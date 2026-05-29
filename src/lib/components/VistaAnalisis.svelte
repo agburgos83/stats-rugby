@@ -1,6 +1,4 @@
 <script lang="ts">
-	// 1. Defino tipos y datos fijos
-
 	interface Props {
 		urlVideo: string;
 		equipo: Puesto[];
@@ -51,9 +49,8 @@
 	] as const;
 
 	const SKILLS_CON_NEUTRO = ['Tackle', 'Duelo'];
-
 	const LISTADO_CALIFICACIONES_SKILLS = ['Negativo', 'Neutro', 'Positivo'] as const;
-	const LISTADO_CALIFICACIONES_GRUPALES = ['Negativo', 'Neutro', 'Positivo'] as const;
+	const LISTADO_CALIFICACIONES_GRUPALES = ['Negativo', 'Positivo'] as const; // Grupal directo sin Neutro
 
 	const LISTADO_SITUACIONES_JUEGO = [
 		'Scrum propio',
@@ -70,47 +67,15 @@
 	type CalificacionGrupal = (typeof LISTADO_CALIFICACIONES_GRUPALES)[number];
 	type SituacionJuego = (typeof LISTADO_SITUACIONES_JUEGO)[number];
 
-	// 2. Defino el estado en memoria
-
 	let acciones = $state<Accion[]>([]);
 	let teamAcciones = $state<TeamAccion[]>([]);
 	let jugadorElegido = $state<Player | null>(null);
 	let skillElegido = $state<Skill | null>(null);
 	let sitJuegoElegida = $state<SituacionJuego | null>(null);
 	let califIndividualElegida = $state<Calificacion | null>(null);
-	let califGrupalElegida = $state<Calificacion | null>(null);
+	let califGrupalElegida = $state<CalificacionGrupal | null>(null);
 	let { urlVideo = $bindable(), cambiarVista, equipo = $bindable() }: Props = $props();
-
-	// funciones locas
-
-	// FUNCIÓN AUXILIAR: Transforma links normales en links aptos para IFRAME
-	// function formatearUrlParaIframe(url: string): string {
-	// 	if (!url) return '';
-
-	// 	// CASO YOUTUBE: Captura si es watch?v=, live/, shorts/ o youtu.be/
-	// 	if (url.includes('youtube.com') || url.includes('youtu.be')) {
-	// 		let videoId = '';
-
-	// 		if (url.includes('watch?v=')) {
-	// 			videoId = url.split('watch?v=')[1].split('&')[0];
-	// 		} else if (url.includes('/live/')) {
-	// 			videoId = url.split('/live/')[1].split('?')[0];
-	// 		} else if (url.includes('youtu.be/')) {
-	// 			videoId = url.split('youtu.be/')[1].split('?')[0];
-	// 		}
-
-	// 		return `https://youtube.com{videoId}`;
-	// 	}
-
-	// 	// CASO VEO: Si el analista pega el link normal de app.veo.co, lo redirigimos a su reproductor embebido público
-	// 	if (url.includes('veo.co') && url.includes('/matches/')) {
-	// 		// Cambiamos 'app.veo.co' por 'live.veo.co' o el formato embed que te dé su plataforma
-	// 		return url.replace('app.veo.co', 'live.veo.co');
-	// 	}
-
-	// 	// Si es otra plataforma o ya viene formateada, la dejamos pasar limpia
-	// 	return url;
-	// }
+	const urlEmbed = $derived(cocinarEnlaceVideo(urlVideo));
 
 	function confirmarAccionJugador(): void {
 		if (!jugadorElegido || !skillElegido || !califIndividualElegida) return;
@@ -125,14 +90,13 @@
 		jugadorElegido = null;
 		skillElegido = null;
 		califIndividualElegida = null;
-
-		acciones.push(accion);
+		acciones = [...acciones, accion];
 	}
 
 	function confirmarAccionEquipo(): void {
 		if (!sitJuegoElegida || !califGrupalElegida) return;
 
-		const accion: TeamAccion = {
+		const teamAccion: TeamAccion = {
 			situacion: sitJuegoElegida,
 			calificacion: califGrupalElegida,
 			timestamp: Date.now()
@@ -140,12 +104,11 @@
 
 		sitJuegoElegida = null;
 		califGrupalElegida = null;
-
-		teamAcciones.push(accion);
+		teamAcciones = [...teamAcciones, teamAccion];
 	}
 
 	function deshacerAccionJugador(): void {
-		if (!acciones) return;
+		if (acciones.length === 0) return;
 		acciones.pop();
 		jugadorElegido = null;
 		skillElegido = null;
@@ -154,79 +117,128 @@
 	}
 
 	function deshacerAccionEquipo(): void {
-		if (!teamAcciones) return;
+		if (teamAcciones.length === 0) return;
 		teamAcciones.pop();
 		sitJuegoElegida = null;
-		califIndividualElegida = null;
+		califGrupalElegida = null; // Corregido: antes limpiaba la individual
 		teamAcciones = [...teamAcciones];
 	}
 
 	function hayPilaAcciones(): boolean {
-		return acciones.length !== null || teamAcciones.length !== null;
+		return acciones.length > 0 || teamAcciones.length > 0;
+	}
+
+	function cocinarEnlaceVideo(enlace: string): string {
+		if (!enlace) return '';
+
+		// Si ya viene formateada con embed, pasa directo
+		if (enlace.includes('/embed/') || enlace.includes('://vimeo.com')) {
+			return enlace;
+		}
+
+		// CASO YOUTUBE
+		if (enlace.includes('youtube.com') || enlace.includes('youtu.be')) {
+			let codigoFinal = '';
+
+			if (enlace.includes('watch?v=')) {
+				// [.split('watch?v=')[1]] extrae el ID, y el [.split('&')[0]] limpia parámetros extras
+				codigoFinal = enlace.split('watch?v=')[1].split('&')[0];
+			} else if (enlace.includes('youtu.be/')) {
+				codigoFinal = enlace.split('youtu.be/')[1].split('?')[0];
+			} else if (enlace.includes('/shorts/')) {
+				codigoFinal = enlace.split('/shorts/')[1].split('?')[0];
+			} else if (enlace.includes('/live/')) {
+				codigoFinal = enlace.split('/live/')[1].split('?')[0];
+			}
+
+			// Si logramos sacar el ID, armamos la URL de embed oficial
+			return codigoFinal ? 'https://youtube.com/embed/' + codigoFinal : enlace;
+		}
+
+		// CASO VEO (app.veo.co -> embed.veo.co)
+		if (enlace.includes('veo.co') && enlace.includes('app.veo.co')) {
+			return enlace.replace('app.veo.co', 'embed.veo.co');
+		}
+
+		return enlace;
 	}
 </script>
 
 <div class="pantalla-analisis">
 	<div class="panel-video">
 		<h2>Video del partido</h2>
+
 		<iframe
-			src={urlVideo}
+			src={urlEmbed}
 			title="Video Player"
 			frameborder="0"
 			allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 			allowfullscreen
 		></iframe>
+
+		<div class="contenedor-boton">
+			<button disabled={!hayPilaAcciones()} onclick={cambiarVista} class="btn-primary">
+				← Finalizar análisis
+			</button>
+		</div>
 	</div>
 
-	<div class="contenedor-boton">
-		<button disabled={hayPilaAcciones()} onclick={cambiarVista} class="btn-primary">
-			← Finalizar análisis
-		</button>
-	</div>
-
-	<!-- panel acciones individuales -->
 	<div class="bloque-paneles-derecha">
+		<!-- Panel Individual -->
 		<div class="panel-interaccion">
 			<div class="seccion-bloque">
 				<h3>Jugadores</h3>
-				{#each equipo as p (p.numero)}
-					{#if p.player !== null}
-					<button
-							onclick={() => (jugadorElegido = p.player)}
-							disabled={sitJuegoElegida !== null ||
-								(jugadorElegido !== null && jugadorElegido.id !== p.player.id)}
-							class:activo={jugadorElegido?.id === p.player.id}
-							class="btn-chip">{p.player.apellido}</button
-						>
-					{/if}
-				{/each}
+				<div class="grupo-chips">
+					{#each equipo as p (p.numero)}
+						{#if p.player !== null}
+							<button
+								onclick={() =>
+									(jugadorElegido = jugadorElegido?.id === p.player?.id ? null : p.player)}
+								disabled={sitJuegoElegida !== null}
+								class:activo={jugadorElegido?.id === p.player.id}
+								class="btn-chip">{p.player.apellido}</button
+							>
+						{/if}
+					{/each}
+				</div>
 			</div>
 
 			<div class="seccion-bloque">
 				<h3>Acción individual</h3>
-				{#each LISTADO_SKILLS as s (s)}
-					<button
-						onclick={() => (skillElegido = s)}
-						disabled={jugadorElegido === null || (skillElegido !== null && skillElegido !== s)}
-						class:activo={skillElegido === s}
-						class="btn-chip">{s}</button
-					>
-				{/each}
+				<div class="grupo-chips">
+					{#each LISTADO_SKILLS as s (s)}
+						<button
+							onclick={() => (skillElegido = skillElegido === s ? null : s)}
+							disabled={jugadorElegido === null}
+							class:activo={skillElegido === s}
+							class="btn-chip">{s}</button
+						>
+					{/each}
+				</div>
 			</div>
 
 			<div class="seccion-bloque">
 				<h3>Calificación</h3>
-				{#each LISTADO_CALIFICACIONES_SKILLS as c (c)}
-					<button
-						onclick={() => (califIndividualElegida = c)}
-						disabled={jugadorElegido === null || skillElegido === null}
-						class:activo={califIndividualElegida === c}
-						class="btn-chip">{c}</button
-					>
-				{/each}
+				<div class="grupo-chips">
+					{#each LISTADO_CALIFICACIONES_SKILLS as c (c)}
+						{#if c !== 'Neutro' || (skillElegido && SKILLS_CON_NEUTRO.includes(skillElegido))}
+							<button
+								onclick={() => (califIndividualElegida = califIndividualElegida === c ? null : c)}
+								disabled={jugadorElegido === null || skillElegido === null}
+								class:activo={califIndividualElegida === c}
+								class="btn-chip">{c}</button
+							>
+						{/if}
+					{/each}
+				</div>
+			</div>
 
 			<div class="acciones-finales">
-				<button onclick={deshacerAccionJugador} disabled={acciones.length === 0} class="btn-primary" style="padding: 8px 16px;">
+				<button
+					onclick={deshacerAccionJugador}
+					disabled={acciones.length === 0}
+					class="btn-primary outline"
+				>
 					Deshacer
 				</button>
 				<button
@@ -239,59 +251,62 @@
 					Confirmar
 				</button>
 			</div>
-			</div>
 		</div>
 
-		<!-- panel acciones grupales -->
+		<!-- Panel Grupal -->
 		<div class="panel-interaccion">
-			<!-- 3. ACCIONES GRUPALES (Toggleable) -->
 			<div class="seccion-bloque">
 				<h3>Acciones grupales</h3>
-				{#each LISTADO_SITUACIONES_JUEGO as sj (sj)}
-					<button
-						onclick={() => (sitJuegoElegida = sj)}
-						disabled={jugadorElegido !== null ||
-							(sitJuegoElegida !== null && sitJuegoElegida !== sj)}
-						class:activo={sitJuegoElegida === sj}
-						class="btn-chip">{sj}</button
-					>
-				{/each}
+				<div class="grupo-chips">
+					{#each LISTADO_SITUACIONES_JUEGO as sj (sj)}
+						<button
+							onclick={() => (sitJuegoElegida = sitJuegoElegida === sj ? null : sj)}
+							disabled={jugadorElegido !== null}
+							class:activo={sitJuegoElegida === sj}
+							class="btn-chip">{sj}</button
+						>
+					{/each}
+				</div>
 			</div>
 
-			<!-- 4. CALIFICACIÓN GRUPAL INDEPENDIENTE -->
 			<div class="seccion-bloque">
 				<h3>Calificación</h3>
-				{#each LISTADO_CALIFICACIONES_GRUPALES as c (c)}
-					{#if c !== 'Neutro' || (sitJuegoElegida && SKILLS_CON_NEUTRO.includes(sitJuegoElegida))}
+				<div class="grupo-chips">
+					{#each LISTADO_CALIFICACIONES_GRUPALES as c (c)}
 						<button
 							onclick={() => (califGrupalElegida = califGrupalElegida === c ? null : c)}
 							disabled={sitJuegoElegida === null}
 							class:activo={califGrupalElegida === c}
 							class="btn-chip">{c}</button
 						>
-					{/if}
-				{/each}
+					{/each}
+				</div>
 			</div>
 
 			<div class="acciones-finales">
-				<button onclick={deshacerAccionEquipo} disabled={teamAcciones.length === 0} class="btn-primary" style="padding: 8px 16px;"
-					>Deshacer</button
+				<button
+					onclick={deshacerAccionEquipo}
+					disabled={teamAcciones.length === 0}
+					class="btn-primary outline"
 				>
+					Deshacer
+				</button>
 				<button
 					onclick={confirmarAccionEquipo}
 					disabled={sitJuegoElegida === null || califGrupalElegida === null}
-					class="btn-primary">Confirmar</button
+					class="btn-primary"
 				>
+					Confirmar
+				</button>
 			</div>
 		</div>
 	</div>
 </div>
 
 <style>
-	/* Contenedor principal en formato Grid */
 	.pantalla-analisis {
 		display: grid;
-		grid-template-columns: 1.8fr 1.2fr; /* 2/3 aproximado video, 1/3 panel */
+		grid-template-columns: 1.8fr 1.2fr;
 		gap: 24px;
 		padding: 20px;
 		font-family: sans-serif;
@@ -303,43 +318,54 @@
 		color: #1e293b;
 	}
 
-	/* Panel de botones agrupado */
-	.panel-interaccion {
+	.panel-video {
 		display: flex;
 		flex-direction: column;
-		gap: 20px;
-		background-color: #f8fafc;
-		padding: 16px;
+		gap: 16px;
+		width: 100%;
+	}
+
+	/* Le damos proporciones firmes de pantalla de TV al reproductor */
+	.panel-video iframe {
+		width: 100%;
+		aspect-ratio: 16 / 9; /* Mantiene la proporción de video estándar */
 		border-radius: 8px;
+		background-color: #000000; /* Fondo negro de carga */
 		border: 1px solid #e2e8f0;
 	}
 
-	.seccion-bloque {
-		margin: 0 0 10px 0;
+	.panel-interaccion {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		background-color: #f8fafc;
+		padding: 20px;
+		border-radius: 8px;
+		border: 1px solid #e2e8f0;
+	}
+	.seccion-bloque h3 {
+		margin: 0 0 8px 0;
 		font-size: 0.95rem;
 		font-weight: bold;
-		/* color: #475569; */
 		color: #212831;
-		/* border-bottom: 2px solid #cbd5e1; */
-		padding-bottom: 4px;
 	}
-
+	.grupo-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
 	.bloque-paneles-derecha {
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
 	}
-
 	.contenedor-boton {
-		margin-bottom: 12px;
+		margin-top: 12px;
 	}
-
-	/* Chips de selección */
 	.btn-chip {
 		padding: 8px 12px;
-		margin: 4px;
 		font-weight: bold;
-		font-size: 0.9rem;
+		font-size: 0.85rem;
 		border-radius: 6px;
 		border: 1px solid #cbd5e1;
 		background: white;
@@ -347,54 +373,54 @@
 		cursor: pointer;
 		transition: all 0.1s ease;
 	}
-
 	.btn-chip:disabled {
-		background-color: #cbd5e1;
+		background-color: #e2e8f0;
 		color: #94a3b8;
-		border-color: #cbd5e1;
+		border-color: #e2e8f0;
 		cursor: not-allowed;
 	}
-
 	.btn-chip.activo {
 		background-color: #2563eb !important;
 		color: white !important;
 		border-color: #2563eb !important;
 	}
-
-	/* Botones de acción primarios */
 	.btn-primary {
 		background-color: #2563eb;
 		color: white;
 		border: none;
-		padding: 12px 24px;
-		font-size: 1rem;
+		padding: 10px 20px;
+		font-size: 0.95rem;
 		font-weight: bold;
 		border-radius: 8px;
 		cursor: pointer;
-		transition: background-color 0.2s;
 	}
-
-	.btn-primary:hover {
-		background-color: #1d4ed8;
+	.btn-primary.outline {
+		background-color: transparent;
+		border: 1px solid #cbd5e1;
+		color: #475569;
 	}
-
 	.btn-primary:disabled {
 		background-color: #cbd5e1;
 		color: #94a3b8;
 		cursor: not-allowed;
 	}
-
 	.acciones-finales {
 		display: flex;
 		justify-content: space-between;
 		gap: 12px;
-		margin-top: 16px;
+		margin-top: 8px;
 		padding-top: 12px;
 		border-top: 1px solid #e2e8f0;
 	}
-
 	.acciones-finales .btn-primary {
 		flex: 1;
 		text-align: center;
+	}
+
+	h2 {
+		color: #0f172a;
+		margin: 0 0 4px 0;
+		font-size: 1.35rem;
+		font-weight: 700;
 	}
 </style>
