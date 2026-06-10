@@ -1,19 +1,7 @@
 <script lang="ts">
-	interface Props {
-		urlVideo: string;
-		cambiarVista: () => void;
-	}
+	import { type PropsCargapartido } from '$lib/types';
 
-	let { urlVideo = $bindable(), cambiarVista }: Props = $props();
-
-	// 1. Inicializamos fecha como string para matchear con el input type="date"
-	let fecha = $state('');
-	let local = $state('');
-	let visitante = $state('');
-	let puntosLocal = $state<number | null>(null);
-	let puntosVisitante = $state<number | null>(null);
-	let union = $state('URBA');
-	let division = $state('Primera');
+	let { partido = $bindable(), cambiarVista }: PropsCargapartido = $props();
 
 	function esUrlValida(texto: string): boolean {
 		if (!texto) return false;
@@ -27,16 +15,17 @@
 
 	// 2. Validación estricta y segura
 	let formValido = $derived(
-		local.trim() !== '' &&
-			visitante.trim() !== '' &&
-			puntosLocal !== null &&
-			puntosVisitante !== null &&
-			union.trim() !== '' &&
-			division.trim() !== '' &&
-			fecha.trim() !== ''
+		partido.local.trim() !== '' &&
+			partido.visitante.trim() !== '' &&
+			partido.puntosLocal !== null &&
+			partido.puntosVisitante !== null &&
+			partido.union.trim() !== '' &&
+			partido.division.trim() !== '' &&
+			partido.fecha.trim() !== '' &&
+			partido.urlVideo.trim() !== ''
 	);
 
-	let botonHabilitado = $derived(esUrlValida(urlVideo) && formValido);
+	let botonHabilitado = $derived(esUrlValida(partido.urlVideo) && formValido);
 </script>
 
 <div class="contenedor-centrado">
@@ -48,7 +37,7 @@
 		<div class="fila-formulario">
 			<div class="campo-formulario flex-1">
 				<label for="union-select">Unión / Torneo</label>
-				<select id="union-select" bind:value={union} class="input-control">
+				<select id="union-select" bind:value={partido.union} class="input-control">
 					<option value="URBA">URBA (Buenos Aires)</option>
 					<option value="URS">URS (Sur)</option>
 					<option value="UROBA">UROBA (Oeste)</option>
@@ -58,7 +47,7 @@
 
 			<div class="campo-formulario flex-1">
 				<label for="division-select">División</label>
-				<select id="division-select" bind:value={division} class="input-control">
+				<select id="division-select" bind:value={partido.division} class="input-control">
 					<option value="Primera">Primera</option>
 					<option value="Intermedia">Intermedia</option>
 					<option value="Pre A">Pre A</option>
@@ -77,7 +66,7 @@
 				<label>Equipo Local</label>
 				<input
 					type="text"
-					bind:value={local}
+					bind:value={partido.local}
 					placeholder="Ej: Berisso R.C."
 					class="input-control"
 				/>
@@ -86,7 +75,7 @@
 				<label>Equipo Visitante</label>
 				<input
 					type="text"
-					bind:value={visitante}
+					bind:value={partido.visitante}
 					placeholder="Ej: Beromama R.C."
 					class="input-control"
 				/>
@@ -100,7 +89,7 @@
 				<input
 					type="number"
 					min="0"
-					bind:value={puntosLocal}
+					bind:value={partido.puntosLocal}
 					placeholder="0"
 					class="input-control"
 				/>
@@ -110,14 +99,14 @@
 				<input
 					type="number"
 					min="0"
-					bind:value={puntosVisitante}
+					bind:value={partido.puntosVisitante}
 					placeholder="0"
 					class="input-control"
 				/>
 			</div>
 			<div class="campo-formulario flex-1">
 				<label for="fecha-partido">Fecha del Partido</label>
-				<input id="fecha-partido" type="date" bind:value={fecha} class="input-control" />
+				<input id="fecha-partido" type="date" bind:value={partido.fecha} class="input-control" />
 			</div>
 		</div>
 
@@ -127,7 +116,7 @@
 		<p class="subtitulo">Acepta enlaces de YouTube, Vimeo, Veo y plataformas web.</p>
 		<input
 			type="text"
-			bind:value={urlVideo}
+			bind:value={partido.urlVideo}
 			placeholder="https://youtube.com..."
 			class="input-control input-url"
 		/>

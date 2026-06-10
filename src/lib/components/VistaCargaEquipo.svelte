@@ -1,25 +1,7 @@
 <script lang="ts">
-	type Player = {
-		id: number;
-		nombre: string;
-		apellido: string;
-		posicion: string;
-		categoria: string;
-	};
+	import { type Player, type PropsCargaEquipo } from '$lib/types';
 
-	type Puesto = {
-		player: Player | null;
-		numero: number;
-		posicionOriginal: string;
-	};
-
-	interface Props {
-		jugadores: Player[];
-		equipo: Puesto[];
-		cambiarVista: () => void;
-	}
-
-	let { jugadores, equipo = $bindable(), cambiarVista }: Props = $props();
+	let { jugadores, equipo = $bindable(), cambiarVista }: PropsCargaEquipo = $props();
 	let jugadorSiendoArrastrado: Player | null = null;
 
 	function removerJugador(numeroCamiseta: number): void {
@@ -58,7 +40,6 @@
 
 <div class="contenedor-centrado">
 	<div class="pantalla-carga">
-		
 		<!-- CABECERA: Ocupa las 3 columnas de forma nativa -->
 		<div class="encabezado-carga">
 			<h2>Armá el equipo</h2>
@@ -189,11 +170,12 @@
 		border-radius: 8px;
 		padding: 20px;
 		overflow-y: auto; /* Scroll interno si los nombres desbordan */
-		box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 	}
 
 	/* Estilos internos de las columnas */
-	.columna-disponibles h2, .columna-equipo h2 {
+	.columna-disponibles h2,
+	.columna-equipo h2 {
 		font-size: 1.1rem;
 		color: #334155;
 		margin-top: 0;

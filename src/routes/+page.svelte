@@ -1,22 +1,16 @@
 <script lang="ts">
+	import { type Player, type Puesto, type PartidoContexto, type Accion, type TeamAccion } from '$lib/types';
+	import { browser } from '$app/environment';
+	import { loadFromStorage, saveToStorage } from '$lib/stores.svelte';
+
 	import VistaBienvenida from '$lib/components/VistaBienvenida.svelte';
 	import VistaCargaEquipo from '$lib/components/VistaCargaEquipo.svelte';
-	import VistaInputVideo from '$lib/components/VistaInputVideo.svelte';
+	import VistaCargaPartido from '$lib/components/VistaCargaPartido.svelte';
 	import VistaAnalisis from '$lib/components/VistaAnalisis.svelte';
-	import plantilla from '$lib/plantilla-jugadores.csv?raw';
-
-	// tipos
-
-	type Player = {
-		id: number;
-		nombre: string;
-		apellido: string;
-		posicion: string;
-		categoria: string;
-	};
+	import VistaAcciones from '$lib/components/VistaAcciones.svelte';
+	import plantilla from '$lib/plantilla-jugadores-brc.csv?raw';
 
 	// 0. inicializacion de puestos
-
 	function obtenerPosicionTeorica(numero: number): string {
 		const posiciones: Record<number, string> = {
 			1: 'Pilar izquierdo',
@@ -35,65 +29,96 @@
 			14: 'Wing derecho',
 			15: 'Fullback'
 		};
-
 		return posiciones[numero] || `Suplente ${numero}`;
 	}
 
 	// 1. parseador csv
-
 	const filas = plantilla.trim().split(/\r?\n/);
-
-	const jugadoresCargados = filas
-		.slice(1)
-		.filter((fila) => fila.split(',').length >= 4)
-		.map((fila, index) => {
-			const columnas = fila.split(',');
-
-			// if (columnas.length < 4) return null;
-
-			const categoriaLimpia = columnas[3].trim().toLowerCase();
-
-			return {
-				id: index + 1,
-				nombre: columnas[0].trim(),
-				apellido: columnas[1].trim(),
-				posicion: columnas[2].trim(),
-				categoria: categoriaLimpia as 'forward' | 'back'
-			};
-		});
-
-	// 3. Estados Globales
-	let vistaActual = $state(1);
-	let jugadores = $state(jugadoresCargados as Player[]);
-	let urlVideo = $state('');
-
-	let equipo = $state(
-		Array(23)
-			.fill(null)
-			.map((_, i) => ({
-				numero: i + 1,
-				posicionOriginal: obtenerPosicionTeorica(i + 1), // Función auxiliar
-				player: null
-			}))
+	const jugadores = $state(
+		filas
+			.slice(1)
+			.filter((fila) => fila.split(',').length >= 4)
+			.map((fila, index) => {
+				const columnas = fila.split(',');
+				const categoriaLimpia = columnas[3].trim().toLowerCase();
+				return {
+					id: index + 1,
+					nombre: columnas[0].trim(),
+					apellido: columnas[1].trim(),
+					posicion: columnas[2].trim(),
+					categoria: categoriaLimpia as 'forward' | 'back'
+				};
+			}) as Player[]
 	);
 
-	// 4. Funciones de navegación
+	// 2. Estados globales
+	let vistaActual = $state(1);
+
+	let equipo = $state(
+		Array.from({ length: 23 }, (_, i) => ({
+			numero: i + 1,
+			posicionOriginal: obtenerPosicionTeorica(i + 1),
+			player: null as Player | null
+		}))
+	);
+
+	let partido = $state({
+		fecha: '',
+		local: '',
+		visitante: '',
+		puntosLocal: null as number | null,
+		puntosVisitante: null as number | null,
+		union: 'URBA',
+		division: 'Primera',
+		urlVideo: ''
+	});
+
+	let acciones = $state<Accion[]>([]);
+	let teamAcciones = $state<TeamAccion[]>([]);
+
+	// 3. Cargar estado persistido (solo en cliente)
+	if (browser) {
+		const saved = loadFromStorage();
+		if (saved.vistaActual) vistaActual = saved.vistaActual as number;
+		if (saved.equipo) equipo = saved.equipo as Puesto[];
+		if (saved.partido) partido = saved.partido as PartidoContexto;
+		if (saved.acciones) acciones = saved.acciones as Accion[];
+		if (saved.teamAcciones) teamAcciones = saved.teamAcciones as TeamAccion[];
+	}
+
+	// 4. Persistir automaticamente en cada cambio
+	$effect(() => {
+		if (!browser) return;
+		saveToStorage({ vistaActual, equipo, partido, acciones, teamAcciones });
+	});
+
+	// 5. Funciones de navegación
 	function cambiarVista(nuevaVista: number) {
 		vistaActual = nuevaVista;
 	}
 </script>
 
-<!-- 3. Renderizado condicional limpio -->
+<!-- 6. Renderizado condicional -->
 {#if vistaActual === 1}
-	<!-- Le pasamos la función para que el botón "Comenzar" pueda avanzar -->
 	<VistaBienvenida cambiarVista={() => cambiarVista(2)} />
 {:else if vistaActual === 2}
-	<!-- Le pasamos los datos que necesita y la función para avanzar -->
 	<VistaCargaEquipo {jugadores} bind:equipo cambiarVista={() => cambiarVista(3)} />
 {:else if vistaActual === 3}
-	<!-- Usamos bind para que la URL que tipee el usuario impacte en el Orquestador -->
-	<VistaInputVideo bind:urlVideo cambiarVista={() => cambiarVista(4)} />
+	<VistaCargaPartido bind:partido cambiarVista={() => cambiarVista(4)} />
 {:else if vistaActual === 4}
-	<!-- El monstruo final recibe el equipo armado y el video listo -->
-	<VistaAnalisis {equipo} {urlVideo} cambiarVista={() => cambiarVista(5)} />
+	<VistaAnalisis
+		{equipo}
+		{partido}
+		bind:acciones
+		bind:teamAcciones
+		cambiarVista={() => cambiarVista(5)}
+	/>
+{:else if vistaActual === 5}
+	<VistaAcciones
+		{equipo}
+		{partido}
+		{acciones}
+		{teamAcciones}
+		cambiarVista={() => cambiarVista(6)}
+	/>
 {/if}
