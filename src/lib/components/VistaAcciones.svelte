@@ -2,7 +2,7 @@
 	import { procesarReporte } from '$lib/processing/reporte-data';
 	import { descargarPDF } from '$lib/pdf/reporte';
 
-	let { equipo, partido, acciones, teamAcciones } = $props();
+	let { equipo, partido, acciones, teamAcciones, cambiarVista } = $props();
 
 	async function generarReporte(): Promise<void> {
 		const { matrizProcesada, dixTotales } = procesarReporte(equipo, acciones, teamAcciones);

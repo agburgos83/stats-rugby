@@ -203,7 +203,7 @@
 					onclick={cambiarVista}
 					class="btn-primary"
 				>
-					← Terminar análisis
+					Terminar análisis →
 				</button>
 			</div>
 		</div>
@@ -328,7 +328,7 @@
 		<!-- 2. ACCIONES GRUPALES -->
 		<div class="panel-interaccion">
 			<div class="seccion-bloque">
-				<h3>Acciones grupales</h3>
+				<h3>Situaciones de juego</h3>
 
 				<!-- Contenedor vertical que apila las 3 líneas -->
 				<div class="contenedor-lineas-grupales">
