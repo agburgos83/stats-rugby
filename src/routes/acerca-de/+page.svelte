@@ -1,9 +1,9 @@
 <section class="mx-auto max-w-3xl px-6 py-16">
-	<h2 class="mb-12 text-4xl tracking-tight text-gray-900">Sobre Lupa Rugby</h2>
+	<h2 class="mb-12 text-4xl tracking-tight text-gray-900">Sobre Stats Rugby</h2>
 
 	<div class="prose prose-stone lg:prose-xl">
 		<p>
-			Lupa Rugby es una herramienta gratuita y fácil de usar para entrenadores y analistas que
+			Stats Rugby es una herramienta gratuita y fácil de usar para entrenadores y analistas que
 			quieran proveer información precisa a sus jugadores, tanto de acciones individuales como de
 			situaciones grupales del juego.
 		</p>

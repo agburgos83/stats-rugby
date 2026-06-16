@@ -33,6 +33,7 @@
 		z-index: 50;
 		background: #ffffff;
 		border-bottom: 1px solid #e5e7eb;
+		/* border-bottom: 1px solid #ff2a2aff; */
 		padding: 0.75rem 2rem;
 	}
 	ul {
@@ -53,6 +54,7 @@
 	}
 	a.active {
 		color: #2563eb;
+		/* color: #ff2a2aff; */
 		font-weight: 700;
 	}
 </style>
