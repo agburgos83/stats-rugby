@@ -1,11 +1,11 @@
-import { SKILLS, type Skill, type Puesto, type Accion, type TeamAccion } from '$lib/types';
+import { BALL_SKILLS, CONTACT_SKILLS, FOOT_SKILLS, type Skill, type Puesto, type Accion, type TeamAccion } from '$lib/types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MatrizProcesada = Record<number, any>;
 export type DixTotales = Record<string, [number, number]>;
 
 function crearContadorVacio() {
-    return { Negativo: 0, Neutro: 0, Positivo: 0, Dominante: 0, Total: 0, TotalPositivas: 0 };
+    return { Negativo: 0, Neutro: 0, Positivo: 0, Dominante: 0, Total: 0 };
 }
 
 export function procesarReporte(
@@ -21,7 +21,8 @@ export function procesarReporte(
         'Scrum rival': [0, 0],
         'Line rival': [0, 0],
         'Salida cargada': [0, 0],
-        'Puntos en ZD': [0, 0]
+        'Efect. AT. 22m': [0, 0],
+        'Efect. DEF. 22m': [0, 0]
     };
 
     for (const puesto of equipo) {
@@ -29,7 +30,8 @@ export function procesarReporte(
 
         const jugador = puesto.player;
         const dixSkills: Record<string, unknown> = {};
-        for (const skill of SKILLS) {
+        const ALL_SKILLS = [...BALL_SKILLS, ...CONTACT_SKILLS, ...FOOT_SKILLS];
+        for (const skill of ALL_SKILLS) {
             dixSkills[skill] = crearContadorVacio();
         }
 
@@ -39,7 +41,12 @@ export function procesarReporte(
             apellido: jugador.apellido,
             skills: dixSkills,
             totalGeneral: 0,
-            totalPositivas: 0
+            totalPelota: 0,
+            totalContacto: 0,
+            totalPie: 0,
+            efectividadPelota: 0,
+            efectividadContacto: 0,
+            efectividadPie: 0
         };
     }
 
@@ -51,8 +58,25 @@ export function procesarReporte(
         matrizProcesada[jugadorID].skills[skill][calificacion]++;
         matrizProcesada[jugadorID].totalGeneral++;
 
-        if (calificacion === 'Positivo' || calificacion === 'Dominante') {
-            matrizProcesada[jugadorID].totalPositivas++;
+        if ((BALL_SKILLS as readonly string[]).includes(skill)) {
+            matrizProcesada[jugadorID].totalPelota++;
+        } else if ((CONTACT_SKILLS as readonly string[]).includes(skill)) {
+            matrizProcesada[jugadorID].totalContacto++;
+        } else if ((FOOT_SKILLS as readonly string[]).includes(skill)) {
+            matrizProcesada[jugadorID].totalPie++;
+        }
+
+        const esFavorable = calificacion === 'Positivo' || calificacion === 'Dominante'
+            || (calificacion === 'Neutro' && skill !== 'Duelo');
+
+        if (esFavorable) {
+            if ((BALL_SKILLS as readonly string[]).includes(skill)) {
+                matrizProcesada[jugadorID].efectividadPelota++;
+            } else if ((CONTACT_SKILLS as readonly string[]).includes(skill)) {
+                matrizProcesada[jugadorID].efectividadContacto++;
+            } else if ((FOOT_SKILLS as readonly string[]).includes(skill)) {
+                matrizProcesada[jugadorID].efectividadPie++;
+            }
         }
     }
 

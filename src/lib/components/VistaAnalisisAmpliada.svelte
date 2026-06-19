@@ -1,6 +1,8 @@
 <script lang="ts">
 	import {
-		SKILLS,
+		BALL_SKILLS,
+		CONTACT_SKILLS,
+		FOOT_SKILLS,
 		type Skill,
 		type SituacionJuego,
 		type CalificacionIndividual,
@@ -12,12 +14,19 @@
 	} from '$lib/types';
 
 	// importadas desde el orquestador
-	let { equipo, partido, acciones= $bindable(), teamAcciones= $bindable(), cambiarVista }: PropsAnalisis = $props();
+	let {
+		equipo,
+		partido,
+		acciones = $bindable(),
+		teamAcciones = $bindable(),
+		cambiarVista
+	}: PropsAnalisis = $props();
 
-	let jugadorElegido = $state<Player | null>(null);
+	// let jugadorElegido = $state<Player | null>(null);
+	let jugadoresElegidos = $state<Player[]>([]);
 	// let sitJuegoElegida = $state<SituacionJuego | null>(null);
 	let ultimaAccionClickeada = $state<string | null>(null);
-
+	let prevAccionesLength = $state(0);
 	let puedeDeshacerIndividual = $state(false);
 	let puedeDeshacerGrupal = $state(false);
 
@@ -31,26 +40,30 @@
 		skillElegida: Skill,
 		califIndividualElegida: CalificacionIndividual
 	): void {
-		if (!jugadorElegido) {
+		if (jugadoresElegidos.length === 0) {
 			alert('Primero selecciona un jugador de la grilla superior');
 			return;
 		}
 
+		prevAccionesLength = acciones.length;
+
 		const tiempoActual = obtenerTimestampVideo();
 
-		const nuevaAccion: Accion = {
-			timestamp: tiempoActual,
-			player: jugadorElegido, // El que está activo en memoria
-			skill: skillElegida, // El que viene de la celda
-			calificacion: califIndividualElegida // El del botón que tocó
-		};
+		for (const j of jugadoresElegidos) {
+			const nuevaAccion: Accion = {
+				timestamp: tiempoActual,
+				player: j,
+				skill: skillElegida,
+				calificacion: califIndividualElegida
+			};
+			acciones.push(nuevaAccion);
+		}
 
-		acciones.push(nuevaAccion);
 		acciones = [...acciones];
 
 		puedeDeshacerIndividual = true;
 
-		jugadorElegido = null;
+		jugadoresElegidos = [];
 
 		// Activamos el flash visual
 		ultimaAccionClickeada = `${skillElegida}-${califIndividualElegida}`;
@@ -70,6 +83,8 @@
 			return;
 		}
 
+		// prevAccionesLength = acciones.length;
+
 		const tiempoActual = obtenerTimestampVideo();
 
 		const nuevaTeamAccion: TeamAccion = {
@@ -83,8 +98,6 @@
 
 		puedeDeshacerGrupal = true;
 
-		jugadorElegido = null;
-
 		// Activamos el flash visual
 		ultimaAccionClickeada = `${sitJuegoElegida}-${califGrupalElegida}`;
 
@@ -94,11 +107,11 @@
 		}, 300);
 	}
 
-	function deshacerAccionIndividual(): void {
-		if (acciones.length === 0 || !puedeDeshacerIndividual) return;
-		acciones.pop();
-		puedeDeshacerIndividual = false;
+	function deshacerAccionIndividual() {
+		if (!puedeDeshacerIndividual) return;
+		acciones = acciones.slice(0, prevAccionesLength);
 		acciones = [...acciones];
+		puedeDeshacerIndividual = false;
 	}
 
 	function deshacerAccionGrupal(): void {
@@ -163,6 +176,22 @@
 		return enlace;
 	}
 
+	function toggleJugador(p: Player, ctrlKey: boolean): void {
+		if (ctrlKey) {
+			if (jugadoresElegidos.some((j) => j.id === p.id)) {
+				jugadoresElegidos = jugadoresElegidos.filter((j) => j.id !== p.id);
+			} else {
+				jugadoresElegidos = [...jugadoresElegidos, p];
+			}
+		} else {
+			if (jugadoresElegidos.length === 1 && jugadoresElegidos[0].id === p.id) {
+				jugadoresElegidos = [];
+			} else {
+				jugadoresElegidos = [p];
+			}
+		}
+	}
+
 	function obtenerTimestampVideo(): number {
 		const iframe = document.querySelector('iframe');
 		if (!iframe) return Date.now(); // fallback por seguridad
@@ -214,112 +243,130 @@
 		<!-- 1. ACCIONES INDIVIDUALES -->
 		<div class="panel-interaccion">
 			<div class="seccion-bloque">
-				<div
-					style="display: flex; justify-content: space-between; align-items: baseline; width: 100%;"
-				>
-					<h3 style="margin: 0;">Jugadores</h3>
-				</div>
+				<h3>Jugadores</h3>
 
 				<div class="grupo-chips">
 					{#each equipo as p (p.numero)}
 						{#if p.player !== null}
 							<button
-								onclick={() =>
-									(jugadorElegido = jugadorElegido?.id === p.player?.id ? null : p.player)}
-								// disabled={sitJuegoElegida !== null}
-								class:activo={jugadorElegido?.id === p.player.id}
-								class="btn-chip">{p.player.apellido}</button
+								onclick={(e) => toggleJugador(p.player, e.ctrlKey)}
+								class:activo={jugadoresElegidos.some((j) => j.id === p.player?.id)}
+								class="btn-chip"
 							>
+								{p.player.apellido}
+							</button>
 						{/if}
 					{/each}
 				</div>
 			</div>
 
 			<div class="seccion-bloque">
-				<!-- Grilla de habilidades -->
 				<div class="grilla-skills">
-					{#each SKILLS as s (s)}
-						<div class="tarjeta-skill">
-							<p class="titulo-skill">{s}</p>
+					<h3>Manejo de pelota</h3>
+					<div class="grilla-tiras">
+						{#each BALL_SKILLS as s (s)}
+							<div class="tarjeta-skill">
+								<span class="titulo-skill">{s}</span>
+								<button
+									disabled={jugadoresElegidos.length === 0}
+									onclick={() => registrarAccionDirecta(s, 'Negativo')}
+									class="btn-calif neg">-</button
+								>
+								<button
+									disabled={jugadoresElegidos.length === 0}
+									onclick={() => registrarAccionDirecta(s, 'Positivo')}
+									class="btn-calif pos">+</button
+								>
+							</div>
+						{/each}
+					</div>
 
-							<div class="botones-calificacion">
-								{#if s === 'Tackle'}
+					<h3>Juego de contacto</h3>
+					<div class="grilla-tiras">
+						{#each CONTACT_SKILLS as s (s)}
+							<div class="tarjeta-skill">
+								{#if s === 'Tackle' || s === 'Duelo'}
+									<span class="titulo-skill">{s}</span>
 									<button
-										disabled={jugadorElegido === null}
+										disabled={jugadoresElegidos.length === 0}
 										onclick={() => registrarAccionDirecta(s, 'Negativo')}
 										class="btn-calif neg">-</button
 									>
 									<button
-										disabled={jugadorElegido === null}
+										disabled={jugadoresElegidos.length === 0}
 										onclick={() => registrarAccionDirecta(s, 'Neutro')}
 										class="btn-calif neu">=</button
 									>
 									<button
-										disabled={jugadorElegido === null}
+										disabled={jugadoresElegidos.length === 0}
 										onclick={() => registrarAccionDirecta(s, 'Positivo')}
 										class="btn-calif pos">+</button
 									>
 									<button
-										disabled={jugadorElegido === null}
+										disabled={jugadoresElegidos.length === 0}
 										onclick={() => registrarAccionDirecta(s, 'Dominante')}
 										class="btn-calif dom">++</button
 									>
-								{:else if s === 'Duelo'}
-									<button
-										disabled={jugadorElegido === null}
-										onclick={() => registrarAccionDirecta(s, 'Negativo')}
-										class="btn-calif neg">-</button
-									>
-									<button
-										disabled={jugadorElegido === null}
-										onclick={() => registrarAccionDirecta(s, 'Neutro')}
-										class="btn-calif neu">=</button
-									>
-									<button
-										disabled={jugadorElegido === null}
-										onclick={() => registrarAccionDirecta(s, 'Positivo')}
-										class="btn-calif pos">+</button
-									>
 								{:else}
+									<span class="titulo-skill">{s}</span>
 									<button
-										disabled={jugadorElegido === null}
+										disabled={jugadoresElegidos.length === 0}
 										onclick={() => registrarAccionDirecta(s, 'Negativo')}
 										class="btn-calif neg">-</button
 									>
 									<button
-										disabled={jugadorElegido === null}
+										disabled={jugadoresElegidos.length === 0}
 										onclick={() => registrarAccionDirecta(s, 'Positivo')}
 										class="btn-calif pos">+</button
 									>
 								{/if}
 							</div>
+						{/each}
+					</div>
+
+					<h3>Juego con el pie</h3>
+					<div class="grilla-tiras">
+						{#each FOOT_SKILLS as s (s)}
+							<div class="tarjeta-skill">
+								<span class="titulo-skill">{s}</span>
+								<button
+									disabled={jugadoresElegidos.length === 0}
+									onclick={() => registrarAccionDirecta(s, 'Negativo')}
+									class="btn-calif neg">-</button
+								>
+								<button
+									disabled={jugadoresElegidos.length === 0}
+									onclick={() => registrarAccionDirecta(s, 'Positivo')}
+									class="btn-calif pos">+</button
+								>
+							</div>
+						{/each}
+					</div>
+
+					<hr class="separador-panel" />
+
+					<div class="barra-herramientas">
+						<span class="contador-texto"
+							>Total acciones individuales: <strong>{totalAccionesIndividuales}</strong></span
+						>
+						<div class="grupo-botones-control">
+							<button
+								onclick={deshacerAccionIndividual}
+								disabled={!puedeDeshacerIndividual}
+								class="btn-accion-barra"
+								title="Deshacer última acción"
+							>
+								Deshacer acción ↺
+							</button>
+							<button
+								onclick={limpiarAccionesIndividuales}
+								disabled={!hayAccionesIndividuales()}
+								class="btn-accion-barra peligro"
+								title="Borrar todo el historial de jugadores"
+							>
+								Borrar historial 🗑
+							</button>
 						</div>
-					{/each}
-				</div>
-
-				<hr class="separador-panel" />
-
-				<div class="barra-herramientas">
-					<span class="contador-texto"
-						>Total acciones individuales: <strong>{totalAccionesIndividuales}</strong></span
-					>
-					<div class="grupo-botones-control">
-						<button
-							onclick={deshacerAccionIndividual}
-							disabled={!puedeDeshacerIndividual}
-							class="btn-accion-barra"
-							title="Deshacer última acción"
-						>
-							Deshacer acción ↺
-						</button>
-						<button
-							onclick={limpiarAccionesIndividuales}
-							disabled={!hayAccionesIndividuales()}
-							class="btn-accion-barra peligro"
-							title="Borrar todo el historial de jugadores"
-						>
-							Borrar historial 🗑
-						</button>
 					</div>
 				</div>
 			</div>
@@ -473,7 +520,7 @@
 					<div class="linea-grupal">
 						<div class="tarjeta-situacion tarjeta-ancha">
 							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Efect. AT. 22m</p>
+								<p class="titulo-situacion">Efectividad 22m (Ataque)</p>
 								<span class="contador-badge">
 									{teamAcciones.filter((ta) => ta.situacion === 'Efect. AT. 22m').length}
 								</span>
@@ -488,6 +535,27 @@
 									onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Positivo')}
 									class="btn-calif pos"
 									class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Positivo'}>+</button
+								>
+							</div>
+						</div>
+
+						<div class="tarjeta-situacion tarjeta-ancha">
+							<div class="encabezado-tarjeta">
+								<p class="titulo-situacion">Efectividad 22m (Defensa)</p>
+								<span class="contador-badge">
+									{teamAcciones.filter((ta) => ta.situacion === 'Efect. DEF. 22m').length}
+								</span>
+							</div>
+							<div class="botones-calificacion">
+								<button
+									onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Negativo')}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Negativo'}>-</button
+								>
+								<button
+									onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Positivo')}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Positivo'}>+</button
 								>
 							</div>
 						</div>
@@ -652,24 +720,14 @@
 		font-weight: 700;
 	}
 
-	.grilla-skills {
-		display: grid;
-		/* Distribuye tarjetas de mínimo 130px de ancho rellenando el espacio lateral */
-		grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-		gap: 10px;
-		margin-top: 10px;
-	}
-
 	.tarjeta-skill {
 		background-color: white;
 		border: 1px solid #cbd5e1;
-		border-radius: 6px;
-		padding: 8px;
+		border-radius: 4px;
+		padding: 3px 8px;
 		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		gap: 8px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+		align-items: center;
+		gap: 6px;
 	}
 
 	.titulo-skill {
@@ -677,10 +735,11 @@
 		font-size: 0.8rem;
 		font-weight: 600;
 		color: #334155;
-		text-align: center;
+		text-align: left;
+		flex: 1;
 		white-space: nowrap;
 		overflow: hidden;
-		text-overflow: ellipsis; /* Evita que nombres largos rompan la caja */
+		text-overflow: ellipsis;
 	}
 
 	.botones-calificacion {
@@ -690,10 +749,24 @@
 		width: 100%;
 	}
 
-	/* Botones compactos internos de las tarjetas */
-	.btn-calif {
+	/* Botones de situación de juego: ancho completo, altura compacta */
+	.botones-calificacion .btn-calif {
 		flex: 1;
 		padding: 6px 4px;
+		font-size: 0.9rem;
+		font-weight: bold;
+		border-radius: 4px;
+		border: 1px solid #cbd5e1;
+		background-color: #f8fafc;
+		color: #334155;
+		cursor: pointer;
+		text-align: center;
+		transition: background-color 0.1s ease;
+	}
+
+	/* Botones compactos internos de las tarjetas */
+	.btn-calif {
+		padding: 4px 8px;
 		font-size: 0.75rem;
 		font-weight: bold;
 		border-radius: 4px;
@@ -732,14 +805,6 @@
 		background-color: #eff6ff;
 		color: #2563eb;
 		border-color: #bfdbfe;
-	}
-
-	/* Contenedor vertical general de la sección grupal */
-	.contenedor-lineas-grupales {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		margin-top: 10px;
 	}
 
 	/* Cada una de las 3 líneas de tarjetas horizontales */
@@ -851,22 +916,27 @@
 		height: 100%; /* Obliga al bloque a usar todo el alto disponible */
 	}
 
-	/* 2. En tu grilla-skills actual, le decimos que empuje lo que tenga abajo */
 	.grilla-skills {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-		gap: 10px;
-		margin-top: 10px;
-		flex-grow: 1; /* Esto hace que la grilla ocupe el espacio medio sobrante */
+		display: flex;
+		flex-direction: column;
 	}
 
-	/* lo mismo si tenés un contenedor de las líneas grupales */
+	.grilla-tiras {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+		margin-bottom: 16px;
+	}
+
+	.grilla-tiras:last-of-type {
+		margin-bottom: 0;
+	}
+
 	.contenedor-lineas-grupales {
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
-		margin-top: 10px;
-		flex-grow: 1; /* Empuja los botones hacia abajo */
+		flex-grow: 1;
 	}
 
 	/* 3. El contenedor de los botones se pega al fondo */

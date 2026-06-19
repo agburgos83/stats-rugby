@@ -38,9 +38,33 @@ export type PartidoContexto = {
     urlVideo: string;
 };
 
+export const BALL_SKILLS = [
+    'Pase',
+    'Off load',
+    'Rec. aérea',
+    'Rec. line',
+    'Tirada line',
+    'Intercep.'
+    
+] as const;
 
+export const CONTACT_SKILLS = [
+    'Duelo',
+    'Tackle',
+    'Ast. duelo',
+    'Ast. Tackle',
+    'Ruck',
+    'Pesca',
+    'Contraruck',
+] as const;
 
-// support types
+export const FOOT_SKILLS = [
+    'Kick',
+    'Salida',
+    'Palos',
+    'Drop',
+    'Tap',
+] as const;
 
 export const SKILLS = [
     'Duelo',
@@ -60,10 +84,18 @@ export const SKILLS = [
 
 export const SKILLS_CON_NEUTRO = ['Tackle', 'Duelo'];
 
-export type Skill = (typeof SKILLS)[number];
+// 1. Creamos los tipos específicos de cada grupo (opcional, pero útil)
+export type BallSkill = (typeof BALL_SKILLS)[number];
+export type ContactSkill = (typeof CONTACT_SKILLS)[number];
+export type FootSkill = (typeof FOOT_SKILLS)[number];
+
+// 2. Unificamos todo en el tipo Skill general
+export type Skill = BallSkill | ContactSkill | FootSkill;
+
+// export type Skill = (typeof SKILLS)[number];
 export type CalificacionIndividual = 'Negativo' | 'Neutro' | 'Positivo' | 'Dominante';
 export type CalificacionGrupal = 'Negativo' | 'Positivo';
-export type SituacionJuego = 'Scrum propio' | 'Line propio' | 'Salida recibida' | 'Scrum rival' | 'Line rival' | 'Salida cargada' | 'Puntos en ZD';
+export type SituacionJuego = 'Scrum propio' | 'Line propio' | 'Salida recibida' | 'Scrum rival' | 'Line rival' | 'Salida cargada' | 'Efect. AT. 22m' | 'Efect. DEF. 22m';
 
 
 // props

@@ -13,7 +13,7 @@
 	import VistaCargaCSV from '$lib/components/VistaCargaCSV.svelte';
 	import VistaCargaEquipo from '$lib/components/VistaCargaEquipo.svelte';
 	import VistaCargaPartido from '$lib/components/VistaCargaPartido.svelte';
-	import VistaAnalisis from '$lib/components/VistaAnalisis.svelte';
+	import VistaAnalisisAmpliada from '$lib/components/VistaAnalisisAmpliada.svelte';
 	import VistaAcciones from '$lib/components/VistaAcciones.svelte';
 
 	// 0. inicializacion de puestos
@@ -100,7 +100,7 @@
 {:else if vistaActual === 3}
 	<VistaCargaPartido bind:partido cambiarVista={() => cambiarVista(4)} />
 {:else if vistaActual === 4}
-	<VistaAnalisis
+	<VistaAnalisisAmpliada
 		{equipo}
 		{partido}
 		bind:acciones

@@ -25,9 +25,38 @@
 
 <section class="pantalla-analisis">
 	<div class="bloque-paneles-izquierda">
+		<div>
+			<img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" />
+		</div>
+		<p class="max-w-lg text-xl leading-relaxed font-medium text-gray-800">
+			App gratuita para entrenadores y analistas de rugby. Cargá tu equipo, registrá acciones
+			individuales y grupales y compartí el reporte con tu equipo.
+		</p>
+		<div class="flex flex-wrap justify-center gap-4">
+
+			{#if hayDatos}
+				<a
+					href={resolve('/app')}
+					class="inline-block rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+				>
+					Retomar análisis
+				</a>
+			{/if}
+			<button
+				onclick={empezarNuevo}
+				class="inline-block rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+			>
+				Comenzar nuevo análisis
+			</button>
+
+			
+		</div>
+	</div>
+	<div class="bloque-paneles-derecha">
 		<div class="panel-video">
 			<!-- <h2>Video del partido</h2> -->
 			<h2>Cómo usar la app</h2>
+			<br />
 			<iframe
 				width="560"
 				height="315"
@@ -40,48 +69,14 @@
 			></iframe>
 		</div>
 	</div>
-	<div class="bloque-paneles-derecha">
-		<div>
-			<img src="/logo-app-blue-200.png" alt="Lupa Rugby Logo" />
-		</div>
-		<p class="max-w-lg text-lg leading-relaxed text-gray-600">
-			Herramienta gratuita para entrenadores y analistas de rugby. Cargá tu equipo, analizá acciones
-			individuales y grupales, y descargá reportes en PDF.
-		</p>
-		<div class="flex flex-wrap justify-center gap-4">
-			{#if hayDatos}
-				<a
-					href={resolve('/app')}
-					class="inline-block rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-				>
-					Retomar análisis
-				</a>
-				<button
-					onclick={empezarNuevo}
-					class="inline-block rounded-sm border border-gray-300 bg-white px-8 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-				>
-					Comenzar nuevo análisis
-				</button>
-			{:else}
-				<button
-					onclick={empezarNuevo}
-					class="inline-block rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-				>
-					Comenzar nuevo análisis
-				</button>
-			{/if}
-		</div>
-	</div>
 </section>
 
 <style>
 	.pantalla-analisis {
 		display: grid;
-		/* 1. Cambiado a proporciones más equilibradas (o usa 1fr 1fr si quieres simetría) */
-		grid-template-columns: 1.8fr 1.2fr;
+		grid-template-columns: 1.2fr 1.8fr;
 		/* 2. Reducido ligeramente el espacio entre columnas para ganar ancho interno */
 		gap: 32px;
-		/* 3. Ampliado el ancho máximo para aprovechar pantallas modernas */
 		max-width: 1400px;
 		margin: 0 auto;
 		padding: 48px 24px;
@@ -90,6 +85,8 @@
 	}
 
 	.bloque-paneles-izquierda {
+		align-items: center;
+		text-align: center;
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
@@ -97,9 +94,11 @@
 	}
 
 	.panel-video h2 {
-		margin: 0 0 16px 0;
-		font-size: 1.4rem;
-		color: #1e293b;
+		border-left: 4px solid #2563eb; /* blue-600 */
+		padding-left: 12px;
+		font-size: 1.5rem;
+		color: #1e293b; /* slate-800 */
+		font-weight: 500;
 	}
 
 	.panel-video iframe {
@@ -113,7 +112,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		text-align: center;
+		text-align: left;
 		gap: 32px;
 		width: 100%; /* Asegura que ocupe todo su espacio */
 	}

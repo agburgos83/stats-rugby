@@ -31,7 +31,8 @@
 		position: sticky;
 		top: 0;
 		z-index: 50;
-		background: #ffffff;
+		/* background: #ffffff; */
+		background-color: #2563ebff;
 		border-bottom: 1px solid #e5e7eb;
 		/* border-bottom: 1px solid #ff2a2aff; */
 		padding: 0.75rem 2rem;
@@ -45,7 +46,7 @@
 	}
 	a {
 		text-decoration: none;
-		color: #4b5563;
+		color: #ffffff;
 		font-weight: 500;
 		transition: color 0.15s;
 	}
@@ -53,8 +54,8 @@
 		color: #1f2937;
 	}
 	a.active {
-		color: #2563eb;
-		/* color: #ff2a2aff; */
+		/* color: #2563eb; */
+		color: #ffffff;
 		font-weight: 700;
 	}
 </style>

@@ -41,9 +41,9 @@
 <div class="contenedor-centrado">
 	<div class="pantalla-carga">
 		<!-- CABECERA: Ocupa las 3 columnas de forma nativa -->
+		<br />
 		<div class="encabezado-carga">
 			<h2>Armá el equipo</h2>
-			<p class="subtitulo">Los 15 titulares del fin de semana no pueden quedar incompletos.</p>
 		</div>
 
 		<!-- COLUMNA 1: FORWARDS -->

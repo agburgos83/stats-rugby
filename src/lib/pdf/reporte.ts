@@ -3,8 +3,7 @@ import autoTable from 'jspdf-autotable';
 import type { HookData, RowInput } from 'jspdf-autotable';
 import { type MatrizProcesada, type DixTotales } from '$lib/processing/reporte-data'
 import { agregarDonutsAlPDF } from '$lib/pdf/donuts'
-import { type PartidoContexto, type Puesto } from '$lib/types';
-import { SKILLS } from '$lib/types';
+import { type PartidoContexto, type Puesto, BALL_SKILLS, CONTACT_SKILLS, FOOT_SKILLS } from '$lib/types';
 
 export async function descargarPDF(
     equipo: Puesto[],
@@ -26,50 +25,77 @@ export async function descargarPDF(
         18
     );
 
-    const filaHead1: RowInput = [
+    const ALL_SKILLS = [...BALL_SKILLS, ...CONTACT_SKILLS, ...FOOT_SKILLS];
+
+    function skillCols(skill: string): number {
+        const s = skill.toLowerCase();
+        if (s === 'tackle' || s === 'duelo') return 4;
+        return 2;
+    }
+
+    const colsPelota = BALL_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
+    const colsContacto = CONTACT_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
+    const colsPie = FOOT_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
+
+    const filaHead0: RowInput = [
         {
             content: 'Jugador',
-            rowSpan: 2,
+            rowSpan: 3,
+            styles: { halign: 'center' as const, valign: 'middle' as const }
+        },
+        {
+            content: 'Juego con pelota',
+            colSpan: colsPelota,
+            styles: { halign: 'center' as const }
+        },
+        {
+            content: 'Juego de contacto',
+            colSpan: colsContacto,
+            styles: { halign: 'center' as const }
+        },
+        {
+            content: 'Juego con el pie',
+            colSpan: colsPie,
+            styles: { halign: 'center' as const }
+        },
+        {
+            content: 'Total\nacciones',
+            rowSpan: 3,
+            styles: { halign: 'center' as const, valign: 'middle' as const }
+        },
+        {
+            content: 'Efectividad\njuego con\npelota',
+            rowSpan: 3,
+            styles: { halign: 'center' as const, valign: 'middle' as const }
+        },
+        {
+            content: 'Efectividad\njuego en el\ncontacto',
+            rowSpan: 3,
+            styles: { halign: 'center' as const, valign: 'middle' as const }
+        },
+        {
+            content: 'Efectividad\njuego con el\npie',
+            rowSpan: 3,
             styles: { halign: 'center' as const, valign: 'middle' as const }
         }
     ];
 
+    const filaHead1: RowInput = [];
+    ALL_SKILLS.forEach((skill) => {
+        filaHead1.push({ content: skill, colSpan: skillCols(skill), styles: { halign: 'center' as const, valign: 'middle' as const } });
+    });
+
     const filaHead2: RowInput = [];
-
-    // 1. Armar Encabezados dinámicos según las especificaciones exactas
-    SKILLS.forEach((skill) => {
-        const sNombre = skill.toLowerCase();
-
-        if (sNombre === 'tackle') {
-            // 4 columnas
-            filaHead1.push({ content: skill, colSpan: 4, styles: { halign: 'center' as const } });
+    ALL_SKILLS.forEach((skill) => {
+        const s = skill.toLowerCase();
+        if (s === 'tackle' || s === 'duelo') {
             filaHead2.push({ content: '-' }, { content: '=' }, { content: '+' }, { content: '++' });
-        } else if (sNombre === 'duelo') {
-            // 3 columnas
-            filaHead1.push({ content: skill, colSpan: 3, styles: { halign: 'center' as const } });
-            filaHead2.push({ content: '-' }, { content: '=' }, { content: '+' });
         } else {
-            // 2 columnas para el resto
-            filaHead1.push({ content: skill, colSpan: 2, styles: { halign: 'center' as const } });
             filaHead2.push({ content: '-' }, { content: '+' });
         }
     });
 
-    // Añadimos las columnas de Totales al final de la primera fila
-    filaHead1.push(
-        {
-            content: 'Total\nacciones',
-            rowSpan: 2,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        },
-        {
-            content: 'Total\nacciones\npositivas',
-            rowSpan: 2,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        }
-    );
-
-    const encabezados: RowInput[] = [filaHead1, filaHead2];
+    const encabezados: RowInput[] = [filaHead0, filaHead1, filaHead2];
 
     // 2. Mapear los datos respetando el orden de carga original del array 'equipo'
     const filasBody = equipo
@@ -83,29 +109,30 @@ export async function descargarPDF(
 
             const fila = [`${datosJugador.apellido}, ${datosJugador.nombre}`];
 
-            SKILLS.forEach((skill) => {
+            ALL_SKILLS.forEach((skill) => {
                 const s = datosJugador.skills[skill];
                 const sNombre = skill.toLowerCase();
 
                 // Primer columna para todas: Negativo (-)
                 fila.push(s.Negativo || 0);
 
-                if (sNombre === 'tackle') {
+                if (sNombre === 'tackle' || sNombre === 'duelo') {
                     fila.push(s.Neutro || 0); // (=)
                     fila.push(s.Positivo || 0); // (+)
                     fila.push(s.Dominante || 0); // (++)
-                } else if (sNombre === 'duelo') {
-                    fila.push(s.Neutro || 0); // (=)
-                    fila.push(s.Positivo || 0); // (+)
                 } else {
                     // El resto de las skills solo tienen (-) y (+)
                     fila.push(s.Positivo || 0); // (+)
                 }
             });
 
-            // Totales generales al final de la fila del jugador
+            const pct = (favorable: number, total: number) =>
+                total > 0 ? Math.round((favorable / total) * 100) + '%' : '-';
+
             fila.push(datosJugador.totalGeneral);
-            fila.push(datosJugador.totalPositivas);
+            fila.push(pct(datosJugador.efectividadPelota, datosJugador.totalPelota));
+            fila.push(pct(datosJugador.efectividadContacto, datosJugador.totalContacto));
+            fila.push(pct(datosJugador.efectividadPie, datosJugador.totalPie));
 
             return fila;
         })
@@ -137,10 +164,10 @@ export async function descargarPDF(
 
             doc.setFontSize(9);
             doc.setTextColor(100);
-            doc.setFont('sans-serif', 'italic');
+            doc.setFont('sans-serif');
 
             doc.text(
-                'Leyenda de calificaciones:  [-] Negativo   [=] Neutro   [+] Positivo   [++] Dominante',
+                'Tackle: [-] Errado  [=] Negativo  [+] Positivo  [++] Dominante' + '\n\nDuelo: [-] Negativo/Knock-on  [=] Neutro  [+] Positivo  [++] Quiebre',
                 14,
                 finalY
             );

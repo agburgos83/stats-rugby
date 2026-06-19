@@ -12,10 +12,10 @@ import { type PartidoContexto } from '$lib/types';
 function generarDonutSVG(positivos: number, negativos: number): string {
     const scale = 3;
     const viewW = 200 * scale;
-    const viewH = 210 * scale;
+    const viewH = 240 * scale;
 
     const cx = viewW / 2;
-    const cy = 85 * scale;
+    const cy = 80 * scale;
     const outerR = 65 * scale;
     const innerR = 36 * scale;
 
@@ -40,15 +40,16 @@ function generarDonutSVG(positivos: number, negativos: number): string {
     slices.forEach((slice, i) => {
         const d = arcGenerator(slice);
         if (d) {
-            pathsHtml += `      <path d="${d}" fill="${colores[i]}" stroke="white" stroke-width="${1.5 * scale}" />\n`;
+            pathsHtml += `<path d="${d}" fill="${colores[i]}" />\n`;
         }
     });
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewW} ${viewH}">
-			<g transform="translate(${cx}, ${cy})">
-			${pathsHtml}  </g>
-			<text x="${cx}" y="${cy + outerR + 14 * scale}" text-anchor="middle" font-family="sans-serif" font-size="${12 * scale}" font-weight="normal" fill="#1e293b">${pct}% efectividad</text>
-			</svg>`;
+        <g transform="translate(${cx}, ${cy})">
+        ${pathsHtml}</g>
+        <text x="${cx}" y="${cy + outerR + 18 * scale}" text-anchor="middle" font-family="helvetica" font-size="${12 * scale}" fill="#1e293b">${pct}% efectividad</text>
+        <text x="${cx}" y="${cy + outerR + 32 * scale}" text-anchor="middle" font-family="helvetica" font-size="${10 * scale}" fill="#64748b">${total} situaciones</text>
+    </svg>`;
 }
 
 export async function agregarDonutsAlPDF(doc: jsPDF,
@@ -61,7 +62,8 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
         'Scrum rival',
         'Line rival',
         'Salida cargada',
-        'Puntos en ZD'
+        'Efect. AT. 22m',
+        'Efect. DEF. 22m'
     ];
 
     doc.addPage([210, 297], 'portrait');
@@ -81,18 +83,17 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
 
     const colX = [18, 78, 138];
     const rowY = [28, 112, 196];
-    const centroX = (210 - 60) / 2;
 
     for (let i = 0; i < situaciones.length; i++) {
         const situacion = situaciones[i];
         const col = i % 3;
         const row = Math.floor(i / 3);
 
-        const x = i === 6 ? centroX : colX[col];
+        const x = colX[col];
         const y = rowY[row];
 
         doc.setFontSize(13);
-        doc.setFont('sans-serif', 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(30, 41, 59);
         doc.text(situacion, x + 30, y, { align: 'center' });
 

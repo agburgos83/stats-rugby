@@ -6,7 +6,6 @@
 
 	async function generarReporte(): Promise<void> {
 		const { matrizProcesada, dixTotales } = procesarReporte(equipo, acciones, teamAcciones);
-		descargarPDF(equipo, partido, matrizProcesada, dixTotales);
 		await descargarPDF(equipo, partido, matrizProcesada, dixTotales);
 	}
 </script>
