@@ -3,15 +3,10 @@
 	import { loadFromStorage, clearStorage } from '$lib/stores.svelte';
 	import { browser } from '$app/environment';
 
-	import { type PropsCargaEquipo } from '$lib/types';
-
-	let { jugadores }: PropsCargaEquipo = $props();
-
 	let hayDatos = $state(false);
 
 	if (browser) {
 		const saved = loadFromStorage();
-		// hayDatos = Object.keys(saved).length > 0;
 		hayDatos = Array.isArray(saved.jugadores) && saved.jugadores.length > 0;
 	}
 
@@ -25,15 +20,12 @@
 
 <section class="pantalla-analisis">
 	<div class="bloque-paneles-izquierda">
-		<div>
-			<img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" />
-		</div>
-		<p class="max-w-lg text-xl leading-relaxed font-medium text-gray-800">
-			App gratuita para entrenadores y analistas de rugby. Cargá tu equipo, registrá acciones
+		<img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" />
+		<p class="m-0 max-w-lg text-xl leading-relaxed font-medium text-gray-800">
+			App gratuita para analistas de rugby. Cargá tu equipo, registrá acciones
 			individuales y grupales y compartí el reporte con tu equipo.
 		</p>
 		<div class="flex flex-wrap justify-center gap-4">
-
 			{#if hayDatos}
 				<a
 					href={resolve('/app')}
@@ -48,19 +40,16 @@
 			>
 				Comenzar nuevo análisis
 			</button>
-
-			
 		</div>
 	</div>
 	<div class="bloque-paneles-derecha">
 		<div class="panel-video">
-			<!-- <h2>Video del partido</h2> -->
 			<h2>Cómo usar la app</h2>
 			<br />
 			<iframe
 				width="560"
 				height="315"
-				src="https://www.youtube.com/embed/QHBvR0hiq5I?si=kkMQJMvjf-cpOi3B"
+				src="https://www.youtube.com/embed/UVIm4Do0-mk?si=_yI_KvFwwfIYZNGU"
 				title="YouTube video player"
 				frameborder="0"
 				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -79,7 +68,7 @@
 		gap: 32px;
 		max-width: 1400px;
 		margin: 0 auto;
-		padding: 48px 24px;
+		padding: 24px;
 		min-height: calc(100vh - 80px);
 		align-items: center;
 	}
@@ -89,8 +78,16 @@
 		text-align: center;
 		display: flex;
 		flex-direction: column;
-		gap: 20px;
-		width: 100%; /* Asegura que ocupe todo su espacio */
+		gap: 28px;
+		width: 100%;
+		height: 100%;
+		justify-content: center;
+	}
+
+	.bloque-paneles-izquierda img {
+		max-width: 280px;
+		width: 100%;
+		height: auto;
 	}
 
 	.panel-video h2 {

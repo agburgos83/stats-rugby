@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { type PropsCargapartido } from '$lib/types';
+	import { type PropsCargaPartido, EQUIPOS_POR_UNION } from '$lib/types';
 
-	let { partido = $bindable(), cambiarVista }: PropsCargapartido = $props();
+	let { partido = $bindable(), cambiarVista }: PropsCargaPartido = $props();
 
 	function esUrlValida(texto: string): boolean {
 		if (!texto) return false;
@@ -17,15 +17,21 @@
 	let formValido = $derived(
 		partido.local.trim() !== '' &&
 			partido.visitante.trim() !== '' &&
-			partido.puntosLocal !== null &&
-			partido.puntosVisitante !== null &&
-			partido.union.trim() !== '' &&
+			esPuntajeValido(partido.puntosLocal) &&
+			esPuntajeValido(partido.puntosVisitante) &&
+		(partido.usuarioUnion ?? '').trim() !== '' &&
+		(partido.usuarioClub ?? '').trim() !== '' &&
 			partido.division.trim() !== '' &&
 			partido.fecha.trim() !== '' &&
 			partido.urlVideo.trim() !== ''
 	);
 
 	let botonHabilitado = $derived(esUrlValida(partido.urlVideo) && formValido);
+
+	function esPuntajeValido(n: number | null): boolean {
+		if (n === null || n < 0) return false;
+		return n !== 1 && n !== 2 && n !== 4;
+	}
 </script>
 
 <div class="contenedor-centrado">
@@ -37,7 +43,7 @@
 		<div class="fila-formulario">
 			<div class="campo-formulario flex-1">
 				<label for="union-select">Unión / Torneo</label>
-				<select id="union-select" bind:value={partido.union} class="input-control">
+				<select id="union-select" bind:value={partido.usuarioUnion} class="input-control">
 					<option value="URBA">URBA (Buenos Aires)</option>
 					<option value="URS">URS (Sur)</option>
 					<option value="UROBA">UROBA (Oeste)</option>
@@ -61,24 +67,28 @@
 		</div>
 
 		<!-- Fila 2: Equipos en paralelo -->
+
 		<div class="fila-formulario">
 			<div class="campo-formulario flex-1">
-				<label>Equipo Local</label>
-				<input
-					type="text"
-					bind:value={partido.local}
-					placeholder="Ej: Berisso R.C."
-					class="input-control"
-				/>
-			</div>
-			<div class="campo-formulario flex-1">
-				<label>Equipo Visitante</label>
-				<input
-					type="text"
-					bind:value={partido.visitante}
-					placeholder="Ej: Beromama R.C."
-					class="input-control"
-				/>
+				<div class="fila-formulario">
+					<div class="campo-formulario flex-1">
+						<label for="division-select">Equipo Local</label>
+						<select bind:value={partido.local} class="input-control">
+							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []) as equipo (equipo)}
+								<option value={equipo.label}>{equipo.label}</option>
+							{/each}
+						</select>
+					</div>
+
+					<div class="campo-formulario flex-1">
+						<label for="division-select">Equipo Visitante</label>
+						<select bind:value={partido.visitante} class="input-control">
+							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []) as equipo (equipo)}
+								<option value={equipo.label}>{equipo.label}</option>
+							{/each}
+						</select>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -93,6 +103,9 @@
 					placeholder="0"
 					class="input-control"
 				/>
+				{#if partido.puntosLocal !== null && !esPuntajeValido(partido.puntosLocal)}
+					<span class="error-texto">Puntaje inválido</span>
+				{/if}
 			</div>
 			<div class="campo-formulario flex-sub">
 				<label>Puntos Visitante</label>
@@ -103,6 +116,9 @@
 					placeholder="0"
 					class="input-control"
 				/>
+				{#if partido.puntosVisitante !== null && partido.puntosVisitante > 0 && !esPuntajeValido(partido.puntosVisitante)}
+					<span class="error-texto">Puntaje inválido</span>
+				{/if}
 			</div>
 			<div class="campo-formulario flex-1">
 				<label for="fecha-partido">Fecha del Partido</label>
@@ -176,7 +192,6 @@
 	.flex-1 {
 		flex: 1;
 	}
-	/* Proporción más chica para los inputs de puntaje */
 	.flex-sub {
 		flex: 0.6;
 	}
@@ -231,5 +246,20 @@
 		background-color: #cbd5e1;
 		color: #94a3b8;
 		cursor: not-allowed;
+	}
+
+	.error-texto {
+		color: #e63946;
+		font-size: 0.72rem;
+		font-weight: 500;
+		margin-top: 2px;
+
+		/* Truco avanzado de CSS: ocupa espacio visual pero no empuja el diseño */
+		height: 0px;
+		overflow: visible;
+		white-space: nowrap;
+	}
+	.input-control:has(+ .error-texto) {
+		border-color: #e63946;
 	}
 </style>

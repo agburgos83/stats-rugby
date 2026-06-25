@@ -1,10 +1,8 @@
 <script lang="ts">
 	import type { Player } from '$lib/types';
 
-	let {
-		jugadores = $bindable(),
-		cambiarVista
-	}: { jugadores: Player[]; cambiarVista: () => void } = $props();
+	let { jugadores = $bindable(), cambiarVista }: { jugadores: Player[]; cambiarVista: () => void } =
+		$props();
 
 	let error = $state('');
 	let parsed = $state<Player[]>([]);
@@ -58,6 +56,14 @@
 		jugadores = parsed;
 		cambiarVista();
 	}
+
+	function replaceCSV(): void {
+		if (jugadores.length === 0 && parsed.length === 0) return;
+		jugadores = [];
+		jugadores = [...jugadores];
+		parsed = [];
+		error = '';
+	}
 </script>
 
 <section class="mx-auto max-w-2xl px-6 py-16">
@@ -69,8 +75,13 @@
 		class:border-blue-500={dragOver}
 		class:border-gray-300={!dragOver}
 		class:bg-blue-50={dragOver}
-		ondragover={(e) => { e.preventDefault(); dragOver = true; }}
-		ondragleave={() => { dragOver = false; }}
+		ondragover={(e) => {
+			e.preventDefault();
+			dragOver = true;
+		}}
+		ondragleave={() => {
+			dragOver = false;
+		}}
 		ondrop={handleDrop}
 	>
 		<input
@@ -78,10 +89,15 @@
 			type="file"
 			accept=".csv"
 			class="hidden"
-			onchange={(e) => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) handleFile(file); }}
+			onchange={(e) => {
+				const file = (e.target as HTMLInputElement).files?.[0];
+				if (file) handleFile(file);
+			}}
 		/>
 		<span class="text-gray-500">Hacé clic o arrastrá un archivo CSV</span>
-		<span class="text-sm text-gray-400">Columnas: nombre, apellido, posición, categoría (forward/back)</span>
+		<span class="text-sm text-gray-400"
+			>Columnas: nombre, apellido, posición, categoría (forward/back)</span
+		>
 	</label>
 
 	{#if error}
@@ -117,12 +133,22 @@
 				{parsed.length} jugador{parsed.length === 1 ? '' : 'es'} cargados
 			</p>
 
-			<button
-				onclick={confirmar}
-				class="rounded-sm bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-			>
-				Confirmar plantel
-			</button>
+			<div class="flex justify-end gap-4">
+				<button
+					onclick={replaceCSV}
+					class="rounded-sm bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+				>
+					Reemplazar CSV 🗑
+				</button>
+
+				<button
+					onclick={confirmar}
+					class="rounded-sm bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+				>
+					Confirmar plantel
+				</button>
+			</div>
+			
 		</div>
 	{/if}
 </section>

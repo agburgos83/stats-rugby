@@ -3,6 +3,7 @@
 		type Player,
 		type Puesto,
 		type PartidoContexto,
+		type UnionClave,
 		type Accion,
 		type TeamAccion
 	} from '$lib/types';
@@ -15,6 +16,9 @@
 	import VistaCargaPartido from '$lib/components/VistaCargaPartido.svelte';
 	import VistaAnalisisAmpliada from '$lib/components/VistaAnalisisAmpliada.svelte';
 	import VistaAcciones from '$lib/components/VistaAcciones.svelte';
+
+	let usuarioUnion = $state<UnionClave>('URBA');
+	let usuarioClub = $state('');
 
 	// 0. inicializacion de puestos
 	function obtenerPosicionTeorica(numero: number): string {
@@ -50,13 +54,14 @@
 		}))
 	);
 
-	let partido = $state({
+	let partido = $state<PartidoContexto>({
 		fecha: '',
 		local: '',
 		visitante: '',
-		puntosLocal: null as number | null,
-		puntosVisitante: null as number | null,
-		union: 'URBA',
+		puntosLocal: null,
+		puntosVisitante: null,
+		usuarioUnion: 'URBA',
+		usuarioClub: '',
 		division: 'Primera',
 		urlVideo: ''
 	});
@@ -88,6 +93,10 @@
 	});
 	// 5. Funciones de navegación
 	function cambiarVista(nuevaVista: number) {
+		if (nuevaVista === 3) {
+			partido.usuarioUnion = usuarioUnion;
+			partido.usuarioClub = usuarioClub;
+		}
 		vistaActual = nuevaVista;
 	}
 </script>
@@ -96,7 +105,13 @@
 {#if vistaActual === 1}
 	<VistaCargaCSV bind:jugadores cambiarVista={() => cambiarVista(2)} />
 {:else if vistaActual === 2}
-	<VistaCargaEquipo {jugadores} bind:equipo cambiarVista={() => cambiarVista(3)} />
+	<VistaCargaEquipo
+		{jugadores}
+		{equipo}
+		bind:usuarioUnion
+		bind:usuarioClub
+		cambiarVista={() => cambiarVista(3)}
+	/>
 {:else if vistaActual === 3}
 	<VistaCargaPartido bind:partido cambiarVista={() => cambiarVista(4)} />
 {:else if vistaActual === 4}
@@ -108,11 +123,5 @@
 		cambiarVista={() => cambiarVista(5)}
 	/>
 {:else if vistaActual === 5}
-	<VistaAcciones
-		{equipo}
-		{partido}
-		{acciones}
-		{teamAcciones}
-		cambiarVista={() => cambiarVista(5)}
-	/>
+	<VistaAcciones {equipo} {partido} {acciones} {teamAcciones} />
 {/if}

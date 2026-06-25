@@ -1,7 +1,18 @@
 <script lang="ts">
-	import { type Player, type PropsCargaEquipo } from '$lib/types';
+	import {
+		type Player,
+		type PropsCargaEquipo,
+		type UnionClave,
+		EQUIPOS_POR_UNION
+	} from '$lib/types';
 
-	let { jugadores, equipo = $bindable(), cambiarVista }: PropsCargaEquipo = $props();
+	let {
+		jugadores,
+		equipo,
+		usuarioUnion = $bindable(),
+		usuarioClub = $bindable(),
+		cambiarVista
+	}: PropsCargaEquipo = $props();
 	let jugadorSiendoArrastrado: Player | null = null;
 
 	function removerJugador(numeroCamiseta: number): void {
@@ -31,22 +42,40 @@
 		if (e.dataTransfer) e.dataTransfer.setData('text/plain', jugador.id.toString());
 	}
 
-	function titularesCompletos(): boolean {
-		// Volvemos a los 15 reglamentarios para producción
-		const titulares = equipo.slice(0, 3);
-		return titulares.every((p) => p.player !== null);
+	function formularioCompleto(): boolean {
+		return usuarioClub !== '' &&
+			equipo.slice(0, 3).every((p) => p.player !== null);
 	}
 </script>
 
 <div class="contenedor-centrado">
 	<div class="pantalla-carga">
-		<!-- CABECERA: Ocupa las 3 columnas de forma nativa -->
-		<br />
+		<!-- CABECERA: Arma el equipo (ocupa las 4 columnas) -->
 		<div class="encabezado-carga">
 			<h2>Armá el equipo</h2>
 		</div>
 
-		<!-- COLUMNA 1: FORWARDS -->
+		<!-- COLUMNA 1: UNION Y CLUB -->
+		<div class="columna-union-club">
+			<h2>Elegí tu Unión y club</h2>
+			<p class="subtitulo">Seleccioná tu unión y club antes de armar el equipo</p>
+
+			<label for="union-select">Elegí tu unión</label>
+			<select id="union-select" bind:value={usuarioUnion} class="input-control">
+				{#each Object.keys(EQUIPOS_POR_UNION) as union (union)}
+					<option value={union as UnionClave}>{union}</option>
+				{/each}
+			</select>
+
+			<label for="club-select">Elegí tu club</label>
+			<select id="club-select" bind:value={usuarioClub} class="input-control">
+				{#each EQUIPOS_POR_UNION[usuarioUnion] as club (club)}
+					<option value={club.label}>{club.label}</option>
+				{/each}
+			</select>
+		</div>
+
+		<!-- COLUMNA 2: FORWARDS -->
 		<div class="columna-disponibles">
 			<h2>Forwards</h2>
 			{#each jugadores as j (j.id)}
@@ -63,7 +92,7 @@
 			{/each}
 		</div>
 
-		<!-- COLUMNA 2: BACKS -->
+		<!-- COLUMNA 3: BACKS -->
 		<div class="columna-disponibles">
 			<h2>Backs</h2>
 			{#each jugadores as j (j.id)}
@@ -80,7 +109,7 @@
 			{/each}
 		</div>
 
-		<!-- COLUMNA 3: EL EQUIPO DE 23 -->
+		<!-- COLUMNA 4: EL EQUIPO DE 23 -->
 		<div class="columna-equipo">
 			<h2>Equipo (23)</h2>
 			{#each equipo as p (p.numero)}
@@ -109,9 +138,9 @@
 			{/each}
 		</div>
 
-		<!-- PIE: Ocupa las 3 columnas -->
+		<!-- PIE: Ocupa las 4 columnas -->
 		<div class="contenedor-boton">
-			<button disabled={!titularesCompletos()} onclick={cambiarVista} class="btn-primary">
+			<button disabled={!formularioCompleto()} onclick={cambiarVista} class="btn-primary">
 				Confirmar equipo →
 			</button>
 		</div>
@@ -119,61 +148,91 @@
 </div>
 
 <style>
-	/* Envuelve y centra todo el bloque de la aplicación en la pantalla */
 	.contenedor-centrado {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: center;
 		min-height: 100vh;
 		font-family: sans-serif;
-		padding: 20px;
+		padding: 24px 20px;
 		background-color: #f8fafc;
 		box-sizing: border-box;
 	}
 
-	/* La grilla principal limita el ancho máximo para estar centrada siempre */
+	/* La grilla principal limitada en ancho y centrada */
 	.pantalla-carga {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(280px, 380px)); /* Columnas responsivas pero firmes */
-		grid-template-rows: auto 1fr auto; /* Fila cabecera, Fila columnas, Fila botón */
-		gap: 24px;
+		grid-template-columns: 280px 1fr 1fr 1fr;
+		grid-template-rows: auto 1fr auto;
+		gap: 20px;
 		width: 100%;
-		max-width: 1200px; /* Ancho ideal de escritorio */
-		height: 90vh;
+		max-width: 1400px;
+		min-height: 85vh;
 		box-sizing: border-box;
 	}
 
-	/* Truco maestro: El encabezado abarca las 3 columnas del grid */
+	/* Encabezado que abarca las 4 columnas */
 	.encabezado-carga {
-		grid-column: span 3;
+		grid-column: span 4;
 		text-align: left;
-		margin-bottom: -10px; /* Acerca el título a las columnas */
 	}
 
 	.encabezado-carga h2 {
 		color: #0f172a;
-		margin: 0 0 4px 0;
-		font-size: 1.75rem;
+		margin: 0;
+		font-size: 1.1rem;
 		font-weight: 700;
+		/* border-bottom: 1px solid #f1f5f9; */
+		/* padding-bottom: 8px; */
 	}
 
 	.subtitulo {
 		color: #64748b;
-		margin: 0;
-		font-size: 0.95rem;
+		margin: 0 0 16px 0;
+		font-size: 0.82rem;
+		line-height: 1.4;
 	}
 
+	.input-control {
+		width: 100%;
+		padding: 10px 12px;
+		font-size: 0.9rem;
+		border: 1px solid #cbd5e1;
+		border-radius: 6px;
+		outline: none;
+		box-sizing: border-box;
+		background-color: #fff;
+		color: #1e293b;
+		transition: border-color 0.15s ease;
+		font-family: sans-serif;
+		margin-bottom: 14px;
+	}
+
+	.input-control:focus {
+		border-color: #2563eb;
+		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+	}
+
+	label {
+		font-size: 0.82rem;
+		font-weight: 600;
+		color: #475569;
+		margin-bottom: 4px;
+		display: block;
+	}
+
+	.columna-union-club,
 	.columna-disponibles,
 	.columna-equipo {
 		background-color: #ffffff;
 		border: 1px solid #e2e8f0;
 		border-radius: 8px;
 		padding: 20px;
-		overflow-y: auto; /* Scroll interno si los nombres desbordan */
+		overflow-y: auto;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 	}
 
-	/* Estilos internos de las columnas */
+	.columna-union-club h2,
 	.columna-disponibles h2,
 	.columna-equipo h2 {
 		font-size: 1.1rem;
@@ -283,18 +342,18 @@
 		background: #dc2626;
 	}
 
-	/* El botón inferior abarca las 3 columnas del grid */
+	/* El botón inferior abarca las 4 columnas del grid */
 	.contenedor-boton {
-		grid-column: span 3;
+		grid-column: span 4;
 		text-align: right;
-		padding-top: 10px;
+		padding-top: 6px;
 	}
 
 	.btn-primary {
 		background-color: #2563eb;
 		color: white;
 		border: none;
-		padding: 12px 28px;
+		padding: 12px 24px;
 		font-size: 0.95rem;
 		font-weight: bold;
 		border-radius: 8px;

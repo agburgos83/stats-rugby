@@ -1,4 +1,4 @@
-import { BALL_SKILLS, CONTACT_SKILLS, FOOT_SKILLS, type Skill, type Puesto, type Accion, type TeamAccion } from '$lib/types';
+import { INFRACCION_SKILLS, BALL_SKILLS, CONTACT_SKILLS, FOOT_SKILLS, type Skill, type Puesto, type Accion, type TeamAccion } from '$lib/types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MatrizProcesada = Record<number, any>;
@@ -30,7 +30,7 @@ export function procesarReporte(
 
         const jugador = puesto.player;
         const dixSkills: Record<string, unknown> = {};
-        const ALL_SKILLS = [...BALL_SKILLS, ...CONTACT_SKILLS, ...FOOT_SKILLS];
+        const ALL_SKILLS = [...BALL_SKILLS, ...CONTACT_SKILLS, ...FOOT_SKILLS, ...INFRACCION_SKILLS];
         for (const skill of ALL_SKILLS) {
             dixSkills[skill] = crearContadorVacio();
         }

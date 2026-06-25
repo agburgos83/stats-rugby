@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		INFRACCION_SKILLS,
 		BALL_SKILLS,
 		CONTACT_SKILLS,
 		FOOT_SKILLS,
@@ -165,7 +166,7 @@
 			}
 
 			// Si logramos sacar el ID, armamos la URL de embed oficial
-			return codigoFinal ? 'https://youtube.com/embed/' + codigoFinal : enlace;
+			return codigoFinal ? 'https://www.youtube.com/embed/' + codigoFinal : enlace;
 		}
 
 		// CASO VEO (app.veo.co -> embed.veo.co)
@@ -243,7 +244,7 @@
 		<!-- 1. ACCIONES INDIVIDUALES -->
 		<div class="panel-interaccion">
 			<div class="seccion-bloque">
-				<h3>Jugadores</h3>
+				<h3>JUGADORES 👨🏻👩🏻</h3>
 
 				<div class="grupo-chips">
 					{#each equipo as p (p.numero)}
@@ -260,9 +261,11 @@
 				</div>
 			</div>
 
+			<!-- <hr class="separador-panel" /> -->
+
 			<div class="seccion-bloque">
 				<div class="grilla-skills">
-					<h3>Manejo de pelota</h3>
+					<h3>HANDLING 🏉</h3>
 					<div class="grilla-tiras">
 						{#each BALL_SKILLS as s (s)}
 							<div class="tarjeta-skill">
@@ -281,7 +284,9 @@
 						{/each}
 					</div>
 
-					<h3>Juego de contacto</h3>
+					<!-- <hr class="separador-panel" /> -->
+
+					<h3>CONTACTO 🚜</h3>
 					<div class="grilla-tiras">
 						{#each CONTACT_SKILLS as s (s)}
 							<div class="tarjeta-skill">
@@ -324,7 +329,9 @@
 						{/each}
 					</div>
 
-					<h3>Juego con el pie</h3>
+					<!-- <hr class="separador-panel" /> -->
+
+					<h3>JUEGO CON EL PIE 🦶🏼</h3>
 					<div class="grilla-tiras">
 						{#each FOOT_SKILLS as s (s)}
 							<div class="tarjeta-skill">
@@ -343,7 +350,21 @@
 						{/each}
 					</div>
 
-					<hr class="separador-panel" />
+					<!-- <hr class="separador-panel" /> -->
+
+					<h3>INFRACCIONES 🧑🏽‍⚖️</h3>
+					<div class="grilla-tiras">
+						{#each INFRACCION_SKILLS as i (i)}
+							<div class="tarjeta-skill">
+								<span class="titulo-skill">{i}</span>
+								<button
+									disabled={jugadoresElegidos.length === 0}
+									onclick={() => registrarAccionDirecta(i, 'Positivo')}
+									class="btn-calif pos">+</button
+								>
+							</div>
+						{/each}
+					</div>
 
 					<div class="barra-herramientas">
 						<span class="contador-texto"
@@ -375,194 +396,134 @@
 		<!-- 2. ACCIONES GRUPALES -->
 		<div class="panel-interaccion">
 			<div class="seccion-bloque">
-				<h3>Situaciones de juego</h3>
+				<h3>SITUACIONES DE JUEGO</h3>
 
 				<!-- Contenedor vertical que apila las 3 líneas -->
 				<div class="contenedor-lineas-grupales">
 					<div class="linea-grupal">
 						<div class="tarjeta-situacion">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Line propio</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Line propio').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => (
-										registrarAccionEquipo('Line propio', 'Negativo'),
-										(puedeDeshacerGrupal = true)
-									)}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Line propio-Negativo'}>-</button
-								>
-								<button
-									onclick={() => (
-										registrarAccionEquipo('Line propio', 'Positivo'),
-										(puedeDeshacerGrupal = true)
-									)}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Line propio-Positivo'}>+</button
-								>
-							</div>
+							<span class="titulo-situacion">Line propio</span>
+							<button
+								onclick={() => (
+									registrarAccionEquipo('Line propio', 'Negativo'),
+									(puedeDeshacerGrupal = true)
+								)}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Line propio-Negativo'}>-</button
+							>
+							<button
+								onclick={() => (
+									registrarAccionEquipo('Line propio', 'Positivo'),
+									(puedeDeshacerGrupal = true)
+								)}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Line propio-Positivo'}>+</button
+							>
 						</div>
 						<div class="tarjeta-situacion">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Scrum propio</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Scrum propio').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => (
-										registrarAccionEquipo('Scrum propio', 'Negativo'),
-										(puedeDeshacerGrupal = true)
-									)}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Scrum propio-Negativo'}>-</button
-								>
-								<button
-									onclick={() => (
-										registrarAccionEquipo('Scrum propio', 'Positivo'),
-										(puedeDeshacerGrupal = true)
-									)}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Scrum propio-Positivo'}>+</button
-								>
-							</div>
+							<span class="titulo-situacion">Scrum propio</span>
+							<button
+								onclick={() => (
+									registrarAccionEquipo('Scrum propio', 'Negativo'),
+									(puedeDeshacerGrupal = true)
+								)}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Scrum propio-Negativo'}>-</button
+							>
+							<button
+								onclick={() => (
+									registrarAccionEquipo('Scrum propio', 'Positivo'),
+									(puedeDeshacerGrupal = true)
+								)}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Scrum propio-Positivo'}>+</button
+							>
 						</div>
 						<div class="tarjeta-situacion">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Salida recibida</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Salida recibida').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => registrarAccionEquipo('Salida recibida', 'Negativo')}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Salida recibida-Negativo'}>-</button
-								>
-								<button
-									onclick={() => registrarAccionEquipo('Salida recibida', 'Positivo')}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Salida recibida-Positivo'}>+</button
-								>
-							</div>
+							<span class="titulo-situacion">Salida recibida</span>
+							<button
+								onclick={() => registrarAccionEquipo('Salida recibida', 'Negativo')}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Salida recibida-Negativo'}>-</button
+							>
+							<button
+								onclick={() => registrarAccionEquipo('Salida recibida', 'Positivo')}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Salida recibida-Positivo'}>+</button
+							>
+						</div>
+
+						<div class="tarjeta-situacion">
+							<span class="titulo-situacion">Efectividad 22m At.</span>
+							<button
+								onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Negativo')}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Negativo'}>-</button
+							>
+							<button
+								onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Positivo')}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Positivo'}>+</button
+							>
 						</div>
 					</div>
 
 					<div class="linea-grupal">
 						<div class="tarjeta-situacion">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Line rival</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Line rival').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => registrarAccionEquipo('Line rival', 'Negativo')}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Line rival-Negativo'}>-</button
-								>
-								<button
-									onclick={() => registrarAccionEquipo('Line rival', 'Positivo')}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Line rival-Positivo'}>+</button
-								>
-							</div>
+							<span class="titulo-situacion">Line rival</span>
+							<button
+								onclick={() => registrarAccionEquipo('Line rival', 'Negativo')}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Line rival-Negativo'}>-</button
+							>
+							<button
+								onclick={() => registrarAccionEquipo('Line rival', 'Positivo')}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Line rival-Positivo'}>+</button
+							>
 						</div>
 						<div class="tarjeta-situacion">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Scrum rival</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Scrum rival').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => registrarAccionEquipo('Scrum rival', 'Negativo')}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Scrum rival-Negativo'}>-</button
-								>
-								<button
-									onclick={() => registrarAccionEquipo('Scrum rival', 'Positivo')}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Scrum rival-Positivo'}>+</button
-								>
-							</div>
+							<span class="titulo-situacion">Scrum rival</span>
+							<button
+								onclick={() => registrarAccionEquipo('Scrum rival', 'Negativo')}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Scrum rival-Negativo'}>-</button
+							>
+							<button
+								onclick={() => registrarAccionEquipo('Scrum rival', 'Positivo')}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Scrum rival-Positivo'}>+</button
+							>
 						</div>
 						<div class="tarjeta-situacion">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Salida cargada</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Salida cargada').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => registrarAccionEquipo('Salida cargada', 'Negativo')}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Salida cargada-Negativo'}>-</button
-								>
-								<button
-									onclick={() => registrarAccionEquipo('Salida cargada', 'Positivo')}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Salida cargada-Positivo'}>+</button
-								>
-							</div>
-						</div>
-					</div>
-
-					<div class="linea-grupal">
-						<div class="tarjeta-situacion tarjeta-ancha">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Efectividad 22m (Ataque)</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Efect. AT. 22m').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Negativo')}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Negativo'}>-</button
-								>
-								<button
-									onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Positivo')}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Positivo'}>+</button
-								>
-							</div>
+							<span class="titulo-situacion">Salida cargada</span>
+							<button
+								onclick={() => registrarAccionEquipo('Salida cargada', 'Negativo')}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Salida cargada-Negativo'}>-</button
+							>
+							<button
+								onclick={() => registrarAccionEquipo('Salida cargada', 'Positivo')}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Salida cargada-Positivo'}>+</button
+							>
 						</div>
 
-						<div class="tarjeta-situacion tarjeta-ancha">
-							<div class="encabezado-tarjeta">
-								<p class="titulo-situacion">Efectividad 22m (Defensa)</p>
-								<span class="contador-badge">
-									{teamAcciones.filter((ta) => ta.situacion === 'Efect. DEF. 22m').length}
-								</span>
-							</div>
-							<div class="botones-calificacion">
-								<button
-									onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Negativo')}
-									class="btn-calif neg"
-									class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Negativo'}>-</button
-								>
-								<button
-									onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Positivo')}
-									class="btn-calif pos"
-									class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Positivo'}>+</button
-								>
-							</div>
+						<div class="tarjeta-situacion">
+							<span class="titulo-situacion">Efectividad 22m Def.</span>
+							<button
+								onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Negativo')}
+								class="btn-calif neg"
+								class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Negativo'}>-</button
+							>
+							<button
+								onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Positivo')}
+								class="btn-calif pos"
+								class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Positivo'}>+</button
+							>
 						</div>
 					</div>
 				</div>
-
-				<hr class="separador-panel" />
 
 				<div class="barra-herramientas">
 					<span class="contador-texto"
@@ -636,7 +597,7 @@
 		margin: 0 0 8px 0;
 		font-size: 0.95rem;
 		font-weight: bold;
-		color: #212831;
+		color: #2563eb;
 	}
 	.grupo-chips {
 		display: flex;
@@ -742,28 +703,6 @@
 		text-overflow: ellipsis;
 	}
 
-	.botones-calificacion {
-		display: flex;
-		justify-content: center;
-		gap: 4px;
-		width: 100%;
-	}
-
-	/* Botones de situación de juego: ancho completo, altura compacta */
-	.botones-calificacion .btn-calif {
-		flex: 1;
-		padding: 6px 4px;
-		font-size: 0.9rem;
-		font-weight: bold;
-		border-radius: 4px;
-		border: 1px solid #cbd5e1;
-		background-color: #f8fafc;
-		color: #334155;
-		cursor: pointer;
-		text-align: center;
-		transition: background-color 0.1s ease;
-	}
-
 	/* Botones compactos internos de las tarjetas */
 	.btn-calif {
 		padding: 4px 8px;
@@ -807,47 +746,23 @@
 		border-color: #bfdbfe;
 	}
 
-	/* Cada una de las 3 líneas de tarjetas horizontales */
+	/* Cada línea de tarjetas de situación usa misma grilla que skills */
 	.linea-grupal {
-		display: flex;
-		gap: 10px;
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
 		width: 100%;
 	}
 
-	/* Tarjeta individual de situación grupal (Líneas 1 y 2 se dividen en 3 partes iguales) */
+	/* Tarjeta de situación con mismo aspecto compacto que tarjeta-skill */
 	.tarjeta-situacion {
-		flex: 1;
 		background-color: white;
 		border: 1px solid #cbd5e1;
-		border-radius: 6px;
-		padding: 8px;
+		border-radius: 4px;
+		padding: 3px 8px;
 		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		gap: 8px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-	}
-
-	/* Modificador para la Línea 3 (Puntos ZD) para que no se estire de forma gigante */
-	.tarjeta-ancha {
-		max-width: calc(33.33% - 7px); /* Ocupa exactamente el mismo ancho que una tarjeta de arriba */
-	}
-
-	.tarjeta-situacion-vacia {
-		flex: 1;
-		/* background-color: white; */
-		/* border: 1px solid #cbd5e1;
-		border-radius: 6px; */
-		padding: 8px;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		gap: 8px;
-		/* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); */
-	}
-
-	.tarjeta-ancha-vacia {
-		max-width: calc(33.33% - 7px); /* Ocupa exactamente el mismo ancho que una tarjeta de arriba */
+		align-items: center;
+		gap: 6px;
 	}
 
 	.titulo-situacion {
@@ -855,28 +770,11 @@
 		font-size: 0.8rem;
 		font-weight: 600;
 		color: #334155;
-		text-align: center;
+		text-align: left;
+		flex: 1;
 		white-space: nowrap;
-	}
-
-	.encabezado-tarjeta {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		width: 100%;
-		margin-bottom: 2px;
-	}
-
-	/* Diseño de esfera o etiqueta gris sutil para el contador individual */
-	.contador-badge {
-		background-color: #e2e8f0;
-		color: #475569;
-		font-size: 0.7rem;
-		font-weight: bold;
-		padding: 2px 6px;
-		border-radius: 4px;
-		min-width: 16px;
-		text-align: center;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.contador-global {
@@ -935,7 +833,8 @@
 	.contenedor-lineas-grupales {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
+		gap: 8px;
+		margin-bottom: 16px;
 		flex-grow: 1;
 	}
 
@@ -954,7 +853,7 @@
 	/* Línea divisoria sutil */
 	.separador-panel {
 		border: 0;
-		border-top: 0px solid #e2e8f0;
+		border-top: 1px solid #2564eb6e;
 		margin: 6px 0;
 		width: 100%;
 	}

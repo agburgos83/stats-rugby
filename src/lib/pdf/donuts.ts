@@ -12,7 +12,7 @@ import { type PartidoContexto } from '$lib/types';
 function generarDonutSVG(positivos: number, negativos: number): string {
     const scale = 3;
     const viewW = 200 * scale;
-    const viewH = 240 * scale;
+    const viewH = 220 * scale;
 
     const cx = viewW / 2;
     const cy = 80 * scale;
@@ -44,7 +44,7 @@ function generarDonutSVG(positivos: number, negativos: number): string {
         }
     });
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewW} ${viewH}">
+    return `<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 ${viewW} ${viewH}">
         <g transform="translate(${cx}, ${cy})">
         ${pathsHtml}</g>
         <text x="${cx}" y="${cy + outerR + 18 * scale}" text-anchor="middle" font-family="helvetica" font-size="${12 * scale}" fill="#1e293b">${pct}% efectividad</text>
@@ -54,7 +54,8 @@ function generarDonutSVG(positivos: number, negativos: number): string {
 
 export async function agregarDonutsAlPDF(doc: jsPDF,
     dixTotales: Record<string, [number, number]>,
-    partido: PartidoContexto): Promise<void> {
+    partido: PartidoContexto,
+    logoDataUrl: string): Promise<void> {
     const situaciones = [
         'Scrum propio',
         'Line propio',
@@ -101,20 +102,38 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
         const svg = generarDonutSVG(positivos, negativos);
         const dataUrl = await renderSVGaImagen(svg);
         doc.addImage(dataUrl, 'PNG', x, y + 3, 60, 63);
+
+
     }
+
+    const margen = 14;
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    const strokeY = pageHeight - 25;
+
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(0.3);
+    doc.line(margen, strokeY, pageWidth - margen, strokeY);
+
+    const logoAlto = 40;
+    const logoAncho = logoAlto * (210 / 297);
+    const logoX = (pageWidth - logoAncho) / 2;
+    const logoY = strokeY - (logoAlto - 25) / 2;
+    doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoAncho, logoAlto);
+    doc.link(logoX, logoY, logoAncho, logoAlto, { url: 'https://google.com' });
 }
 
-function renderSVGaImagen(svgString: string): Promise<string> {
+export function renderSVGaImagen(svgString: string, width = 300, height = 440): Promise<string> {
     return new Promise((resolve, reject) => {
         const canvas = document.createElement('canvas');
-        canvas.width = 600;
-        canvas.height = 630;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d')!;
 
         const img = new Image();
         const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
         img.onload = () => {
-            ctx.drawImage(img, 0, 0, 600, 630);
+            ctx.drawImage(img, 0, 0, width, height);
             resolve(canvas.toDataURL('image/png'));
         };
         img.onerror = reject;
