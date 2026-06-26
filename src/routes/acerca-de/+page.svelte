@@ -3,13 +3,13 @@
 
 	<div class="prose prose-stone lg:prose-xl">
 		<p>
-			Stats Rugby es una web gratuita y fácil de usar para entrenadores y analistas que
-			quieran proveer información detallada a sus jugadores, tanto de acciones individuales como de
-			situaciones grupales del juego.
+			Stats Rugby es una app web gratuita y fácil de usar para entrenadores y analistas que
+			quieran proveer información detallada, tanto de acciones individuales como de
+			situaciones grupales del juego a sus equipos.
 		</p>
 		<p>La parte analítica es bastante manual y solo requiere de tu tiempo y atención para mirar el video y registrar las acciones a medida que mirás el partido.</p>
 		<p>
-			Desarrollada por Agustín Burgos, ex jugador y entrenador. Formado en Uni de Bahía Blanca,
+			Desarrollada por Agustín Burgos, ex jugador y entrenador. Formado en el Club Universitario de Bahía Blanca,
 			desde 2019 integro Berisso Rugby Club. Actualmente la uso para acercar análisis detallados a mis jugadores. 
 		</p>
 	</div>
@@ -21,8 +21,9 @@
 			No hay una única manera de medir el rendimiento de los jugadores. <br />
 			En el caso de Stats Rugby, se buscó un análisis por destrezas, situaciones de juego e infracciones.
 			Existen destrezas que no entran en el análisis (maul, levantada line, quick tap, etc). <br />
+			Tampoco está al alcance del análisis la toma de decisiones.
 			<br />
-			Algunas acciones que pueden generar dudas:
+			Algunas acciones que te pueden generar dudas:
 		</p>
 		<ul>
 			<li><strong>Ast. duelo:</strong> asistencia duelo</li>

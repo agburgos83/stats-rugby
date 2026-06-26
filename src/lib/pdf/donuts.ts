@@ -1,6 +1,25 @@
 import { jsPDF } from 'jspdf';
 import { arc, pie } from 'd3';
 import { type PartidoContexto } from '$lib/types';
+import { type UnionClave, EQUIPOS_POR_UNION } from '$lib/types';
+
+async function obtenerEscudo(union: UnionClave, equipo: string): Promise<string | null> {
+    const team = EQUIPOS_POR_UNION[union].find(t => t.label === equipo);
+    if (!team) return null;
+    try {
+        const resp = await fetch(`/escudos-clubes/${team.slug}`);
+        if (!resp.ok) return null;
+        const blob = await resp.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch {
+        return null;
+    }
+}
 
 /**
  * Genera un string SVG con un donut (positivo/negativo) usando D3.
@@ -10,6 +29,7 @@ import { type PartidoContexto } from '$lib/types';
  * @returns String SVG listo para pasar a doc.addSvgAsImage()
  */
 function generarDonutSVG(positivos: number, negativos: number): string {
+
     const scale = 3;
     const viewW = 200 * scale;
     const viewH = 220 * scale;
@@ -69,21 +89,41 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
 
     doc.addPage([210, 297], 'portrait');
 
+    const [escudoLocal] = await Promise.all([
+        obtenerEscudo(partido.usuarioUnion, partido.local),
+    ])
+
+    // --- Header: título a la izquierda, escudos a la derecha ---
     doc.setFontSize(16);
-    doc.text(
-        `Efectividad por situaciones de juego: ${partido.local} (${partido.puntosLocal}) vs ${partido.visitante} (${partido.puntosVisitante})`,
-        14,
-        12
-    );
+    doc.text('Efectividad por situaciones de juego', 14, 12);
     doc.setFontSize(12);
     doc.text(
-        `Unión: ${partido.union} | División: ${partido.division} | Fecha: ${partido.fecha}`,
+        `${partido.local} (${partido.puntosLocal}) vs ${partido.visitante} (${partido.puntosVisitante})`,
         14,
         18
     );
+    doc.text(
+        `Unión: ${partido.usuarioUnion} | División: ${partido.division} | Fecha: ${partido.fecha}`,
+        14,
+        24
+    );
+
+    const margen = 14;
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    const strokeY = pageHeight - 25;
+
+    const escudoSize = 16;
+    const escudoXLocal = pageWidth - 14 - escudoSize;
+    const escudoY = 6;
+    if (escudoLocal) {
+        doc.addImage(escudoLocal, 'PNG', escudoXLocal, escudoY, escudoSize, escudoSize);
+    }
+
+
 
     const colX = [18, 78, 138];
-    const rowY = [28, 112, 196];
+    const rowY = [38, 112, 186];
 
     for (let i = 0; i < situaciones.length; i++) {
         const situacion = situaciones[i];
@@ -106,10 +146,7 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
 
     }
 
-    const margen = 14;
-    const pageHeight = doc.internal.pageSize.height;
-    const pageWidth = doc.internal.pageSize.width;
-    const strokeY = pageHeight - 25;
+
 
     doc.setDrawColor(37, 99, 235);
     doc.setLineWidth(0.3);

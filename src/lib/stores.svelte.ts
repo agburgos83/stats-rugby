@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 
-const STORAGE_KEY = 'lupa-rugby-state';
+const STORAGE_KEY = 'stats-rugby-state';
 
 export function loadFromStorage(): Record<string, unknown> {
 	if (!browser) return {};

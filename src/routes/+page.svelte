@@ -18,45 +18,69 @@
 	}
 </script>
 
-<section class="pantalla-analisis">
-	<div class="bloque-paneles-izquierda">
-		<img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" />
-		<p class="m-0 max-w-lg text-xl leading-relaxed font-medium text-gray-800">
-			App gratuita para analistas de rugby. Cargá tu equipo, registrá acciones
-			individuales y grupales y compartí el reporte con tu equipo.
-		</p>
-		<div class="flex flex-wrap justify-center gap-4">
-			{#if hayDatos}
-				<a
-					href={resolve('/app')}
-					class="inline-block rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+<section class="relative flex min-h-screen items-center overflow-hidden">
+	<!-- Video de fondo -->
+	<video
+		class="absolute inset-0 -z-10 h-full w-full object-cover"
+		muted
+		autoplay
+		loop
+		playsinline
+		disablepictureinpicture
+	>
+		<source src="/videos-stats-rugby/bg-stats-rugby4.webm" type="video/webm" />
+	</video>
+
+	<!-- Overlay oscuro -->
+	<!-- <div class="absolute inset-0 z-0 bg-gradient-to-r from-black/70 via-black/50 to-black/60"></div> -->
+
+	<!-- Contenido -->
+	<div class="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 gap-8 px-6 lg:grid-cols-5">
+		<!-- Columna izquierda: texto + botones (3/5) -->
+		<div
+			class="flex flex-col items-center justify-center text-center lg:col-span-3 lg:items-start lg:text-left"
+		>
+			<!-- <img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" class="mb-6 h-auto w-64" /> -->
+			<img src="/logo-app-white-400.svg" alt="Stats Rugby Logo" class="mb-6 h-auto w-64" />
+			<p class="mb-8 text-lg leading-relaxed font-medium text-white/90 lg:text-xl">
+				App gratuita para entrenadores y analistas de rugby. <br />Cargá tu equipo, registrá tanto
+				acciones individuales <br />
+				como grupales y compartí el análisis con tus jugadores.
+			</p>
+			<div class="flex flex-wrap gap-4">
+				{#if hayDatos}
+					<a
+						href={resolve('/app')}
+						class="rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+					>
+						Retomar análisis
+					</a>
+				{/if}
+				<button
+					onclick={empezarNuevo}
+					class="rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
 				>
-					Retomar análisis
-				</a>
-			{/if}
-			<button
-				onclick={empezarNuevo}
-				class="inline-block rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-			>
-				Comenzar nuevo análisis
-			</button>
+					Analizar partido
+				</button>
+			</div>
 		</div>
-	</div>
-	<div class="bloque-paneles-derecha">
-		<div class="panel-video">
-			<h2>Cómo usar la app</h2>
-			<br />
-			<iframe
-				width="560"
-				height="315"
-				src="https://www.youtube.com/embed/UVIm4Do0-mk?si=_yI_KvFwwfIYZNGU"
-				title="YouTube video player"
-				frameborder="0"
-				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-				referrerpolicy="strict-origin-when-cross-origin"
-				allowfullscreen
-			></iframe>
-		</div>
+
+		<!-- Columna derecha: tutorial (2/5) -->
+		<!-- <div class="flex items-center justify-center lg:col-span-2">
+			<div class="w-full max-w-lg">
+				<h2 class="mb-4 border-l-4 border-blue-500 pl-3 text-2xl font-medium text-white">Cómo usar la app</h2>
+				<div class="aspect-video w-full overflow-hidden rounded-xl shadow-2xl">
+					<iframe
+						src="https://www.youtube.com/embed/UVIm4Do0-mk?si=_yI_KvFwwfIYZNGU"
+						title="YouTube video player"
+						class="h-full w-full"
+						frameborder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+						allowfullscreen
+					></iframe>
+				</div>
+			</div>
+		</div> -->
 	</div>
 </section>
 

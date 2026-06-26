@@ -15,7 +15,7 @@ To recreate this project with the same configuration:
 
 ```sh
 # recreate this project
-npx sv@0.15.3 create --template minimal --types ts --add eslint prettier tailwindcss="plugins:typography,forms" --install npm lupa-rugby
+npx sv@0.15.3 create --template minimal --types ts --add eslint prettier tailwindcss="plugins:typography,forms" --install npm stats-rugby
 ```
 
 ## Developing
