@@ -31,7 +31,7 @@ export async function descargarPDF(
 ): Promise<void> {
 
     const [escudoLocal] = await Promise.all([
-        obtenerEscudo(partido.usuarioUnion, partido.local),
+        obtenerEscudo(partido.usuarioUnion, partido.usuarioClub),
     ])
 
     const respLogo = await fetch('/logo-se-ss.svg');

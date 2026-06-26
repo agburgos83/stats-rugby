@@ -175,15 +175,14 @@
 	.encabezado-carga {
 		grid-column: span 4;
 		text-align: left;
+		padding-bottom: 12px;
 	}
 
 	.encabezado-carga h2 {
 		color: #0f172a;
 		margin: 0;
-		font-size: 1.1rem;
+		font-size: 1.35rem;
 		font-weight: 700;
-		/* border-bottom: 1px solid #f1f5f9; */
-		/* padding-bottom: 8px; */
 	}
 
 	.subtitulo {

@@ -93,6 +93,7 @@
 	});
 	// 5. Funciones de navegación
 	function cambiarVista(nuevaVista: number) {
+		window.scrollTo(0, 0);
 		if (nuevaVista === 3) {
 			partido.usuarioUnion = usuarioUnion;
 			partido.usuarioClub = usuarioClub;

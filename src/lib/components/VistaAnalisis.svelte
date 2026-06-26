@@ -212,11 +212,10 @@
 
 	<div class="bloque-paneles-izquierda">
 		<div class="panel-video">
-			<!-- <h2>Video del partido</h2> -->
 			<h2>
 				Análisis {partido.local} vs {partido.visitante} ({partido.puntosLocal} - {partido.puntosVisitante})
 			</h2>
-			<p class="subtitulo-torneo">{partido.union} - {partido.division} | {partido.fecha}</p>
+			<p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p>
 			<iframe
 				src={urlEmbed}
 				title="Video Player"
@@ -244,13 +243,13 @@
 		<!-- 1. ACCIONES INDIVIDUALES -->
 		<div class="panel-interaccion">
 			<div class="seccion-bloque">
-				<h3>JUGADORES 👨🏻👩🏻</h3>
+				<h3>JUGADORES</h3>
 
 				<div class="grupo-chips">
 					{#each equipo as p (p.numero)}
 						{#if p.player !== null}
 							<button
-								onclick={(e) => toggleJugador(p.player, e.ctrlKey)}
+								onclick={(e) => toggleJugador(p.player!, e.ctrlKey)}
 								class:activo={jugadoresElegidos.some((j) => j.id === p.player?.id)}
 								class="btn-chip"
 							>
@@ -265,7 +264,7 @@
 
 			<div class="seccion-bloque">
 				<div class="grilla-skills">
-					<h3>HANDLING 🏉</h3>
+					<h3>MANEJO DE PELOTA</h3>
 					<div class="grilla-tiras">
 						{#each BALL_SKILLS as s (s)}
 							<div class="tarjeta-skill">
@@ -286,7 +285,7 @@
 
 					<!-- <hr class="separador-panel" /> -->
 
-					<h3>CONTACTO 🚜</h3>
+					<h3>JUEGO EN EL CONTACTO</h3>
 					<div class="grilla-tiras">
 						{#each CONTACT_SKILLS as s (s)}
 							<div class="tarjeta-skill">
@@ -331,7 +330,7 @@
 
 					<!-- <hr class="separador-panel" /> -->
 
-					<h3>JUEGO CON EL PIE 🦶🏼</h3>
+					<h3>JUEGO CON EL PIE</h3>
 					<div class="grilla-tiras">
 						{#each FOOT_SKILLS as s (s)}
 							<div class="tarjeta-skill">
@@ -352,7 +351,7 @@
 
 					<!-- <hr class="separador-panel" /> -->
 
-					<h3>INFRACCIONES 🧑🏽‍⚖️</h3>
+					<h3>INFRACCIONES</h3>
 					<div class="grilla-tiras">
 						{#each INFRACCION_SKILLS as i (i)}
 							<div class="tarjeta-skill">
@@ -564,7 +563,7 @@
 
 	.panel-video h2 {
 		margin-top: 0;
-		margin-bottom: 12px;
+		margin-bottom: 0px;
 		color: #1e293b;
 	}
 

@@ -66,46 +66,48 @@
 	}
 </script>
 
-<section class="mx-auto max-w-2xl px-6 py-16">
-	<h2 class="mb-8 text-3xl font-bold tracking-tight text-gray-900">Cargar plantel</h2>
+<section>
+	<h2 class="titulo-seccion">Cargar plantel</h2>
 
-	<label
-		for="csv-upload"
-		class="flex cursor-pointer flex-col items-center gap-4 rounded-lg border-2 border-dashed p-12 transition-colors"
-		class:border-blue-500={dragOver}
-		class:border-gray-300={!dragOver}
-		class:bg-blue-50={dragOver}
-		ondragover={(e) => {
-			e.preventDefault();
-			dragOver = true;
-		}}
-		ondragleave={() => {
-			dragOver = false;
-		}}
-		ondrop={handleDrop}
-	>
-		<input
-			id="csv-upload"
-			type="file"
-			accept=".csv"
-			class="hidden"
-			onchange={(e) => {
-				const file = (e.target as HTMLInputElement).files?.[0];
-				if (file) handleFile(file);
+	{#if jugadores.length === 0 && parsed.length === 0}
+		<label
+			for="csv-upload"
+			class="flex cursor-pointer flex-col items-center gap-4 rounded-lg border-2 border-dashed p-12 transition-colors"
+			class:border-blue-500={dragOver}
+			class:border-gray-300={!dragOver}
+			class:bg-blue-50={dragOver}
+			ondragover={(e) => {
+				e.preventDefault();
+				dragOver = true;
 			}}
-		/>
-		<span class="text-gray-500">Hacé clic o arrastrá un archivo CSV</span>
-		<span class="text-sm text-gray-400"
-			>Columnas: nombre, apellido, posición, categoría (forward/back)</span
+			ondragleave={() => {
+				dragOver = false;
+			}}
+			ondrop={handleDrop}
 		>
-	</label>
+			<input
+				id="csv-upload"
+				type="file"
+				accept=".csv"
+				class="hidden"
+				onchange={(e) => {
+					const file = (e.target as HTMLInputElement).files?.[0];
+					if (file) handleFile(file);
+				}}
+			/>
+			<span class="text-gray-500">Hacé clic o arrastrá un archivo CSV</span>
+			<span class="text-sm text-gray-400"
+				>Columnas: nombre, apellido, posición, categoría (forward/back)</span
+			>
+		</label>
 
-	{#if error}
-		<p class="mt-6 text-red-600">{error}</p>
+		{#if error}
+			<p class="mt-6 text-red-600">{error}</p>
+		{/if}
 	{/if}
 
 	{#if parsed.length > 0}
-		<div class="mt-8 space-y-6">
+		<div class="space-y-6">
 			<div class="overflow-x-auto rounded-sm border border-gray-200">
 				<table class="w-full text-left text-sm">
 					<thead class="border-b border-gray-200 bg-gray-50">
@@ -148,7 +150,21 @@
 					Confirmar plantel
 				</button>
 			</div>
-			
 		</div>
 	{/if}
 </section>
+
+<style>
+	section {
+		margin: 0 auto;
+		max-width: 42rem;
+		padding: 2rem 1.5rem;
+	}
+
+	.titulo-seccion {
+		font-size: 1.35rem;
+		font-weight: 700;
+		color: #0f172a;
+		margin: 0 0 32px 0;
+	}
+</style>

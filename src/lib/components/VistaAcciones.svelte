@@ -15,7 +15,7 @@
 	<div class="contenedor-pilas">
 		<!-- pila acciones jugador -->
 		<div class="columna-historial">
-			<h3 class="subtitulo">Historial de acciones individuales</h3>
+			<h3>Historial de acciones individuales</h3>
 			<div class="lista-scroll">
 				{#each acciones as a (a)}
 					<div class="tarjeta-log individual">
@@ -29,7 +29,7 @@
 
 		<!-- pila situaciones juego -->
 		<div class="columna-historial">
-			<h3 class="subtitulo">Historial de situaciones de juego</h3>
+			<h3>Historial de situaciones de juego</h3>
 			<div class="lista-scroll">
 				{#each teamAcciones as ta (ta)}
 					<div class="tarjeta-log equipo">
@@ -58,12 +58,9 @@
 
 	h2 {
 		color: #0f172a;
-		margin-bottom: 4px;
-	}
-	.subtitulo {
-		color: #64748b;
-		font-size: 0.9rem;
-		margin-bottom: 24px;
+		margin: 0 0 32px 0;
+		font-size: 1.35rem;
+		font-weight: 700;
 	}
 
 	/* Disposición en dos columnas paralelas */
@@ -84,11 +81,12 @@
 	}
 
 	.columna-historial h3 {
-		font-size: 1rem;
-		color: #1e293b;
+		font-size: 1.1rem;
+		font-weight: 700;
+		color: #334155;
 		margin-top: 0;
-		margin-bottom: 12px;
-		border-bottom: 2px solid #e2e8f0;
+		margin-bottom: 16px;
+		border-bottom: 1px solid #f1f5f9;
 		padding-bottom: 8px;
 	}
 
