@@ -157,7 +157,7 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
     const logoX = (pageWidth - logoAncho) / 2;
     const logoY = strokeY - (logoAlto - 25) / 2;
     doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoAncho, logoAlto);
-    doc.link(logoX, logoY, logoAncho, logoAlto, { url: 'https://google.com' });
+    doc.link(logoX, logoY, logoAncho, logoAlto, { url: 'https://stats-rugby.netlify.app/' });
 }
 
 export function renderSVGaImagen(svgString: string, width = 300, height = 440): Promise<string> {
