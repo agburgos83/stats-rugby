@@ -14,7 +14,7 @@
 	import VistaCargaCSV from '$lib/components/VistaCargaCSV.svelte';
 	import VistaCargaEquipo from '$lib/components/VistaCargaEquipo.svelte';
 	import VistaCargaPartido from '$lib/components/VistaCargaPartido.svelte';
-	import VistaAnalisisAmpliada from '$lib/components/VistaAnalisisAmpliada.svelte';
+	import VistaAnalisis from '$lib/components/VistaAnalisis.svelte';
 	import VistaAcciones from '$lib/components/VistaAcciones.svelte';
 
 	let usuarioUnion = $state<UnionClave>('URBA');
@@ -116,7 +116,7 @@
 {:else if vistaActual === 3}
 	<VistaCargaPartido bind:partido cambiarVista={() => cambiarVista(4)} />
 {:else if vistaActual === 4}
-	<VistaAnalisisAmpliada
+	<VistaAnalisis
 		{equipo}
 		{partido}
 		bind:acciones
