@@ -28,7 +28,7 @@
 		playsinline
 		disablepictureinpicture
 	>
-		<source src="/videos-stats-rugby/bg-stats-rugby4.webm" type="video/webm" />
+		<source src="/static/bg-stats-rugby4.webm" type="video/webm" />
 	</video>
 
 	<!-- Overlay oscuro -->
