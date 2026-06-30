@@ -8,6 +8,7 @@
 
 <section class="pantalla-cierre">
 	<h2>Muchas gracias por usar Stats Rugby</h2>
+	<br/>
 	<button onclick={nuevoAnalisis} class="btn-primary"> Nuevo análisis </button>
 </section>
 

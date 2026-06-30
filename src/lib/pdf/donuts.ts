@@ -90,7 +90,7 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
     doc.addPage([210, 297], 'portrait');
 
     const [escudoLocal] = await Promise.all([
-        obtenerEscudo(partido.usuarioUnion, partido.local),
+        obtenerEscudo(partido.usuarioUnion, partido.usuarioClub),
     ])
 
     // --- Header: título a la izquierda, escudos a la derecha ---
