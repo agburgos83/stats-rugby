@@ -167,16 +167,16 @@ export async function descargarPDF(
                 const s = datosJugador.skills[skill];
                 const sNombre = skill.toLowerCase();
 
-                // Primer columna para todas: Negativo (-)
-                fila.push(s.Negativo || 0);
-
-                if (sNombre === 'tackle' || sNombre === 'duelo') {
-                    fila.push(s.Neutro || 0); // (=)
-                    fila.push(s.Positivo || 0); // (+)
-                    fila.push(s.Dominante || 0); // (++)
+                if (sNombre === 'penal' || sNombre === 'knock on' || sNombre === 'fwd. pass') {
+                    fila.push(s.Positivo || 0);
+                } else if (sNombre === 'tackle' || sNombre === 'duelo') {
+                    fila.push(s.Negativo || 0);
+                    fila.push(s.Neutro || 0);
+                    fila.push(s.Positivo || 0);
+                    fila.push(s.Dominante || 0);
                 } else {
-                    // El resto de las skills solo tienen (-) y (+)
-                    fila.push(s.Positivo || 0); // (+)
+                    fila.push(s.Negativo || 0);
+                    fila.push(s.Positivo || 0);
                 }
             });
 
