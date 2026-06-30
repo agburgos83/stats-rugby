@@ -8,6 +8,7 @@
 		type TeamAccion
 	} from '$lib/types';
 	import { browser } from '$app/environment';
+	import { resolve } from '$app/paths';
 	import { loadFromStorage, saveToStorage, clearStorage } from '$lib/stores.svelte';
 	import { page } from '$app/stores';
 
@@ -16,6 +17,7 @@
 	import VistaCargaPartido from '$lib/components/VistaCargaPartido.svelte';
 	import VistaAnalisis from '$lib/components/VistaAnalisis.svelte';
 	import VistaAcciones from '$lib/components/VistaAcciones.svelte';
+	import VistaCierre from '$lib/components/VistaCierre.svelte';
 
 	let usuarioUnion = $state<UnionClave>('URBA');
 	let usuarioClub = $state('');
@@ -124,5 +126,7 @@
 		cambiarVista={() => cambiarVista(5)}
 	/>
 {:else if vistaActual === 5}
-	<VistaAcciones {equipo} {partido} {acciones} {teamAcciones} />
+	<VistaAcciones {equipo} {partido} {acciones} {teamAcciones} cambiarVista={() => cambiarVista(6)} />
+{:else if vistaActual === 6}
+	<VistaCierre cambiarVista={() => { clearStorage(); window.location.href = resolve('/'); }} />
 {/if}

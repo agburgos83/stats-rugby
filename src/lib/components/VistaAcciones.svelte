@@ -2,12 +2,13 @@
 	import { procesarReporte } from '$lib/processing/reporte-data';
 	import { descargarPDF } from '$lib/pdf/reporte';
 
-	let { equipo, partido, acciones, teamAcciones } = $props();
+	let { equipo, partido, acciones, teamAcciones, cambiarVista } = $props();
 
 	async function generarReporte(): Promise<void> {
 		const { matrizProcesada, dixTotales } = procesarReporte(equipo, acciones, teamAcciones);
 		await descargarPDF(equipo, partido, matrizProcesada, dixTotales);
 	}
+	
 </script>
 
 <div class="pantalla-reporte">
@@ -44,7 +45,15 @@
 	</div>
 
 	<div class="contenedor-acciones-pie">
-		<button onclick={generarReporte} class="btn-primary"> Descargar Reporte PDF → </button>
+		<button
+			onclick={() => {
+				generarReporte();
+				cambiarVista();
+			}}
+			class="btn-primary"
+		>
+			Descargar Reporte PDF →
+		</button>
 	</div>
 </div>
 

@@ -1,14 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { loadFromStorage, clearStorage } from '$lib/stores.svelte';
+	import { clearStorage } from '$lib/stores.svelte';
 	import { browser } from '$app/environment';
-
-	let hayDatos = $state(false);
-
-	if (browser) {
-		const saved = loadFromStorage();
-		hayDatos = Array.isArray(saved.jugadores) && saved.jugadores.length > 0;
-	}
 
 	function empezarNuevo() {
 		if (browser) {
@@ -48,14 +41,6 @@
 				como grupales y compartí el análisis con tus jugadores.
 			</p>
 			<div class="flex flex-wrap gap-4">
-				{#if hayDatos}
-					<a
-						href={resolve('/app')}
-						class="rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-					>
-						Retomar análisis
-					</a>
-				{/if}
 				<button
 					onclick={empezarNuevo}
 					class="rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"

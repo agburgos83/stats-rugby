@@ -64,18 +64,52 @@
 		parsed = [];
 		error = '';
 	}
+
+	function simularPlantel(): void {
+		const fileUrl = '/plantilla-jugadores.csv';
+		parsed = [];
+
+		fetch(fileUrl)
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error('No se pudo cargar el archivo');
+				}
+				return response.text();
+			})
+			.then((text) => {
+				const lines = text.trim().split(/\r?\n/);
+				const data = lines
+					.slice(1)
+					.filter((l) => l.split(',').length >= 4)
+					.map((l, i) => {
+						const c = l.split(',');
+						return {
+							id: i + 1,
+							nombre: c[0].trim(),
+							apellido: c[1].trim(),
+							posicion: c[2].trim(),
+							categoria: c[3].trim().toLowerCase() as 'forward' | 'back'
+						};
+					});
+
+				parsed = data;
+				confirmar(); // Se ejecuta dentro del flujo asíncrono
+			})
+			.catch((error) => {
+				console.error('Error al simular plantel:', error);
+			});
+	}
 </script>
 
-<section>
-	<h2 class="titulo-seccion">Cargar plantel</h2>
+<section class="pantalla-carga">
+	<h2>Cargar plantel</h2>
 
-	{#if jugadores.length === 0 && parsed.length === 0}
+	<div class="tarjeta-opcion">
+		<h2>Tengo un excel de jugadores</h2>
 		<label
 			for="csv-upload"
-			class="flex cursor-pointer flex-col items-center gap-4 rounded-lg border-2 border-dashed p-12 transition-colors"
-			class:border-blue-500={dragOver}
-			class:border-gray-300={!dragOver}
-			class:bg-blue-50={dragOver}
+			class="zona-drop"
+			class:drag-over={dragOver}
 			ondragover={(e) => {
 				e.preventDefault();
 				dragOver = true;
@@ -89,82 +123,258 @@
 				id="csv-upload"
 				type="file"
 				accept=".csv"
-				class="hidden"
+				class="input-hidden"
 				onchange={(e) => {
 					const file = (e.target as HTMLInputElement).files?.[0];
 					if (file) handleFile(file);
 				}}
 			/>
-			<span class="text-gray-500">Hacé clic o arrastrá un archivo CSV</span>
-			<span class="text-sm text-gray-400"
-				>Columnas: nombre, apellido, posición, categoría (forward/back)</span
+			<span class="texto-secundario">Hacé clic o arrastrá un archivo CSV</span>
+			<span class="texto-ayuda">Columnas: nombre, apellido, posición, categoría (forward/back)</span
 			>
 		</label>
 
 		{#if error}
-			<p class="mt-6 text-red-600">{error}</p>
+			<p class="mensaje-error">{error}</p>
 		{/if}
-	{/if}
 
-	{#if parsed.length > 0}
-		<div class="space-y-6">
-			<div class="overflow-x-auto rounded-sm border border-gray-200">
-				<table class="w-full text-left text-sm">
-					<thead class="border-b border-gray-200 bg-gray-50">
-						<tr>
-							<th class="px-4 py-2 font-medium text-gray-600">Nombre</th>
-							<th class="px-4 py-2 font-medium text-gray-600">Apellido</th>
-							<th class="px-4 py-2 font-medium text-gray-600">Posición</th>
-							<th class="px-4 py-2 font-medium text-gray-600">Categoría</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each parsed as p (p.id)}
-							<tr class="border-b border-gray-100 last:border-0">
-								<td class="px-4 py-2">{p.nombre}</td>
-								<td class="px-4 py-2">{p.apellido}</td>
-								<td class="px-4 py-2">{p.posicion}</td>
-								<td class="px-4 py-2">{p.categoria}</td>
+		{#if parsed.length > 0}
+			<div class="contenedor-tabla">
+				<div class="tabla-preview">
+					<table>
+						<thead>
+							<tr>
+								<th>Nombre</th>
+								<th>Apellido</th>
+								<th>Posición</th>
+								<th>Categoría</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{#each parsed as p (p.id)}
+								<tr>
+									<td>{p.nombre}</td>
+									<td>{p.apellido}</td>
+									<td>{p.posicion}</td>
+									<td>{p.categoria}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+
+				<p class="texto-contador">
+					{parsed.length} jugador{parsed.length === 1 ? '' : 'es'} cargados
+				</p>
+
+				<div class="contenedor-acciones">
+					<button onclick={replaceCSV} class="btn-secondary"> Reemplazar CSV 🗑 </button>
+
+					<button onclick={confirmar} class="btn-primary"> Confirmar plantel </button>
+				</div>
 			</div>
+		{/if}
+	</div>
 
-			<p class="text-gray-700">
-				{parsed.length} jugador{parsed.length === 1 ? '' : 'es'} cargados
-			</p>
-
-			<div class="flex justify-end gap-4">
-				<button
-					onclick={replaceCSV}
-					class="rounded-sm bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-				>
-					Reemplazar CSV 🗑
-				</button>
-
-				<button
-					onclick={confirmar}
-					class="rounded-sm bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-				>
-					Confirmar plantel
-				</button>
-			</div>
-		</div>
-	{/if}
+	<div class="tarjeta-opcion">
+		<h2>No tengo un excel de jugadores</h2>
+		<button onclick={simularPlantel} class="btn-primary"> Simular plantel </button>
+	</div>
 </section>
 
 <style>
-	section {
+	/* ========== LAYOUT PRINCIPAL ========== */
+	.pantalla-carga {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 32px;
+		padding: 40px 32px;
+		font-family: sans-serif;
+		max-width: 960px;
 		margin: 0 auto;
-		max-width: 42rem;
-		padding: 2rem 1.5rem;
 	}
 
-	.titulo-seccion {
+	@media (max-width: 768px) {
+		.pantalla-carga {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	/* ========== TÍTULOS ========== */
+	h2 {
+		color: #0f172a;
+		margin: 0 0 4px 0;
 		font-size: 1.35rem;
 		font-weight: 700;
-		color: #0f172a;
-		margin: 0 0 32px 0;
+	}
+
+	.pantalla-carga > h2 {
+		grid-column: 1 / -1;
+		margin-bottom: 8px;
+	}
+
+	.tarjeta-opcion h2 {
+		font-size: 1.1rem;
+		margin: 0;
+	}
+
+	/* ========== TARJETAS ========== */
+	.tarjeta-opcion {
+		background: white;
+		padding: 32px 24px;
+		border-radius: 12px;
+		border: 1px solid #e2e8f0;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		gap: 16px;
+		/* justify-content: center; */
+	}
+
+	/* ========== TEXTOS AUXILIARES ========== */
+	.texto-secundario {
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+		color: rgb(107, 114, 128);
+		margin: 0;
+	}
+
+	.texto-ayuda {
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+		color: rgb(107, 114, 128);
+		margin: 0;
+	}
+
+	.texto-contador {
+		color: #334155;
+		margin: 0;
+	}
+
+	.mensaje-error {
+		color: #dc2626;
+		margin: 0;
+		width: 100%;
+		text-align: left;
+	}
+
+	/* ========== BOTONES ========== */
+	.btn-primary {
+		background-color: #2563eb;
+		color: white;
+		border: none;
+		padding: 12px 24px;
+		font-size: 0.95rem;
+		font-weight: bold;
+		border-radius: 8px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+		font-family: sans-serif;
+		margin: 50px;
+	}
+
+	.btn-primary:hover {
+		background-color: #1d4ed8;
+	}
+
+	.btn-primary:disabled {
+		background-color: #cbd5e1;
+		color: #94a3b8;
+		cursor: not-allowed;
+	}
+
+	.btn-secondary {
+		background-color: transparent;
+		border: 1px solid #cbd5e1;
+		color: #475569;
+		padding: 12px 24px;
+		font-size: 0.95rem;
+		font-weight: bold;
+		border-radius: 8px;
+		cursor: pointer;
+		transition:
+			background-color 0.2s,
+			border-color 0.2s;
+		font-family: sans-serif;
+	}
+
+	.btn-secondary:hover {
+		background-color: #f8fafc;
+		border-color: #94a3b8;
+	}
+
+	/* ========== ZONA DE DROP ========== */
+	.zona-drop {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
+		cursor: pointer;
+		padding: 48px;
+		border: 2px dashed #d1d5db;
+		border-radius: 8px;
+		transition:
+			border-color 0.2s,
+			background-color 0.2s;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.zona-drop.drag-over {
+		border-color: #2563eb;
+		background-color: #eff6ff;
+	}
+
+	.input-hidden {
+		display: none;
+	}
+
+	/* ========== TABLA DE PREVIEW ========== */
+	.contenedor-tabla {
+		margin-top: 32px;
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+		width: 100%;
+	}
+
+	.tabla-preview {
+		overflow-x: auto;
+		border-radius: 0.125rem;
+		border: 1px solid rgb(229, 231, 235);
+	}
+
+	.tabla-preview table {
+		width: 100%;
+		text-align: left;
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+		border-collapse: collapse;
+	}
+
+	.tabla-preview th {
+		border-bottom: 1px solid rgb(229, 231, 235);
+		background-color: rgb(249, 250, 251);
+		padding: 0.5rem 1rem;
+		font-weight: 500;
+		color: rgb(75, 85, 99);
+	}
+
+	.tabla-preview td {
+		padding: 0.5rem 1rem;
+		border-bottom: 1px solid rgb(243, 244, 246);
+	}
+
+	.tabla-preview tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	/* ========== CONTENEDOR DE ACCIONES ========== */
+	.contenedor-acciones {
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
 	}
 </style>
