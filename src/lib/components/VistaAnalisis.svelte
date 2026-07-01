@@ -36,6 +36,29 @@
 
 	const urlEmbed = $derived(cocinarEnlaceVideo(partido.urlVideo));
 
+	let veoVideoUrl = $state<string | null>(null);
+	let veoLoading = $state(false);
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		if (url && url.includes('veo.co') && url.includes('app.veo.co')) {
+			veoLoading = true;
+			veoVideoUrl = null;
+			const slug = url.replace(/\/$/, '').split('/').pop() || '';
+			fetch(`/api/veo-video?slug=${encodeURIComponent(slug)}`)
+				.then((r) => r.json())
+				.then((data) => {
+					if (data.videoUrl) veoVideoUrl = data.videoUrl;
+					else console.error('Veo API error:', data.error);
+				})
+				.catch((e) => console.error('Error fetching Veo video:', e))
+				.finally(() => (veoLoading = false));
+		} else {
+			veoVideoUrl = null;
+			veoLoading = false;
+		}
+	});
+
 	// 1. FUNCIONES DE ACCIONES Y VIDEO
 	function registrarAccionDirecta(
 		skillElegida: Skill,
@@ -142,12 +165,15 @@
 		return teamAcciones.length > 0;
 	}
 
-	function cocinarEnlaceVideo(enlace: string): string {
+	function cocinarEnlaceVideo(enlace: string): string | null {
 		if (!enlace) return '';
 
-		// Si ya viene formateada con embed, pasa directo
-		if (enlace.includes('/embed/') || enlace.includes('://vimeo.com')) {
-			return enlace;
+		if (enlace.includes('vimeo.com')) {
+			if (enlace.includes('player.vimeo.com')) {
+				return enlace;
+			}
+			const id = enlace.split('vimeo.com/')[1]?.split('?')[0]?.split('/')[0];
+			return id ? `https://player.vimeo.com/video/${id}` : enlace;
 		}
 
 		// CASO YOUTUBE
@@ -169,9 +195,9 @@
 			return codigoFinal ? 'https://www.youtube.com/embed/' + codigoFinal : enlace;
 		}
 
-		// CASO VEO (app.veo.co -> embed.veo.co)
+		// CASO VEO (no soporta iframe, se usa <video> nativo vía API)
 		if (enlace.includes('veo.co') && enlace.includes('app.veo.co')) {
-			return enlace.replace('app.veo.co', 'embed.veo.co');
+			return null;
 		}
 
 		return enlace;
@@ -216,13 +242,20 @@
 				Análisis {partido.local} vs {partido.visitante} ({partido.puntosLocal} - {partido.puntosVisitante})
 			</h2>
 			<p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p>
-			<iframe
-				src={urlEmbed}
-				title="Video Player"
-				frameborder="0"
-				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-				allowfullscreen
-			></iframe>
+			{#if urlEmbed}
+				<iframe
+					src={urlEmbed}
+					title="Video Player"
+					frameborder="0"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+					allowfullscreen
+				></iframe>
+			{:else if veoVideoUrl}
+				<!-- svelte-ignore a11y_media_has_caption -->
+				<video src={veoVideoUrl} controls preload="metadata"></video>
+			{:else if veoLoading}
+				<div class="veo-loading">Cargando video de Veo…</div>
+			{/if}
 		</div>
 
 		<div class="acciones-finales">
@@ -575,11 +608,24 @@
 	}
 
 	/* Le damos proporciones firmes de pantalla de TV al reproductor */
-	.panel-video iframe {
+	.panel-video iframe,
+	.panel-video video {
 		width: 100%;
-		aspect-ratio: 16 / 9; /* Mantiene la proporción de video estándar */
+		aspect-ratio: 16 / 9;
 		border-radius: 8px;
-		background-color: #000000; /* Fondo negro de carga */
+		background-color: #000;
+		border: 1px solid #e2e8f0;
+	}
+
+	.veo-loading {
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		border-radius: 8px;
+		background: #000;
+		color: #94a3b8;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		border: 1px solid #e2e8f0;
 	}
 
