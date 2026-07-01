@@ -44,7 +44,7 @@
 
 	function formularioCompleto(): boolean {
 		return usuarioClub !== '' &&
-			equipo.slice(0, 3).every((p) => p.player !== null);
+			equipo.slice(0, 15).every((p) => p.player !== null);
 	}
 </script>
 
