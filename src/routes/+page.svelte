@@ -36,22 +36,23 @@
 			<!-- <img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" class="mb-6 h-auto w-64" /> -->
 			<img src="/logo-app-white-400.svg" alt="Stats Rugby Logo" class="mb-6 h-auto w-64" />
 			<p class="mb-8 text-lg leading-relaxed font-medium text-white/90 lg:text-xl">
-				App gratuita para entrenadores y analistas de rugby. <br />Cargá tu equipo, registrá tanto
-				acciones individuales <br />
-				como grupales y compartí el análisis con tus jugadores.
+				App gratuita para entrenadores y analistas de rugby. <br />Cargá tu equipo, registrá
+				acciones individuales y grupales <br/>
+				y compartí el análisis con tus jugadores.
 			</p>
 			<div class="flex flex-wrap gap-4">
-				<button
-					onclick={empezarNuevo}
-					class="rounded-sm bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+				<button onclick={empezarNuevo} class="btn-contratame"> Analizar partido </button>
+				<a
+					href="mailto:agburgos83@gmail.com?subject=Contratar%20análisis%20de%20partido"
+					class="btn-contratame"
 				>
-					Analizar partido
-				</button>
+					Contratame
+				</a>
 			</div>
 		</div>
 
 		<!-- Columna derecha: tutorial (2/5) -->
-		<div class="flex items-center justify-center lg:col-span-2">
+		<!-- <div class="flex items-center justify-center lg:col-span-2">
 			<div class="w-full max-w-lg">
 				<h2 class="mb-4 border-l-4 border-blue-500 pl-3 text-2xl font-medium text-white">Cómo usar la app</h2>
 				<div class="aspect-video w-full overflow-hidden rounded-xl shadow-2xl">
@@ -65,7 +66,7 @@
 					></iframe>
 				</div>
 			</div>
-		</div>
+		</div> -->
 	</div>
 </section>
 
@@ -137,5 +138,35 @@
 			gap: 40px;
 			padding: 24px 16px;
 		}
+	}
+
+	.btn-primary,
+	.btn-contratame {
+		padding: 12px 24px;
+		font-size: 0.95rem;
+		font-weight: bold;
+		border-radius: 8px;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		text-decoration: none;
+		transition: background-color 0.2s;
+		font-family: sans-serif;
+	}
+	.btn-primary {
+		background-color: #2563eb;
+		color: white;
+		border: none;
+	}
+	.btn-primary:hover {
+		background-color: #1d4ed8;
+	}
+	.btn-contratame {
+		background-color: #fff;
+		color: #2563eb;
+		border: none;
+	}
+	.btn-contratame:hover {
+		background-color: #f1f5f9;
 	}
 </style>

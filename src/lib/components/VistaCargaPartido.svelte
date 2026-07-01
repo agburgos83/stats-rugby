@@ -36,7 +36,7 @@
 
 <div class="contenedor-centrado">
 	<div class="tarjeta-formulario">
-		<h2>Datos del Partido</h2>
+		<h2>Datos del partido</h2>
 		<p class="subtitulo">Información clave para la cabecera del reporte final.</p>
 
 		<!-- Fila 1: Torneo y División paralelos -->
@@ -128,8 +128,8 @@
 
 		<hr class="separador" />
 
-		<h2>Video del Partido</h2>
-		<p class="subtitulo">Acepta enlaces de YouTube, Vimeo, Veo y plataformas web.</p>
+		<h2>Video del partido</h2>
+		<p class="subtitulo">Acepta enlaces de Veo, YouTube y Vimeo.</p>
 		<input
 			type="text"
 			bind:value={partido.urlVideo}

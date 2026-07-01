@@ -7,8 +7,10 @@
 </script>
 
 <section class="pantalla-cierre">
-	<h2>Muchas gracias por usar Stats Rugby</h2>
+	<h2>Muchas gracias por elegir</h2>
 	<br/>
+	<img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" class="mb-6 h-auto w-64" />
+	<hr class="border-t border-[#e2e8f0] my-6 w-full" />
 	<button onclick={nuevoAnalisis} class="btn-primary"> Nuevo análisis </button>
 </section>
 
@@ -27,7 +29,7 @@
 	}
 
 	h2 {
-		color: #0f172a;
+		color: #47484a;
 		margin: 0;
 		font-size: 1.35rem;
 		font-weight: 700;
