@@ -51,12 +51,12 @@
 		</div>
 
 		<!-- Columna derecha: tutorial (2/5) -->
-		<!-- <div class="flex items-center justify-center lg:col-span-2">
+		<div class="flex items-center justify-center lg:col-span-2">
 			<div class="w-full max-w-lg">
 				<h2 class="mb-4 border-l-4 border-blue-500 pl-3 text-2xl font-medium text-white">Cómo usar la app</h2>
 				<div class="aspect-video w-full overflow-hidden rounded-xl shadow-2xl">
 					<iframe
-						src="https://www.youtube.com/embed/UVIm4Do0-mk?si=_yI_KvFwwfIYZNGU"
+						src="https://www.youtube.com/embed/EB0SmVEKD3c?si=xneN9LCyg3vAIxma"
 						title="YouTube video player"
 						class="h-full w-full"
 						frameborder="0"
@@ -65,7 +65,7 @@
 					></iframe>
 				</div>
 			</div>
-		</div> -->
+		</div>
 	</div>
 </section>
 
