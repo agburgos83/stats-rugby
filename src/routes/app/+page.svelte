@@ -87,6 +87,26 @@
 		}
 	}
 
+	// ?mock=1: genera acciones de prueba con el equipo cargado y descarga PDF
+	if (browser && $page.url.searchParams.has('mock')) {
+		const equipoInicial = equipo;
+		const partidoInicial = partido;
+		if (equipoInicial.some(p => p.player !== null)) {
+			import('$lib/mock-data').then(async ({ generarMockData }) => {
+				const { acciones: mockAcc, teamAcciones: mockTeam } = generarMockData(equipoInicial, partidoInicial);
+				acciones = mockAcc;
+				teamAcciones = mockTeam;
+				vistaActual = 5;
+				const [{ procesarReporte }, { descargarPDF }] = await Promise.all([
+					import('$lib/processing/reporte-data'),
+					import('$lib/pdf/reporte')
+				]);
+				const { matrizProcesada, dixTotales } = procesarReporte(equipoInicial, acciones, teamAcciones);
+				await descargarPDF(equipoInicial, partidoInicial, matrizProcesada, dixTotales);
+			});
+		}
+	}
+
 	// 4. Persistir automaticamente en cada cambio
 	$effect(() => {
 		if (!browser) return;
