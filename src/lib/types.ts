@@ -25,6 +25,7 @@ export type Puesto = {
 };
 
 export type Accion = {
+	id: number;
 	timestamp: number; // Podríamos usar Date o un número (milisegundos desde epoch)
 	player: Player;
 	skill: Skill;

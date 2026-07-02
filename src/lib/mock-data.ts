@@ -21,9 +21,10 @@ export function generarMockData(
 ): { acciones: Accion[]; teamAcciones: TeamAccion[] } {
 	const acciones: Accion[] = [];
 	let baseTs = Date.now();
+	let nextId = 1;
 
 	function push(p: NonNullable<Puesto['player']>, skill: Skill, calif: CalificacionIndividual) {
-		acciones.push({ timestamp: baseTs, player: p, skill, calificacion: calif });
+		acciones.push({ id: nextId++, timestamp: baseTs, player: p, skill, calificacion: calif });
 		baseTs += 100;
 	}
 

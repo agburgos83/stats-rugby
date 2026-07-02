@@ -25,7 +25,7 @@
 
 	// let jugadorElegido = $state<Player | null>(null);
 	let jugadoresElegidos = $state<Player[]>([]);
-	// let sitJuegoElegida = $state<SituacionJuego | null>(null);
+	let nextAccionId = 0;
 	let ultimaAccionClickeada = $state<string | null>(null);
 	let prevAccionesLength = $state(0);
 	let puedeDeshacerIndividual = $state(false);
@@ -62,37 +62,41 @@
 	// 1. FUNCIONES DE ACCIONES Y VIDEO
 	function registrarAccionDirecta(
 		skillElegida: Skill,
-		califIndividualElegida: CalificacionIndividual
+		califIndividualElegida: CalificacionIndividual,
+		shiftKey: boolean = false
 	): void {
 		if (jugadoresElegidos.length === 0) {
 			alert('Primero selecciona un jugador de la grilla superior');
 			return;
 		}
 
+		if (shiftKey && jugadoresElegidos.length > 1) {
+	alert('Para usar Shift debe haber solo un jugador seleccionado');
+	return;
+}
+
 		prevAccionesLength = acciones.length;
 
 		const tiempoActual = obtenerTimestampVideo();
 
 		for (const j of jugadoresElegidos) {
-			const nuevaAccion: Accion = {
+			acciones.push({
+				id: nextAccionId++,
 				timestamp: tiempoActual,
 				player: j,
 				skill: skillElegida,
 				calificacion: califIndividualElegida
-			};
-			acciones.push(nuevaAccion);
+			});
 		}
 
 		acciones = [...acciones];
 
 		puedeDeshacerIndividual = true;
 
-		jugadoresElegidos = [];
+		if (!shiftKey) jugadoresElegidos = [];
 
-		// Activamos el flash visual
 		ultimaAccionClickeada = `${skillElegida}-${califIndividualElegida}`;
 
-		// Lo apagamos después de 300ms
 		setTimeout(() => {
 			ultimaAccionClickeada = null;
 		}, 300);
@@ -149,12 +153,14 @@
 		if (acciones.length === 0) return;
 		acciones = [];
 		acciones = [...acciones];
+		puedeDeshacerIndividual = false;
 	}
 
 	function limpiarAccionesGrupales(): void {
 		if (teamAcciones.length === 0) return;
 		teamAcciones = [];
 		teamAcciones = [...teamAcciones];
+		puedeDeshacerGrupal = false;
 	}
 
 	function hayAccionesIndividuales(): boolean {
@@ -304,12 +310,12 @@
 								<span class="titulo-skill">{s}</span>
 								<button
 									disabled={jugadoresElegidos.length === 0}
-									onclick={() => registrarAccionDirecta(s, 'Negativo')}
+									onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
 									class="btn-calif neg">-</button
 								>
 								<button
 									disabled={jugadoresElegidos.length === 0}
-									onclick={() => registrarAccionDirecta(s, 'Positivo')}
+									onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
 									class="btn-calif pos">+</button
 								>
 							</div>
@@ -326,34 +332,34 @@
 									<span class="titulo-skill">{s}</span>
 									<button
 										disabled={jugadoresElegidos.length === 0}
-										onclick={() => registrarAccionDirecta(s, 'Negativo')}
+										onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
 										class="btn-calif neg">-</button
 									>
 									<button
 										disabled={jugadoresElegidos.length === 0}
-										onclick={() => registrarAccionDirecta(s, 'Neutro')}
+										onclick={(e) => registrarAccionDirecta(s, 'Neutro', e.shiftKey)}
 										class="btn-calif neu">=</button
 									>
 									<button
 										disabled={jugadoresElegidos.length === 0}
-										onclick={() => registrarAccionDirecta(s, 'Positivo')}
+										onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
 										class="btn-calif pos">+</button
 									>
 									<button
 										disabled={jugadoresElegidos.length === 0}
-										onclick={() => registrarAccionDirecta(s, 'Dominante')}
+										onclick={(e) => registrarAccionDirecta(s, 'Dominante', e.shiftKey)}
 										class="btn-calif dom">++</button
 									>
 								{:else}
 									<span class="titulo-skill">{s}</span>
 									<button
 										disabled={jugadoresElegidos.length === 0}
-										onclick={() => registrarAccionDirecta(s, 'Negativo')}
+										onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
 										class="btn-calif neg">-</button
 									>
 									<button
 										disabled={jugadoresElegidos.length === 0}
-										onclick={() => registrarAccionDirecta(s, 'Positivo')}
+										onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
 										class="btn-calif pos">+</button
 									>
 								{/if}
@@ -370,12 +376,12 @@
 								<span class="titulo-skill">{s}</span>
 								<button
 									disabled={jugadoresElegidos.length === 0}
-									onclick={() => registrarAccionDirecta(s, 'Negativo')}
+									onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
 									class="btn-calif neg">-</button
 								>
 								<button
 									disabled={jugadoresElegidos.length === 0}
-									onclick={() => registrarAccionDirecta(s, 'Positivo')}
+									onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
 									class="btn-calif pos">+</button
 								>
 							</div>
@@ -391,7 +397,7 @@
 								<span class="titulo-skill">{i}</span>
 								<button
 									disabled={jugadoresElegidos.length === 0}
-									onclick={() => registrarAccionDirecta(i, 'Positivo')}
+									onclick={(e) => registrarAccionDirecta(i, 'Positivo', e.shiftKey)}
 									class="btn-calif pos">+</button
 								>
 							</div>
@@ -952,7 +958,7 @@
 		color: #1e293b;
 	}
 
-	/* Variación sutil para el botón de borrar historial */
+	/* Variación sutil para el botón de borrar historia */
 	.btn-accion-barra.peligro:hover:not(:disabled) {
 		background-color: #fef2f2;
 		border-color: #fca5a5;
