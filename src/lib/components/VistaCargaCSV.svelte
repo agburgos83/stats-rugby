@@ -189,7 +189,6 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 32px;
 		padding: 40px 32px;
-		font-family: sans-serif;
 		max-width: 960px;
 		margin: 0 auto;
 	}
@@ -271,7 +270,6 @@
 		border-radius: 8px;
 		cursor: pointer;
 		transition: background-color 0.2s;
-		font-family: sans-serif;
 		margin: 50px;
 	}
 
@@ -297,9 +295,7 @@
 		transition:
 			background-color 0.2s,
 			border-color 0.2s;
-		font-family: sans-serif;
 	}
-
 	.btn-secondary:hover {
 		background-color: #f8fafc;
 		border-color: #94a3b8;

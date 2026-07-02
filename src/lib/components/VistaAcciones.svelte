@@ -60,7 +60,6 @@
 <style>
 	.pantalla-reporte {
 		padding: 24px;
-		font-family: sans-serif;
 		max-width: 1200px;
 		margin: 0 auto;
 	}

@@ -5,22 +5,22 @@
 	let enviado = $state(false);
 </script>
 
-<section class="mx-auto max-w-3xl px-6 py-16">
-	<h2 class="mb-12 text-4xl tracking-tight text-gray-900">Contacto</h2>
+<section class="pagina-contenido">
+	<h2 class="pagina-titulo">Contacto</h2>
 
 	{#if enviado}
-		<p class="rounded-sm bg-green-50 p-6 text-green-800">
+		<p class="alerta-exito">
 			Gracias por tu mensaje. Te responderé a la brevedad.
 		</p>
 	{:else}
 		<form
 			action="https://formspree.io/f/tu-id-aqui"
 			method="POST"
-			class="space-y-6"
+			class="formulario"
 			onsubmit={() => (enviado = true)}
 		>
 			<div>
-				<label for="nombre" class="mb-2 block text-sm font-bold tracking-wider text-gray-700 uppercase">
+				<label for="nombre" class="label-form">
 					Nombre
 				</label>
 				<input
@@ -29,12 +29,12 @@
 					id="nombre"
 					bind:value={nombre}
 					required
-					class="w-full rounded-sm border-gray-300 shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
+					class="input-form"
 				/>
 			</div>
 
 			<div>
-				<label for="email" class="mb-2 block text-sm font-bold tracking-wider text-gray-700 uppercase">
+				<label for="email" class="label-form">
 					Email
 				</label>
 				<input
@@ -43,12 +43,12 @@
 					id="email"
 					bind:value={email}
 					required
-					class="w-full rounded-sm border-gray-300 shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
+					class="input-form"
 				/>
 			</div>
 
 			<div>
-				<label for="mensaje" class="mb-2 block text-sm font-bold tracking-wider text-gray-700 uppercase">
+				<label for="mensaje" class="label-form">
 					Mensaje
 				</label>
 				<textarea
@@ -57,16 +57,74 @@
 					rows="5"
 					bind:value={mensaje}
 					required
-					class="w-full rounded-sm border-gray-300 shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500"
+					class="input-form"
 				></textarea>
 			</div>
 
-			<button
-				type="submit"
-				class="w-full bg-blue-600 py-4 font-bold tracking-widest text-white uppercase transition-colors duration-300 hover:bg-blue-700"
-			>
+			<button type="submit" class="btn-enviar">
 				Enviar mensaje
 			</button>
 		</form>
 	{/if}
 </section>
+
+<style>
+	.alerta-exito {
+		background-color: #f0fdf4;
+		color: #166534;
+		padding: 1.5rem;
+		border-radius: 2px;
+	}
+
+	.formulario {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.label-form {
+		display: block;
+		margin-bottom: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		color: #374151;
+		text-transform: uppercase;
+	}
+
+	.input-form {
+		width: 100%;
+		border: 1px solid #d1d5db;
+		border-radius: 2px;
+		padding: 0.5rem 0.75rem;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+		transition: border-color 0.15s, box-shadow 0.15s;
+		font-family: inherit;
+		font-size: inherit;
+	}
+
+	.input-form:focus {
+		outline: none;
+		border-color: #3b82f6;
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+	}
+
+	.btn-enviar {
+		width: 100%;
+		background-color: #2563eb;
+		color: white;
+		border: none;
+		padding: 1rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		cursor: pointer;
+		transition: background-color 0.3s;
+		font-family: inherit;
+		font-size: inherit;
+	}
+
+	.btn-enviar:hover {
+		background-color: #1d4ed8;
+	}
+</style>

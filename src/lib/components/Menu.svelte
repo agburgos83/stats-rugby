@@ -19,12 +19,9 @@
 
 	$effect(() => {
 		if (!browser) return;
-		void $page.url.pathname;
 		const saved = loadFromStorage();
 		hayDatos = Array.isArray(saved.jugadores) && saved.jugadores.length > 0;
 	});
-
-	let mostrarRetomar = $derived(hayDatos && !$page.url.pathname.startsWith('/app'));
 </script>
 
 <nav>
@@ -36,11 +33,11 @@
 				</a>
 			</li>
 		{/each}
-		<div class="flex flex-wrap gap-4">
-			{#if mostrarRetomar}
+		{#if hayDatos && !$page.url.pathname.startsWith('/app')}
+			<li>
 				<a href={resolve('/app')} class="retomar-btn"> Retomar análisis </a>
-			{/if}
-		</div>
+			</li>
+		{/if}
 	</ul>
 </nav>
 

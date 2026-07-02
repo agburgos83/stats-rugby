@@ -151,7 +151,6 @@
 		align-items: center;
 		justify-content: center;
 		min-height: 90vh;
-		font-family: sans-serif;
 		padding: 40px 20px;
 		background-color: #f8fafc;
 	}
@@ -211,7 +210,6 @@
 		background-color: #fff;
 		color: #1e293b;
 		transition: border-color 0.15s ease;
-		font-family: sans-serif;
 	}
 	.input-control:focus {
 		border-color: #2563eb;

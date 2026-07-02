@@ -591,9 +591,7 @@
 		grid-template-columns: 1.8fr 1.2fr;
 		gap: 24px;
 		padding: 20px;
-		font-family: sans-serif;
 	}
-
 	.panel-video h2 {
 		margin-top: 0;
 		margin-bottom: 0px;

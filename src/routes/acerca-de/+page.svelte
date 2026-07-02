@@ -1,7 +1,7 @@
-<section class="mx-auto max-w-3xl px-6 py-16">
-	<h2 class="mb-12 text-4xl tracking-tight text-gray-900">Sobre Stats Rugby</h2>
+<section class="pagina-contenido">
+	<h2 class="pagina-titulo">Sobre Stats Rugby</h2>
 
-	<div class="prose prose-stone lg:prose-xl">
+	<div class="seccion-texto">
 		<p>
 			Stats Rugby es una app web gratuita y fácil de usar para entrenadores y analistas que quieran
 			proveer reportes con información detallada a sus equipos.
@@ -18,8 +18,8 @@
 	</div>
 	<br />
 	<br />
-	<h2 class="mb-12 text-4xl tracking-tight text-gray-900">Indicadores</h2>
-	<div class="prose prose-stone lg:prose-xl">
+	<h2 class="pagina-titulo">Indicadores</h2>
+	<div class="seccion-texto">
 		<p>
 			No hay una única manera de medir el rendimiento de los jugadores. En el caso de Stats Rugby,
 			se buscó un análisis por destrezas, situaciones de juego e infracciones.

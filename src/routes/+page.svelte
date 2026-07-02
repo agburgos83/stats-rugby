@@ -11,66 +11,106 @@
 	}
 </script>
 
-<section class="relative flex min-h-screen items-center overflow-hidden">
-	<!-- Video de fondo -->
-	<video
-		class="absolute inset-0 -z-10 h-full w-full object-cover"
-		muted
-		autoplay
-		loop
-		playsinline
-		disablepictureinpicture
-	>
+<section class="hero">
+	<video class="hero-video" muted autoplay loop playsinline disablepictureinpicture>
 		<source src="/bg-stats-rugby4.webm" type="video/webm" />
 	</video>
 
-	<!-- Overlay oscuro -->
-	<!-- <div class="absolute inset-0 z-0 bg-gradient-to-r from-black/70 via-black/50 to-black/60"></div> -->
-
-	<!-- Contenido -->
-	<div class="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 gap-8 px-6 lg:grid-cols-5">
-		<!-- Columna izquierda: texto + botones (3/5) -->
-		<div
-			class="flex flex-col items-center justify-center text-center lg:col-span-3 lg:items-start lg:text-left"
-		>
-			<!-- <img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" class="mb-6 h-auto w-64" /> -->
-			<img src="/logo-app-white-400.svg" alt="Stats Rugby Logo" class="mb-6 h-auto w-64" />
-			<p class="mb-8 text-lg leading-relaxed font-medium text-white/90 lg:text-xl">
+	<div class="hero-grid">
+		<div class="hero-texto">
+			<img src="/logo-app-white-400.svg" alt="Stats Rugby Logo" class="hero-logo" />
+			<p class="hero-descripcion">
 				App gratuita para entrenadores y analistas de rugby. <br />Cargá tu equipo, registrá
 				acciones individuales y grupales <br/>
 				y compartí el análisis con tus jugadores.
 			</p>
-			<div class="flex flex-wrap gap-4">
+			<div class="hero-botones">
 				<button onclick={empezarNuevo} class="btn-contratame"> Analizar partido </button>
 				<a
-					href="mailto:agburgos83@gmail.com?subject=Contratar%20análisis%20de%20partido"
+					href="mailto:agburgos83@gmail.com?subject=Contratar%20an%C3%A1lisis%20de%20partido"
 					class="btn-contratame"
 				>
 					Contratame
 				</a>
 			</div>
 		</div>
-
-		<!-- Columna derecha: tutorial (2/5) -->
-		<!-- <div class="flex items-center justify-center lg:col-span-2">
-			<div class="w-full max-w-lg">
-				<h2 class="mb-4 border-l-4 border-blue-500 pl-3 text-2xl font-medium text-white">Cómo usar la app</h2>
-				<div class="aspect-video w-full overflow-hidden rounded-xl shadow-2xl">
-					<iframe
-						src="https://www.youtube.com/embed/EB0SmVEKD3c?si=xneN9LCyg3vAIxma"
-						title="YouTube video player"
-						class="h-full w-full"
-						frameborder="0"
-						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-						allowfullscreen
-					></iframe>
-				</div>
-			</div>
-		</div> -->
 	</div>
 </section>
 
 <style>
+	.hero {
+		position: relative;
+		display: flex;
+		align-items: center;
+		min-height: 100vh;
+		overflow: hidden;
+	}
+
+	.hero-video {
+		position: absolute;
+		inset: 0;
+		z-index: -10;
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+	}
+
+	.hero-grid {
+		position: relative;
+		z-index: 10;
+		margin: 0 auto;
+		width: 100%;
+		max-width: 1280px;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2rem;
+		padding: 0 1.5rem;
+	}
+	@media (min-width: 1024px) {
+		.hero-grid {
+			grid-template-columns: 3fr 2fr;
+		}
+	}
+
+	.hero-texto {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+	}
+	@media (min-width: 1024px) {
+		.hero-texto {
+			align-items: flex-start;
+			text-align: left;
+		}
+	}
+
+	.hero-logo {
+		margin-bottom: 1.5rem;
+		height: auto;
+		width: 16rem;
+	}
+
+	.hero-descripcion {
+		margin-bottom: 2rem;
+		font-size: 1.125rem;
+		line-height: 1.625;
+		font-weight: 500;
+		color: rgba(255, 255, 255, 0.9);
+	}
+	@media (min-width: 1024px) {
+		.hero-descripcion {
+			font-size: 1.25rem;
+		}
+	}
+
+	.hero-botones {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+
 	.pantalla-analisis {
 		display: grid;
 		grid-template-columns: 1.2fr 1.8fr;
@@ -151,7 +191,6 @@
 		align-items: center;
 		text-decoration: none;
 		transition: background-color 0.2s;
-		font-family: sans-serif;
 	}
 	.btn-primary {
 		background-color: #2563eb;

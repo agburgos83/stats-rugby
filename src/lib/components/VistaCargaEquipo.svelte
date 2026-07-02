@@ -153,7 +153,6 @@
 		align-items: flex-start;
 		justify-content: center;
 		min-height: 100vh;
-		font-family: sans-serif;
 		padding: 24px 20px;
 		background-color: #f8fafc;
 		box-sizing: border-box;
@@ -203,7 +202,6 @@
 		background-color: #fff;
 		color: #1e293b;
 		transition: border-color 0.15s ease;
-		font-family: sans-serif;
 		margin-bottom: 14px;
 	}
 
