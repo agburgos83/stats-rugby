@@ -154,7 +154,7 @@
 		justify-content: center;
 		min-height: 100vh;
 		padding: 24px 20px;
-		background-color: #f8fafc;
+		/* background-color: #f8fafc; */
 		box-sizing: border-box;
 	}
 

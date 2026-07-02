@@ -152,7 +152,7 @@
 		justify-content: center;
 		min-height: 90vh;
 		padding: 40px 20px;
-		background-color: #f8fafc;
+		/* background-color: #f8fafc; */
 	}
 	.tarjeta-formulario {
 		background: white;

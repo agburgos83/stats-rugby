@@ -9,7 +9,6 @@
 		type CalificacionIndividual,
 		type CalificacionGrupal,
 		type Player,
-		type Accion,
 		type TeamAccion,
 		type PropsAnalisis
 	} from '$lib/types';
@@ -637,7 +636,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
-		background-color: #f8fafc;
+		background-color: white;
 		padding: 20px;
 		border-radius: 8px;
 		border: 1px solid #e2e8f0;
@@ -663,6 +662,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
+		background-color: #f8fafc;
 	}
 
 	.contenedor-boton {

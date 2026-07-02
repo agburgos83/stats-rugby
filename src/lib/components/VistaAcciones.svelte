@@ -80,7 +80,7 @@
 
 	.columna-historial {
 		flex: 1;
-		background-color: #f8fafc;
+		background-color: white;
 		border: 1px solid #e2e8f0;
 		border-radius: 8px;
 		padding: 16px;
@@ -142,8 +142,8 @@
 	.contenedor-acciones-pie {
 		display: flex;
 		justify-content: flex-end;
-		border-top: 1px solid #e2e8f0;
-		padding-top: 16px;
+		/* border-top: 1px solid #e2e8f0; */
+		/* padding-top: 16px; */
 	}
 
 	.btn-primary {
