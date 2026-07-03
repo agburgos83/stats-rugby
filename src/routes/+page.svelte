@@ -20,9 +20,11 @@
 		<div class="hero-texto">
 			<img src="/logo-app-white-400.svg" alt="Stats Rugby Logo" class="hero-logo" />
 			<p class="hero-descripcion">
-				App gratuita para entrenadores y analistas de rugby. <br />Cargá tu equipo, registrá
-				acciones individuales y grupales <br/>
-				y compartí el análisis con tus jugadores.
+				<span class="text-band">App gratuita para entrenadores y analistas de rugby. <br /></span>
+				<span class="text-band"
+					>Cargá tu equipo, registrá acciones individuales y grupales <br /></span
+				>
+				<span class="text-band">y compartí el análisis con tus jugadores.</span>
 			</p>
 			<div class="hero-botones">
 				<button onclick={empezarNuevo} class="btn-contratame"> Analizar partido </button>
@@ -30,8 +32,23 @@
 					href="mailto:agburgos83@gmail.com?subject=Contratar%20an%C3%A1lisis%20de%20partido"
 					class="btn-contratame"
 				>
-					Contratame
+					Solicitar análisis
 				</a>
+			</div>
+		</div>
+
+		<!-- Columna derecha: tutorial -->
+		<div class="hero-video-col">
+			<p class="video-titulo">Cómo usar la app</p>
+			<div class="aspect-video w-full overflow-hidden shadow-2xl">
+				<iframe
+					src="https://www.youtube.com/embed/_Z09DZYnLnQ?si=dYaZWp1Q1pq-CzsA"
+					title="YouTube video player"
+					class="h-full w-full"
+					frameborder="0"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+					allowfullscreen
+				></iframe>
 			</div>
 		</div>
 	</div>
@@ -68,7 +85,7 @@
 	}
 	@media (min-width: 1024px) {
 		.hero-grid {
-			grid-template-columns: 3fr 2fr;
+			grid-template-columns: 1fr 1fr;
 		}
 	}
 
@@ -84,6 +101,30 @@
 			align-items: flex-start;
 			text-align: left;
 		}
+	}
+
+	.hero-video-col {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+	@media (min-width: 1024px) {
+		.hero-video-col {
+			align-items: flex-start;
+		}
+	}
+
+	.video-titulo {
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: white;
+		padding-left: 12px;
+		background: white;
+		color: #2563eb;
+		padding: 4px 14px;
+		display: inline-block;
 	}
 
 	.hero-logo {
@@ -111,76 +152,31 @@
 		gap: 1rem;
 	}
 
-	.pantalla-analisis {
-		display: grid;
-		grid-template-columns: 1.2fr 1.8fr;
-		/* 2. Reducido ligeramente el espacio entre columnas para ganar ancho interno */
-		gap: 32px;
-		max-width: 1400px;
-		margin: 0 auto;
-		padding: 24px;
-		min-height: calc(100vh - 80px);
-		align-items: center;
+	.hero::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -5; /* entre el video (-10) y el contenido (10) */
+		background: linear-gradient(135deg, transparent 0%, rgba(255 255 255 / 0.5) 100%);
+		pointer-events: none;
 	}
 
-	.bloque-paneles-izquierda {
-		align-items: center;
-		text-align: center;
-		display: flex;
-		flex-direction: column;
-		gap: 28px;
-		width: 100%;
-		height: 100%;
-		justify-content: center;
-	}
-
-	.bloque-paneles-izquierda img {
-		max-width: 280px;
-		width: 100%;
-		height: auto;
-	}
-
-	.panel-video h2 {
-		border-left: 4px solid #2563eb; /* blue-600 */
-		padding-left: 12px;
-		font-size: 1.5rem;
-		color: #1e293b; /* slate-800 */
-		font-weight: 500;
+	.text-band {
+		background: white;
+		color: #2563eb;
+		padding: 0px 8px;
+		display: inline-block;
+		margin-bottom: 8px;
+		font-weight: 600;
 	}
 
 	.panel-video iframe {
 		width: 100%;
 		aspect-ratio: 16 / 9;
-		border-radius: 12px;
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+		/* border-radius: 12px; */
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 	}
 
-	.bloque-paneles-derecha {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: left;
-		gap: 32px;
-		width: 100%; /* Asegura que ocupe todo su espacio */
-	}
-
-	.bloque-paneles-derecha img {
-		/* 4. Aumentado el tamaño máximo del logo/imagen para que no quede insignificante */
-		max-width: 280px;
-		width: 100%;
-		height: auto;
-	}
-
-	/* 5. RESPONSIVO: Si la pantalla es menor a 1024px, se apilan para que no se compriman */
-	@media (max-width: 1024px) {
-		.pantalla-analisis {
-			grid-template-columns: 1fr;
-			gap: 40px;
-			padding: 24px 16px;
-		}
-	}
-
-	.btn-primary,
 	.btn-contratame {
 		padding: 12px 24px;
 		font-size: 0.95rem;
@@ -191,14 +187,6 @@
 		align-items: center;
 		text-decoration: none;
 		transition: background-color 0.2s;
-	}
-	.btn-primary {
-		background-color: #2563eb;
-		color: white;
-		border: none;
-	}
-	.btn-primary:hover {
-		background-color: #1d4ed8;
 	}
 	.btn-contratame {
 		background-color: #fff;
