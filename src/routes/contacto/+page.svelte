@@ -14,7 +14,7 @@
 		</p>
 	{:else}
 		<form
-			action="https://formspree.io/f/tu-id-aqui"
+			action="https://formspree.io/f/xbdvqqba"
 			method="POST"
 			class="formulario"
 			onsubmit={() => (enviado = true)}
