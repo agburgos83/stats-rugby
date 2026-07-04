@@ -70,18 +70,15 @@
 		}
 
 		if (shiftKey && jugadoresElegidos.length > 1) {
-	alert('Para usar Shift debe haber solo un jugador seleccionado');
-	return;
-}
+			alert('Para usar Shift debe haber solo un jugador seleccionado');
+			return;
+		}
 
 		prevAccionesLength = acciones.length;
-
-		const tiempoActual = obtenerTimestampVideo();
 
 		for (const j of jugadoresElegidos) {
 			acciones.push({
 				id: nextAccionId++,
-				timestamp: tiempoActual,
 				player: j,
 				skill: skillElegida,
 				calificacion: califIndividualElegida
@@ -110,12 +107,7 @@
 			return;
 		}
 
-		// prevAccionesLength = acciones.length;
-
-		const tiempoActual = obtenerTimestampVideo();
-
 		const nuevaTeamAccion: TeamAccion = {
-			timestamp: tiempoActual,
 			situacion: sitJuegoElegida, // El que está activo en memoria
 			calificacion: califGrupalElegida // El del botón que tocó
 		};
@@ -221,19 +213,6 @@
 			} else {
 				jugadoresElegidos = [p];
 			}
-		}
-	}
-
-	function obtenerTimestampVideo(): number {
-		const iframe = document.querySelector('iframe');
-		if (!iframe) return Date.now(); // fallback por seguridad
-
-		try {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const player = new (window as any).YT.Player(iframe);
-			return player.getCurrentTime() * 1000; // Convertir a milisegundos
-		} catch {
-			return Date.now(); // Si algo falla, volvemos al timestamp general
 		}
 	}
 </script>

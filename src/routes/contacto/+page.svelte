@@ -3,26 +3,39 @@
 	let email = $state('');
 	let mensaje = $state('');
 	let enviado = $state(false);
+
+	async function handleSubmit(e: Event) {
+		e.preventDefault();
+		const form = e.target as HTMLFormElement;
+		const data = new FormData(form);
+		try {
+			const res = await fetch(form.action, {
+				method: 'POST',
+				body: data,
+				headers: { Accept: 'application/json' }
+			});
+			if (res.ok) enviado = true;
+			else alert('Error al enviar. Podés escribirme a agburgos83@gmail.com');
+		} catch {
+			alert('Error de conexión. Podés escribirme a agburgos83@gmail.com');
+		}
+	}
 </script>
 
 <section class="pagina-contenido">
 	<h2 class="pagina-titulo">Contacto</h2>
 
 	{#if enviado}
-		<p class="alerta-exito">
-			Gracias por tu mensaje. Te responderé a la brevedad.
-		</p>
+		<p class="alerta-exito">Gracias por tu mensaje. Te responderé a la brevedad.</p>
 	{:else}
 		<form
 			action="https://formspree.io/f/xbdvqqba"
 			method="POST"
 			class="formulario"
-			onsubmit={() => (enviado = true)}
+			onsubmit={handleSubmit}
 		>
 			<div>
-				<label for="nombre" class="label-form">
-					Nombre
-				</label>
+				<label for="nombre" class="label-form"> Nombre </label>
 				<input
 					type="text"
 					name="nombre"
@@ -34,9 +47,7 @@
 			</div>
 
 			<div>
-				<label for="email" class="label-form">
-					Email
-				</label>
+				<label for="email" class="label-form"> Email </label>
 				<input
 					type="email"
 					name="email"
@@ -48,9 +59,7 @@
 			</div>
 
 			<div>
-				<label for="mensaje" class="label-form">
-					Mensaje
-				</label>
+				<label for="mensaje" class="label-form"> Mensaje </label>
 				<textarea
 					name="mensaje"
 					id="mensaje"
@@ -61,9 +70,7 @@
 				></textarea>
 			</div>
 
-			<button type="submit" class="btn-enviar">
-				Enviar mensaje
-			</button>
+			<button type="submit" class="btn-enviar"> Enviar mensaje </button>
 		</form>
 	{/if}
 </section>
@@ -98,7 +105,9 @@
 		border-radius: 2px;
 		padding: 0.5rem 0.75rem;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-		transition: border-color 0.15s, box-shadow 0.15s;
+		transition:
+			border-color 0.15s,
+			box-shadow 0.15s;
 		font-family: inherit;
 		font-size: inherit;
 	}

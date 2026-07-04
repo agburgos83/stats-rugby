@@ -20,12 +20,10 @@ export function generarMockData(
 	partido: { puntosLocal: number | null; puntosVisitante: number | null }
 ): { acciones: Accion[]; teamAcciones: TeamAccion[] } {
 	const acciones: Accion[] = [];
-	let baseTs = Date.now();
 	let nextId = 1;
 
 	function push(p: NonNullable<Puesto['player']>, skill: Skill, calif: CalificacionIndividual) {
-		acciones.push({ id: nextId++, timestamp: baseTs, player: p, skill, calificacion: calif });
-		baseTs += 100;
+		acciones.push({ id: nextId++, player: p, skill, calificacion: calif });
 	}
 
 	function buscarJug(numero: number) {
@@ -191,7 +189,7 @@ export function generarMockData(
 	// Team acciones
 	const teamAcciones: TeamAccion[] = [];
 	function pushTeam(situacion: SituacionJuego, calif?: CalificacionGrupal) {
-		teamAcciones.push({ timestamp: baseTs += 100, situacion, calificacion: calif ?? (Math.random() > 0.3 ? 'Positivo' : 'Negativo') });
+		teamAcciones.push({situacion, calificacion: calif ?? (Math.random() > 0.3 ? 'Positivo' : 'Negativo') });
 	}
 
 	for (let i = 0; i < 5; i++) pushTeam('Scrum propio');

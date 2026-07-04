@@ -26,14 +26,14 @@ export type Puesto = {
 
 export type Accion = {
 	id: number;
-	timestamp: number; // Podríamos usar Date o un número (milisegundos desde epoch)
+	// timestamp: number; // Podríamos usar Date o un número (milisegundos desde epoch)
 	player: Player;
 	skill: Skill;
 	calificacion: CalificacionIndividual;
 };
 
 export type TeamAccion = {
-	timestamp: number;
+	// timestamp: number;
 	situacion: SituacionJuego;
 	calificacion: CalificacionGrupal;
 };

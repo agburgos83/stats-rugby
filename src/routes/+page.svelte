@@ -46,7 +46,7 @@
 					title="YouTube video player"
 					class="h-full w-full"
 					frameborder="0"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
 					allowfullscreen
 				></iframe>
 			</div>
