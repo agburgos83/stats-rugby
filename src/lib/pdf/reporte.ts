@@ -94,7 +94,7 @@ export async function descargarPDF(
             styles: { halign: 'center' as const }
         },
         {
-            content: 'Juego de contacto',
+            content: 'Juego en el contacto',
             colSpan: colsContacto,
             styles: { halign: 'center' as const }
         },
@@ -161,7 +161,7 @@ export async function descargarPDF(
             // Si por alguna razón no se procesó este jugador, devolvemos fila vacía o por defecto
             if (!datosJugador) return [];
 
-            const fila = [`${datosJugador.apellido}`];
+            const fila = [`${puesto.numero}. ${datosJugador.apellido}`];
 
             ALL_SKILLS.forEach((skill) => {
                 const s = datosJugador.skills[skill];
