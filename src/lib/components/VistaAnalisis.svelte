@@ -13,6 +13,8 @@
 		type PropsAnalisis
 	} from '$lib/types';
 
+	/* eslint-disable svelte/no-navigation-without-resolve */
+
 	// importadas desde el orquestador
 	let {
 		equipo,
@@ -29,9 +31,9 @@
 	let prevAccionesLength = $state(0);
 	let puedeDeshacerIndividual = $state(false);
 	let puedeDeshacerGrupal = $state(false);
-
 	let totalAccionesIndividuales = $derived(acciones.length);
 	let totalAccionesGrupales = $derived(teamAcciones.length);
+	let embedPermitido = $state<boolean | null>(null);
 
 	const urlEmbed = $derived(cocinarEnlaceVideo(partido.urlVideo));
 
@@ -215,6 +217,40 @@
 			}
 		}
 	}
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		if (!url) {
+			embedPermitido = null;
+			return;
+		}
+
+		// Extraer ID de YouTube
+		// eslint-disable-next-line no-useless-assignment
+		let videoId = '';
+		if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1].split('&')[0];
+		else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+		else {
+			embedPermitido = true;
+			return;
+		} // no es YT, asumir permitido
+
+		if (!videoId) {
+			embedPermitido = true;
+			return;
+		}
+
+		embedPermitido = null; // loading
+		fetch(
+			`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+		)
+			.then((r) => {
+				embedPermitido = r.ok;
+			})
+			.catch(() => {
+				embedPermitido = true;
+			}); // si falla la consulta, asumir permitido
+	});
 </script>
 
 <div class="pantalla-analisis">
@@ -227,13 +263,24 @@
 			</h2>
 			<p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p>
 			{#if urlEmbed}
-				<iframe
-					src={urlEmbed}
-					title="Video Player"
-					frameborder="0"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-					allowfullscreen
-				></iframe>
+				{#if embedPermitido === null}
+					<div class="veo-loading">Verificando disponibilidad del video…</div>
+				{:else if embedPermitido}
+					<iframe
+						src={urlEmbed}
+						title="Video Player"
+						frameborder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+						allowfullscreen
+					></iframe>
+				{:else}
+					<div class="embed-bloqueado">
+						<span>El propietario del video inhabilitó la reproducción en otros sitios web.</span>
+						<a href={partido.urlVideo} target="_blank" rel="noopener" class="btn-primary">
+							Abrir en YouTube ↗
+						</a>
+					</div>
+				{/if}
 			{:else if veoVideoUrl}
 				<!-- svelte-ignore a11y_media_has_caption -->
 				<video src={veoVideoUrl} controls preload="metadata"></video>
@@ -277,8 +324,6 @@
 				</div>
 			</div>
 
-			<!-- <hr class="separador-panel" /> -->
-
 			<div class="seccion-bloque">
 				<div class="grilla-skills">
 					<h3>MANEJO DE PELOTA</h3>
@@ -299,8 +344,6 @@
 							</div>
 						{/each}
 					</div>
-
-					<!-- <hr class="separador-panel" /> -->
 
 					<h3>JUEGO EN EL CONTACTO</h3>
 					<div class="grilla-tiras">
@@ -345,8 +388,6 @@
 						{/each}
 					</div>
 
-					<!-- <hr class="separador-panel" /> -->
-
 					<h3>JUEGO CON EL PIE</h3>
 					<div class="grilla-tiras">
 						{#each FOOT_SKILLS as s (s)}
@@ -365,8 +406,6 @@
 							</div>
 						{/each}
 					</div>
-
-					<!-- <hr class="separador-panel" /> -->
 
 					<h3>INFRACCIONES</h3>
 					<div class="grilla-tiras">
@@ -878,14 +917,6 @@
 		flex: 1; /* Hace que si hay dos botones, midan exactamente lo mismo */
 	}
 
-	/* Línea divisoria sutil */
-	.separador-panel {
-		border: 0;
-		border-top: 1px solid #2564eb6e;
-		margin: 6px 0;
-		width: 100%;
-	}
-
 	/* Contenedor horizontal que distribuye el total a la izquierda y botones a la derecha */
 	.barra-herramientas {
 		display: flex;
@@ -950,5 +981,34 @@
 		color: #cbd5e1;
 		border-color: #e2e8f0;
 		cursor: not-allowed;
+	}
+
+	.embed-bloqueado {
+		/* flex-direction: column; */
+		display: flex;
+		align-items: center;
+		/* justify-content: space-between; */
+		gap: 16px;
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		border-radius: 8px;
+		padding: 24px 32px;
+		color: #1e40af;
+		font-weight: 500;
+		font-size: 0.95rem;
+		box-sizing: border-box;
+	}
+	.embed-bloqueado .btn-primary {
+		white-space: nowrap;
+		background: #2563eb;
+		color: white;
+		padding: 10px 20px;
+		border-radius: 8px;
+		text-decoration: none;
+		font-weight: bold;
+		font-size: 0.9rem;
+		flex-shrink: 0;
 	}
 </style>
