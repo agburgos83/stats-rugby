@@ -22,3 +22,87 @@
 >
 	{@render children()}
 </main>
+
+<footer class="site-footer">
+	<div class="footer-inner">
+		<p class="footer-desc">Stats Rugby — App gratuita para entrenadores y analistas de rugby</p>
+		<div class="footer-links">
+			<a
+				href="https://www.instagram.com/stats.rugby/"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="ig-link"
+			>
+				<img src="/logo-instagram-svgrepo-com.svg" alt="Instagram" class="ig-icon" />
+				@stats.rugby
+			</a>
+			<span class="footer-sep">·</span>
+			<a href="mailto:agburgos83@gmail.com">agburgos83@gmail.com</a>
+		</div>
+		<p class="footer-license">
+			CC BY-NC-ND 4.0 — © 2025 Agustín Burgos —
+			<a
+				href="https://creativecommons.org/licenses/by-nc-nd/4.0/"
+				target="_blank"
+				rel="noopener noreferrer">Ver licencia</a
+			>
+		</p>
+	</div>
+</footer>
+
+<style>
+	.site-footer {
+		background-color: #2563eb;
+		color: white;
+		text-align: left;
+		padding: 24px 2rem;
+		font-size: 0.85rem;
+	}
+	.footer-inner p {
+		margin: 0;
+	}
+	.footer-desc {
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+	.footer-links {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+	.footer-links a {
+		color: white;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+	.footer-links a:hover {
+		color: #dbeafe;
+	}
+	.ig-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		text-decoration: none !important;
+	}
+	.ig-link:hover {
+		text-decoration: underline !important;
+	}
+	.ig-icon {
+		width: 18px;
+		height: 18px;
+		display: block;
+	}
+	.footer-sep {
+		opacity: 0.5;
+	}
+	.footer-license {
+		opacity: 0.75;
+		font-size: 0.8rem;
+	}
+	.footer-license a {
+		color: white;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+</style>
