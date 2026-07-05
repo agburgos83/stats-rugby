@@ -18,6 +18,8 @@
 	let hayDatos = $state(false);
 
 	$effect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		$page.url.pathname; // ← fuerza re-ejecución en cada navegación
 		if (!browser) return;
 		const saved = loadFromStorage();
 		hayDatos = Array.isArray(saved.jugadores) && saved.jugadores.length > 0;
@@ -102,7 +104,8 @@
 	}
 
 	@keyframes blink-red {
-		0%, 100% {
+		0%,
+		100% {
 			opacity: 0.3;
 			box-shadow: 0 0 4px 1px rgba(220, 38, 38, 0.3);
 		}
