@@ -116,7 +116,7 @@
 					placeholder="0"
 					class="input-control"
 				/>
-				{#if partido.puntosVisitante !== null && partido.puntosVisitante > 0 && !esPuntajeValido(partido.puntosVisitante)}
+				{#if partido.puntosVisitante !== null && !esPuntajeValido(partido.puntosVisitante)}
 					<span class="error-texto">Puntaje inválido</span>
 				{/if}
 			</div>
