@@ -26,16 +26,49 @@ export type Puesto = {
 
 export type Accion = {
 	id: number;
-	// timestamp: number; // Podríamos usar Date o un número (milisegundos desde epoch)
 	player: Player;
 	skill: Skill;
 	calificacion: CalificacionIndividual;
 };
 
 export type TeamAccion = {
-	// timestamp: number;
 	situacion: SituacionJuego;
 	calificacion: CalificacionGrupal;
+};
+
+export type ModalidadClave = 'seven' | 'ten' | 'doce' | 'quince';
+
+export const MODALIDADES: Record<ModalidadClave, { label: string; total: number; titulares: number }> = {
+    seven: { label: 'Seven', total: 12, titulares: 7 },
+    ten:   { label: 'Ten',   total: 15, titulares: 10 },
+    doce:  { label: 'Doce',  total: 17, titulares: 12 },
+    quince:{ label: 'Quince', total: 23, titulares: 15 },
+};
+
+export const POSICIONES_POR_MODALIDAD: Record<ModalidadClave, Record<number, string>> = {
+    seven: {
+        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
+        4: 'Medio scrum', 5: 'Apertura',
+        6: 'Centro', 7: 'Wing',
+    },
+    ten:   {
+        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
+		4: 'Segunda línea', 5: 'Segunda línea',
+        6: 'Medio scrum', 7: 'Apertura',
+        8: 'Centro', 9: 'Wing', 10: 'Fullback',
+    },
+    doce:  {
+        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
+		4: 'Segunda línea', 5: 'Segunda línea', 6: 'Octavo',
+        7: 'Medio scrum', 8: 'Apertura', 9: 'Centro',
+        10: 'Wing', 11: 'Wing', 12: 'Fullback',
+    },
+    quince: {
+        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
+		4: 'Segunda línea', 5: 'Segunda línea', 6: 'Ala', 7: 'Ala',
+		8: 'Octavo', 9: 'Medio scrum', 10: 'Apertura', 11: 'Wing', 
+		12: 'Centro', 13: 'Centro', 14: 'Wing', 15: 'Fullback',
+    },
 };
 
 export type UnionClave = keyof typeof EQUIPOS_POR_UNION;
@@ -295,8 +328,8 @@ export type SituacionJuego = 'Scrum propio' | 'Line propio' | 'Salida recibida' 
 
 // props
 export interface PropsCargaPartido {
-    partido: PartidoContexto;
-    cambiarVista: () => void;
+	partido: PartidoContexto;
+	cambiarVista: () => void;
 }
 
 export interface PropsCargaEquipo {
@@ -304,14 +337,9 @@ export interface PropsCargaEquipo {
 	equipo: Puesto[];
 	usuarioUnion: UnionClave;
 	usuarioClub: string;
+	usuarioModalidad: ModalidadClave;
 	cambiarVista: () => void;
 }
-
-// export interface PropsCargaEquipo {
-// 	jugadores: Player[];
-// 	equipo: Puesto[];
-// 	cambiarVista: () => void;
-// }
 
 export interface PropsAnalisis {
 	partido: PartidoContexto;

@@ -5,7 +5,10 @@
 		type PartidoContexto,
 		type UnionClave,
 		type Accion,
-		type TeamAccion
+		type TeamAccion,
+		type ModalidadClave,
+		MODALIDADES,
+		POSICIONES_POR_MODALIDAD
 	} from '$lib/types';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
@@ -21,26 +24,11 @@
 
 	let usuarioUnion = $state<UnionClave>('URBA');
 	let usuarioClub = $state('');
+	let usuarioModalidad = $state<ModalidadClave>('quince');
 
 	// 0. inicializacion de puestos
-	function obtenerPosicionTeorica(numero: number): string {
-		const posiciones: Record<number, string> = {
-			1: 'Pilar izquierdo',
-			2: 'Hooker',
-			3: 'Pilar derecho',
-			4: 'Segunda línea',
-			5: 'Segunda línea',
-			6: 'Ala',
-			7: 'Ala',
-			8: 'Octavo',
-			9: 'Medio scrum',
-			10: 'Apertura',
-			11: 'Wing izquierdo',
-			12: 'Primer centro',
-			13: 'Segundo centro',
-			14: 'Wing derecho',
-			15: 'Fullback'
-		};
+	function obtenerPosicionTeorica(modalidad: ModalidadClave, numero: number): string {
+		const posiciones = POSICIONES_POR_MODALIDAD[modalidad];
 		return posiciones[numero] || `Suplente ${numero}`;
 	}
 
@@ -48,13 +36,16 @@
 	let jugadores = $state<Player[]>([]);
 	let vistaActual = $state(1);
 
-	let equipo = $state(
-		Array.from({ length: 23 }, (_, i) => ({
+	let equipo = $state<Puesto[]>([]);
+
+	$effect(() => {
+		const total = MODALIDADES[usuarioModalidad].total;
+		equipo = Array.from({ length: total}, (_, i) => ({
 			numero: i + 1,
-			posicionOriginal: obtenerPosicionTeorica(i + 1),
-			player: null as Player | null
-		}))
-	);
+			posicionOriginal: obtenerPosicionTeorica(usuarioModalidad, i + 1),
+			player: null
+		}));
+	})
 
 	let partido = $state<PartidoContexto>({
 		fecha: '',
@@ -91,9 +82,12 @@
 	if (browser && $page.url.searchParams.has('mock')) {
 		const equipoInicial = equipo;
 		const partidoInicial = partido;
-		if (equipoInicial.some(p => p.player !== null)) {
+		if (equipoInicial.some((p) => p.player !== null)) {
 			import('$lib/mock-data').then(async ({ generarMockData }) => {
-				const { acciones: mockAcc, teamAcciones: mockTeam } = generarMockData(equipoInicial, partidoInicial);
+				const { acciones: mockAcc, teamAcciones: mockTeam } = generarMockData(
+					equipoInicial,
+					partidoInicial
+				);
 				acciones = mockAcc;
 				teamAcciones = mockTeam;
 				vistaActual = 5;
@@ -101,7 +95,11 @@
 					import('$lib/processing/reporte-data'),
 					import('$lib/pdf/reporte')
 				]);
-				const { matrizProcesada, dixTotales } = procesarReporte(equipoInicial, acciones, teamAcciones);
+				const { matrizProcesada, dixTotales } = procesarReporte(
+					equipoInicial,
+					acciones,
+					teamAcciones
+				);
 				await descargarPDF(equipoInicial, partidoInicial, matrizProcesada, dixTotales);
 			});
 		}
@@ -133,6 +131,7 @@
 		{equipo}
 		bind:usuarioUnion
 		bind:usuarioClub
+		bind:usuarioModalidad
 		cambiarVista={() => cambiarVista(3)}
 	/>
 {:else if vistaActual === 3}
@@ -146,7 +145,18 @@
 		cambiarVista={() => cambiarVista(5)}
 	/>
 {:else if vistaActual === 5}
-	<VistaAcciones {equipo} {partido} {acciones} {teamAcciones} cambiarVista={() => cambiarVista(6)} />
+	<VistaAcciones
+		{equipo}
+		{partido}
+		{acciones}
+		{teamAcciones}
+		cambiarVista={() => cambiarVista(6)}
+	/>
 {:else if vistaActual === 6}
-	<VistaCierre cambiarVista={() => { clearStorage(); window.location.href = resolve('/'); }} />
+	<VistaCierre
+		cambiarVista={() => {
+			clearStorage();
+			window.location.href = resolve('/');
+		}}
+	/>
 {/if}

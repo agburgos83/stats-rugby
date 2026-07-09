@@ -3,7 +3,9 @@
 		type Player,
 		type PropsCargaEquipo,
 		type UnionClave,
-		EQUIPOS_POR_UNION
+		EQUIPOS_POR_UNION,
+		POSICIONES_POR_MODALIDAD,
+		MODALIDADES
 	} from '$lib/types';
 
 	let {
@@ -11,6 +13,7 @@
 		equipo,
 		usuarioUnion = $bindable(),
 		usuarioClub = $bindable(),
+		usuarioModalidad = $bindable(),
 		cambiarVista
 	}: PropsCargaEquipo = $props();
 	let jugadorSiendoArrastrado: Player | null = null;
@@ -43,8 +46,8 @@
 	}
 
 	function formularioCompleto(): boolean {
-		return usuarioClub !== '' &&
-			equipo.slice(0, 15).every((p) => p.player !== null);
+		const req = MODALIDADES[usuarioModalidad].titulares;
+		return usuarioClub !== '' && equipo.slice(0, req).every((p) => p.player !== null);
 	}
 </script>
 
@@ -57,8 +60,8 @@
 
 		<!-- COLUMNA 1: UNION Y CLUB -->
 		<div class="columna-union-club">
-			<h2>Elegí tu Unión y club</h2>
-			<p class="subtitulo">Seleccioná tu unión y club antes de armar el equipo</p>
+			<h2>Elegí tu Unión, club y modalidad</h2>
+			<p class="subtitulo">Completá estos datos antes de armar el equipo</p>
 
 			<label for="union-select">Elegí tu unión</label>
 			<select id="union-select" bind:value={usuarioUnion} class="input-control">
@@ -71,6 +74,13 @@
 			<select id="club-select" bind:value={usuarioClub} class="input-control">
 				{#each EQUIPOS_POR_UNION[usuarioUnion] as club (club)}
 					<option value={club.label}>{club.label}</option>
+				{/each}
+			</select>
+
+			<label for="modalidad-select">Elegí la modalidad</label>
+			<select id="club-select" bind:value={usuarioModalidad} class="input-control">
+				{#each Object.keys(POSICIONES_POR_MODALIDAD) as mod (mod)}
+					<option value={mod}>{mod}</option>
 				{/each}
 			</select>
 		</div>
@@ -111,7 +121,7 @@
 
 		<!-- COLUMNA 4: EL EQUIPO DE 23 -->
 		<div class="columna-equipo">
-			<h2>Equipo (23)</h2>
+			<h2>Equipo</h2>
 			{#each equipo as p (p.numero)}
 				<div
 					class="tarjeta-casillero"
