@@ -172,12 +172,11 @@
 	.pantalla-carga {
 		display: grid;
 		grid-template-columns: 280px 1fr 1fr 1fr;
-		grid-template-rows: auto 1fr auto;
 		gap: 20px;
+		align-items: start; 
 		width: 100%;
 		max-width: 1400px;
-		min-height: 85vh;
-		box-sizing: border-box;
+		/* sin grid-template-rows ni min-height */
 	}
 
 	/* Encabezado que abarca las 4 columnas */
