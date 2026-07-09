@@ -1,3 +1,11 @@
+<svelte:head>
+	<title>Acerca de — Stats Rugby</title>
+	<meta
+		name="description"
+		content="Conocé más sobre Stats Rugby, la app gratuita para el análisis de rendimiento en rugby."
+	/>
+</svelte:head>
+
 <section class="pagina-contenido">
 	<h2 class="pagina-titulo">Sobre Stats Rugby</h2>
 

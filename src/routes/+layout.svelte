@@ -8,7 +8,19 @@
 	let { children } = $props();
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head
+	><link rel="icon" href={favicon} />
+
+	<title>Stats Rugby — App de análisis para entrenadores</title>
+	<meta
+		name="description"
+		content="App gratuita para entrenadores y analistas de rugby. Cargá tu equipo, registrá acciones individuales y grupales, y compartí el análisis con tus jugadores."
+	/>
+	<meta property="og:title" content="Stats Rugby" />
+	<meta property="og:description" content="App gratuita para entrenadores y analistas de rugby." />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://stats-rugby.netlify.app/" />
+</svelte:head>
 
 <Menu />
 

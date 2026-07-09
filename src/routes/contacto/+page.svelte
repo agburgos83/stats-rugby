@@ -22,6 +22,11 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Contacto — Stats Rugby</title>
+	<meta name="description" content="Contactate con el desarrollador de Stats Rugby." />
+</svelte:head>
+
 <section class="pagina-contenido">
 	<h2 class="pagina-titulo">Contacto</h2>
 
