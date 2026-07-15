@@ -28,7 +28,57 @@ async function obtenerEscudo(union: UnionClave, equipo: string): Promise<string 
  * @param negativos - Cantidad de acciones negativas
  * @returns String SVG listo para pasar a doc.addSvgAsImage()
  */
-function generarDonutSVG(positivos: number, negativos: number): string {
+const VERBOS: Record<string, [string, string, string]> = {
+    'Scrum propio':    ['Tiramos',   'scrums',             'obtuvimos'],
+    'Line propio':     ['Tiramos',   'lines',              'obtuvimos'],
+    'Salida recibida': ['Nos patearon', 'salidas',            'obtuvimos'],
+    'Scrum rival':     ['Tiraron',   'scrums',             'recuperamos'],
+    'Line rival':      ['Tiraron',   'lines',              'recuperamos'],
+    'Salida cargada':  ['Pateamos',  'salidas',            'recuperamos'],
+    'Efect. AT. 22m':  ['Llegamos',  'veces a 22 rival',  'anotamos'],
+    'Efect. DEF. 22m': ['Llegaron',  'veces a nuestros 22', 'evitamos'],
+};
+
+function generarDonutSVG(positivos: number, negativos: number, situacion: string): string {
+
+    const total = positivos + negativos;
+
+    if (total === 0) {
+        const scale = 3;
+        const viewW = 200 * scale;
+        const viewH = 220 * scale;
+        const cx = viewW / 2;
+        const cy = 80 * scale;
+        const outerR = 65 * scale;
+        const innerR = 36 * scale;
+
+        const arcGenerator = arc<{ startAngle: number; endAngle: number; padAngle: number }>()
+            .innerRadius(innerR)
+            .outerRadius(outerR);
+
+        const pieGenerator = pie<number>()
+            .startAngle(0)
+            .endAngle(2 * Math.PI)
+            .sort(null);
+
+        const slices = pieGenerator([1]);
+
+        let pathsHtml = '';
+        slices.forEach((slice) => {
+            const d = arcGenerator(slice);
+            if (d) pathsHtml += `<path d="${d}" fill="#e2e8f0" />\n`;
+        });
+
+        return `<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 ${viewW} ${viewH}">
+            <g transform="translate(${cx}, ${cy})">
+            ${pathsHtml}</g>
+            <text x="${cx}" y="${cy + outerR + 20 * scale}" text-anchor="middle" font-family="helvetica" font-size="${11 * scale}" fill="#94a3b8">Sin datos</text>
+        </svg>`;
+    }
+
+    const pct = Math.round((positivos / total) * 100);
+
+    const [verbo, objeto, resultado] = VERBOS[situacion] ?? ['', '', ''];
 
     const scale = 3;
     const viewW = 200 * scale;
@@ -48,11 +98,8 @@ function generarDonutSVG(positivos: number, negativos: number): string {
         .endAngle(2 * Math.PI)
         .sort(null);
 
-    const total = positivos + negativos;
-    const pct = total > 0 ? Math.round((positivos / total) * 100) : 0;
-
-    const valores = total > 0 ? [positivos, negativos] : [1];
-    const colores = total > 0 ? ['#2664eb', '#2664ebb8'] : ['#e2e8f0'];
+    const valores = [positivos, negativos];
+    const colores = ['#2664eb', '#2664ebb8'];
 
     const slices = pieGenerator(valores);
 
@@ -67,8 +114,9 @@ function generarDonutSVG(positivos: number, negativos: number): string {
     return `<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 ${viewW} ${viewH}">
         <g transform="translate(${cx}, ${cy})">
         ${pathsHtml}</g>
-        <text x="${cx}" y="${cy + outerR + 18 * scale}" text-anchor="middle" font-family="helvetica" font-size="${12 * scale}" fill="#1e293b">${pct}% efectividad</text>
-        <text x="${cx}" y="${cy + outerR + 32 * scale}" text-anchor="middle" font-family="helvetica" font-size="${10 * scale}" fill="#64748b">${total} situaciones</text>
+        <text x="${cx}" y="${cy + outerR + 18 * scale}" text-anchor="middle" font-family="helvetica" font-size="${11 * scale}" fill="#1e293b">${pct}% efectividad</text>
+        <text x="${cx}" y="${cy + outerR + 30 * scale}" text-anchor="middle" font-family="helvetica" font-size="${9 * scale}" fill="#64748b">${verbo} ${total} ${objeto}</text>
+        <text x="${cx}" y="${cy + outerR + 40 * scale}" text-anchor="middle" font-family="helvetica" font-size="${9 * scale}" fill="#64748b">${resultado} ${positivos}</text>
     </svg>`;
 }
 
@@ -120,8 +168,6 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
         doc.addImage(escudoLocal, 'PNG', escudoXLocal, escudoY, escudoSize, escudoSize);
     }
 
-
-
     const colX = [18, 78, 138];
     const rowY = [38, 112, 186];
 
@@ -139,14 +185,11 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
         doc.text(situacion, x + 30, y, { align: 'center' });
 
         const [negativos, positivos] = dixTotales[situacion];
-        const svg = generarDonutSVG(positivos, negativos);
+        const svg = generarDonutSVG(positivos, negativos, situacion);
         const dataUrl = await renderSVGaImagen(svg);
         doc.addImage(dataUrl, 'PNG', x, y + 3, 60, 63);
 
-
     }
-
-
 
     doc.setDrawColor(37, 99, 235);
     doc.setLineWidth(0.3);

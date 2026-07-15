@@ -87,6 +87,7 @@ export type PartidoContexto = {
 
 export const INFRACCION_SKILLS = [
 	'Penal',
+	'Free kick',
 	'Knock on',
 	'Fwd. pass',
 ] as const;

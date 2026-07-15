@@ -55,6 +55,8 @@ export function procesarReporte(
         const skill: Skill = a.skill;
         const calificacion = a.calificacion;
 
+        if (!matrizProcesada[jugadorID]) continue;
+
         matrizProcesada[jugadorID].skills[skill][calificacion]++;
         matrizProcesada[jugadorID].totalGeneral++;
 
