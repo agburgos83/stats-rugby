@@ -4,7 +4,7 @@ function rand(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pickCalif(weights: Record<CalificacionIndividual, number>): CalificacionIndividual {
+function pickCalif(weights: Partial<Record<CalificacionIndividual, number>>): CalificacionIndividual {
 	const entries = Object.entries(weights) as [CalificacionIndividual, number][];
 	const total = entries.reduce((s, [, w]) => s + w, 0);
 	let r = Math.random() * total;
@@ -46,7 +46,7 @@ export function generarMockData(
 			: n >= 16 ? rand(5, 15)
 			: rand(10, 20);
 		for (let i = 0; i < pases; i++) {
-			push(p, 'Pase', pickCalif({ Negativo: 0.05, Neutro: 0.60, Positivo: 0.30, Dominante: 0.05 }));
+			push(p, 'Pase', pickCalif({ Negativo: 0.05, Positivo: 0.95 }));
 		}
 
 		// Tackles
@@ -65,7 +65,7 @@ export function generarMockData(
 		if (n === 4 || n === 5) {
 			const recs = rand(3, 7);
 			for (let i = 0; i < recs; i++) {
-				push(p, 'Rec. line', pickCalif({ Negativo: 0, Neutro: 0.15, Positivo: 0.55, Dominante: 0.30 }));
+				push(p, 'Rec. line', pickCalif({ Negativo: 0, Positivo: 1 }));
 			}
 		}
 
@@ -73,7 +73,7 @@ export function generarMockData(
 		if (n === 2) {
 			const lanzs = rand(10, 18);
 			for (let i = 0; i < lanzs; i++) {
-				push(p, 'Lanz. line', pickCalif({ Negativo: 0.10, Neutro: 0.20, Positivo: 0.50, Dominante: 0.20 }));
+				push(p, 'Lanz. line', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 			}
 		}
 
@@ -81,37 +81,37 @@ export function generarMockData(
 		if (n >= 1 && n <= 8) {
 			const rucks = rand(6, 12);
 			for (let i = 0; i < rucks; i++) {
-				push(p, 'Ruck', pickCalif({ Negativo: 0.10, Neutro: 0.40, Positivo: 0.40, Dominante: 0.10 }));
+				push(p, 'Ruck', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 			}
 		} else if (n >= 11 && n <= 15) {
 			const rucks = rand(0, 4);
 			for (let i = 0; i < rucks; i++) {
-				push(p, 'Ruck', pickCalif({ Negativo: 0.10, Neutro: 0.40, Positivo: 0.40, Dominante: 0.10 }));
+				push(p, 'Ruck', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 			}
 		}
 
 		// Ast. tackle (1-8: 2-3, resto: 0-2)
 		const astTackles = n >= 1 && n <= 8 ? rand(2, 3) : rand(0, 2);
 		for (let i = 0; i < astTackles; i++) {
-			push(p, 'Ast. tackle', pickCalif({ Negativo: 0.10, Neutro: 0.40, Positivo: 0.40, Dominante: 0.10 }));
+			push(p, 'Ast. tackle', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 		}
 
 		// Ast. duelo (1-8: 2-3, resto: 0-1)
 		const astDuelos = n >= 1 && n <= 8 ? rand(2, 3) : rand(0, 1);
 		for (let i = 0; i < astDuelos; i++) {
-			push(p, 'Ast. duelo', pickCalif({ Negativo: 0.10, Neutro: 0.40, Positivo: 0.40, Dominante: 0.10 }));
+			push(p, 'Ast. duelo', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 		}
 
 		// Kicks (9, 10, 11, 14, 15)
 		if (n === 10) {
 			const kicks = rand(10, 15);
 			for (let i = 0; i < kicks; i++) {
-				push(p, 'Kick', pickCalif({ Negativo: 0.10, Neutro: 0.40, Positivo: 0.40, Dominante: 0.10 }));
+				push(p, 'Kick', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 			}
 		} else if ([9, 11, 14, 15].includes(n)) {
 			const kicks = rand(2, 5);
 			for (let i = 0; i < kicks; i++) {
-				push(p, 'Kick', pickCalif({ Negativo: 0.10, Neutro: 0.40, Positivo: 0.40, Dominante: 0.10 }));
+				push(p, 'Kick', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 			}
 		}
 
@@ -119,12 +119,12 @@ export function generarMockData(
 		if ([4, 5, 6, 7, 8, 11, 14, 15].includes(n)) {
 			const recs = rand(2, 3);
 			for (let i = 0; i < recs; i++) {
-				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.10, Neutro: 0.30, Positivo: 0.45, Dominante: 0.15 }));
+				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 			}
 		} else {
 			const recs = rand(0, 1);
 			for (let i = 0; i < recs; i++) {
-				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.10, Neutro: 0.30, Positivo: 0.45, Dominante: 0.15 }));
+				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 			}
 		}
 	}
@@ -139,7 +139,7 @@ export function generarMockData(
 	const totalKickOffs = baseKickOffs + extraKickOffs;
 	if (diez) {
 		for (let i = 0; i < totalKickOffs; i++) {
-			push(diez, 'Kick off', pickCalif({ Negativo: 0.10, Neutro: 0.20, Positivo: 0.50, Dominante: 0.20 }));
+			push(diez, 'Kick off', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 		}
 	}
 
@@ -147,7 +147,7 @@ export function generarMockData(
 	const pateador = diez || buscarJug(15) || poolJug();
 	const palosAttempts = rand(4, 8);
 	for (let i = 0; i < palosAttempts; i++) {
-		push(pateador, 'Palos', pickCalif({ Negativo: 0.20, Neutro: 0.10, Positivo: 0.60, Dominante: 0.10 }));
+		push(pateador, 'Palos', pickCalif({ Negativo: 0.20, Positivo: 0.80 }));
 	}
 
 	// Off load (~5 total, mayormente backs 9-15)
@@ -158,13 +158,13 @@ export function generarMockData(
 			return p && p.numero >= 9 && p.numero <= 15;
 		});
 		push(backs.length > 0 ? backs[rand(0, backs.length - 1)] : poolJug(), 'Off load',
-			pickCalif({ Negativo: 0.10, Neutro: 0.30, Positivo: 0.45, Dominante: 0.15 }));
+			pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 	}
 
 	// Recu. div. (2-3 total)
 	const recuDivs = rand(2, 3);
 	for (let i = 0; i < recuDivs; i++) {
-		push(poolJug(), 'Recu. div.', pickCalif({ Negativo: 0.10, Neutro: 0.20, Positivo: 0.50, Dominante: 0.20 }));
+		push(poolJug(), 'Recu. div.', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
 	}
 
 	// Intercep. (1-2 total, tipicamente backs)
@@ -175,7 +175,7 @@ export function generarMockData(
 			return p && p.numero >= 11 && p.numero <= 15;
 		});
 		push(backs.length > 0 ? backs[rand(0, backs.length - 1)] : poolJug(), 'Intercep.',
-			pickCalif({ Negativo: 0.05, Neutro: 0.10, Positivo: 0.50, Dominante: 0.35 }));
+			pickCalif({ Negativo: 0.05, Positivo: 0.95 }));
 	}
 
 	// Infracciones (se contabilizan en Positivo = ocurrio la infraccion)
