@@ -100,7 +100,7 @@
 					acciones,
 					teamAcciones
 				);
-				await descargarPDF(equipoInicial, partidoInicial, matrizProcesada, dixTotales);
+				await descargarPDF(equipoInicial, partidoInicial, matrizProcesada, dixTotales, usuarioModalidad);
 			});
 		}
 	}
@@ -150,6 +150,7 @@
 		{partido}
 		{acciones}
 		{teamAcciones}
+		modalidad={usuarioModalidad}
 		cambiarVista={() => cambiarVista(6)}
 	/>
 {:else if vistaActual === 6}

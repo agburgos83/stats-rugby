@@ -2,11 +2,13 @@
 	import { procesarReporte } from '$lib/processing/reporte-data';
 	import { descargarPDF } from '$lib/pdf/reporte';
 
-	let { equipo, partido, acciones, teamAcciones, cambiarVista } = $props();
+	import type { ModalidadClave } from '$lib/types';
+
+	let { equipo, partido, acciones, teamAcciones, cambiarVista, modalidad } = $props<{ equipo: any; partido: any; acciones: any; teamAcciones: any; cambiarVista: any; modalidad: ModalidadClave }>();
 
 	async function generarReporte(): Promise<void> {
 		const { matrizProcesada, dixTotales } = procesarReporte(equipo, acciones, teamAcciones);
-		await descargarPDF(equipo, partido, matrizProcesada, dixTotales);
+		await descargarPDF(equipo, partido, matrizProcesada, dixTotales, modalidad);
 	}
 	
 </script>

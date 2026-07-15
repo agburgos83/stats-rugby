@@ -50,24 +50,33 @@ export const POSICIONES_POR_MODALIDAD: Record<ModalidadClave, Record<number, str
         1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
         4: 'Medio scrum', 5: 'Apertura',
         6: 'Centro', 7: 'Wing',
+        8: 'Hooker', 9: 'Pilar', 10: 'Medio scrum',
+        11: 'Centro', 12: 'Wing',
     },
     ten:   {
         1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
 		4: 'Segunda línea', 5: 'Segunda línea',
         6: 'Medio scrum', 7: 'Apertura',
         8: 'Centro', 9: 'Wing', 10: 'Fullback',
+        11: 'Hooker', 12: 'Pilar', 13: 'Segunda línea',
+        14: 'Medio scrum', 15: 'Centro',
     },
     doce:  {
         1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
 		4: 'Segunda línea', 5: 'Segunda línea', 6: 'Octavo',
         7: 'Medio scrum', 8: 'Apertura', 9: 'Centro',
         10: 'Wing', 11: 'Wing', 12: 'Fullback',
+        13: 'Hooker', 14: 'Pilar', 15: 'Segunda línea',
+        16: 'Ala', 17: 'Centro',
     },
     quince: {
         1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
 		4: 'Segunda línea', 5: 'Segunda línea', 6: 'Ala', 7: 'Ala',
 		8: 'Octavo', 9: 'Medio scrum', 10: 'Apertura', 11: 'Wing', 
 		12: 'Centro', 13: 'Centro', 14: 'Wing', 15: 'Fullback',
+		16: 'Pilar', 17: 'Hooker', 18: 'Pilar',
+		19: 'Segunda línea', 20: 'Ala',
+		21: 'Medio scrum', 22: 'Centro', 23: 'Wing',
     },
 };
 

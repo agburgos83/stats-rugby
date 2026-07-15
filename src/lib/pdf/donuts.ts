@@ -142,6 +142,7 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
     ])
 
     // --- Header: título a la izquierda, escudos a la derecha ---
+    doc.setTextColor(0);
     doc.setFontSize(16);
     doc.text('Efectividad por situaciones de juego', 14, 12);
     doc.setFontSize(12);
@@ -161,7 +162,7 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
     const pageWidth = doc.internal.pageSize.width;
     const strokeY = pageHeight - 25;
 
-    const escudoSize = 16;
+    const escudoSize = 18;
     const escudoXLocal = pageWidth - 14 - escudoSize;
     const escudoY = 6;
     if (escudoLocal) {
@@ -169,7 +170,7 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
     }
 
     const colX = [18, 78, 138];
-    const rowY = [38, 112, 186];
+    const rowY = [36, 110, 184];
 
     for (let i = 0; i < situaciones.length; i++) {
         const situacion = situaciones[i];

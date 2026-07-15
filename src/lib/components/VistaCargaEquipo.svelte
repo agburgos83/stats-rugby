@@ -83,6 +83,10 @@
 					<option value={mod}>{mod}</option>
 				{/each}
 			</select>
+
+			<button disabled={!formularioCompleto()} onclick={cambiarVista} class="btn-primary" style="width:100%;margin-top:4px">
+				Confirmar equipo →
+			</button>
 		</div>
 
 		<!-- COLUMNA 2: FORWARDS -->
@@ -148,12 +152,6 @@
 			{/each}
 		</div>
 
-		<!-- PIE: Ocupa las 4 columnas -->
-		<div class="contenedor-boton">
-			<button disabled={!formularioCompleto()} onclick={cambiarVista} class="btn-primary">
-				Confirmar equipo →
-			</button>
-		</div>
 	</div>
 </div>
 
@@ -346,13 +344,6 @@
 
 	.btn-remover:hover {
 		background: #dc2626;
-	}
-
-	/* El botón inferior abarca las 4 columnas del grid */
-	.contenedor-boton {
-		grid-column: span 4;
-		text-align: right;
-		padding-top: 6px;
 	}
 
 	.btn-primary {

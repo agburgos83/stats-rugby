@@ -3,7 +3,8 @@ import autoTable from 'jspdf-autotable';
 import type { HookData, RowInput, CellHookData } from 'jspdf-autotable';
 import { type MatrizProcesada, type DixTotales } from '$lib/processing/reporte-data'
 import { agregarDonutsAlPDF, renderSVGaImagen } from '$lib/pdf/donuts'
-import { type PartidoContexto, type UnionClave, EQUIPOS_POR_UNION, type Puesto, BALL_SKILLS, CONTACT_SKILLS, FOOT_SKILLS, INFRACCION_SKILLS } from '$lib/types';
+import { agregarRadarAlPDF } from '$lib/pdf/radar'
+import { type ModalidadClave, type PartidoContexto, type UnionClave, EQUIPOS_POR_UNION, type Puesto, BALL_SKILLS, CONTACT_SKILLS, FOOT_SKILLS, INFRACCION_SKILLS } from '$lib/types';
 
 function dibujarFooter(doc: jsPDF, logoDataUrl: string): void {
     const margen = 14;
@@ -40,9 +41,18 @@ const onParseCell = (data: CellHookData) => {
     }
 };
 
-function dibujarEncabezado(doc: jsPDF, pageWidth: number, partido: PartidoContexto, escudoLocal: string | null): void {
+function dibujarEncabezado(doc: jsPDF, pageWidth: number, partido: PartidoContexto, escudoLocal: string | null, categoria: string = ''): void {
+    doc.setTextColor(0);
     doc.setFontSize(16);
-    doc.text('Acciones por jugador', 14, 12);
+    const prefix = 'Acciones por jugador';
+    if (categoria) {
+        doc.text(prefix + ': ', 14, 12);
+        doc.setTextColor(37, 99, 235);
+        doc.text(categoria, 14 + doc.getTextWidth(prefix + ': '), 12);
+    } else {
+        doc.text(prefix, 14, 12);
+    }
+    doc.setTextColor(0);
     doc.setFontSize(12);
     doc.text(
         `${partido.local} (${partido.puntosLocal}) vs ${partido.visitante} (${partido.puntosVisitante})`,
@@ -55,7 +65,7 @@ function dibujarEncabezado(doc: jsPDF, pageWidth: number, partido: PartidoContex
         24
     );
 
-    const escudoSize = 16;
+    const escudoSize = 18;
     const escudoXLocal = pageWidth - 14 - escudoSize;
     const escudoYLocal = 6;
     if (escudoLocal) {
@@ -87,7 +97,8 @@ export async function descargarPDF(
     equipo: Puesto[],
     partido: PartidoContexto,
     matrizProcesada: MatrizProcesada,
-    dixTotales: DixTotales
+    dixTotales: DixTotales,
+    modalidad: ModalidadClave = 'quince'
 ): Promise<void> {
 
     const [escudoLocal] = await Promise.all([
@@ -106,8 +117,10 @@ export async function descargarPDF(
     const doc = new jsPDF({ unit: 'mm', format: 'a3' });
     const pageWidth = doc.internal.pageSize.width;
 
-    // --- Header: título a la izquierda, escudo a la derecha ---
-    dibujarEncabezado(doc, pageWidth, partido, escudoLocal);
+    await agregarRadarAlPDF(doc, equipo, matrizProcesada, partido, escudoLocal, logoDataUrl, modalidad);
+
+    doc.addPage();
+    dibujarEncabezado(doc, pageWidth, partido, escudoLocal, 'juego en el contacto + infracciones');
 
     function skillCols(skill: string): number {
         const s = skill.toLowerCase();
@@ -116,84 +129,8 @@ export async function descargarPDF(
         return 2;
     }
 
-    const colsPelota = BALL_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
-    const colsContacto = CONTACT_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
-    const colsPie = FOOT_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
-    const colsInfraccion = INFRACCION_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
-
-    const filaHead0_page1: RowInput = [
-        {
-            content: 'Jugador',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        },
-        {
-            content: 'Juego en el contacto',
-            colSpan: colsContacto,
-            styles: { halign: 'center' as const }
-        },
-        {
-            content: 'Infracciones',
-            colSpan: colsInfraccion,
-            styles: { halign: 'center' as const }
-        },
-        {
-            content: 'Total\nacciones\ncontacto',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        },
-        {
-            content: 'Efectividad\njuego en el\ncontacto',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        }
-    ];
-
-    const filaHead0_page2: RowInput = [
-        {
-            content: 'Jugador',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        },
-        {
-            content: 'Juego con pelota',
-            colSpan: colsPelota,
-            styles: { halign: 'center' as const }
-        },
-        {
-            content: 'Total\nacciones\npelota',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        },
-        {
-            content: 'Efectividad\njuego con\npelota',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        }
-    ];
-
-    const filaHead0_page3: RowInput = [
-        {
-            content: 'Jugador',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        },
-        {
-            content: 'Juego con el pie',
-            colSpan: colsPie,
-            styles: { halign: 'center' as const }
-        },
-        {
-            content: 'Total\nacciones\npie',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        },
-        {
-            content: 'Efectividad\njuego con el\npie',
-            rowSpan: 3,
-            styles: { halign: 'center' as const, valign: 'middle' as const }
-        }
-    ];
+    // const colsPelota = BALL_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
+    // const colsPie = FOOT_SKILLS.reduce((sum, s) => sum + skillCols(s), 0);
 
     // fila de skills
     const filaSkillsContacto: RowInput = [];
@@ -258,9 +195,33 @@ export async function descargarPDF(
         filaHead1_page3.push({ content: '-' }, { content: '+' });
     });
 
-    const encabezado_page1: RowInput[] = [filaHead0_page1, [...filaSkillsContacto, ...filaSkillsInfraccion], [...filaHead1_page1]];
-    const encabezado_page2: RowInput[] = [filaHead0_page2, [...filaSkillsBall], [...filaHead1_page2]];
-    const encabezado_page3: RowInput[] = [filaHead0_page3, [...filaSkillsFoot], [...filaHead1_page3]];
+    const cellCenter = { halign: 'center' as const, valign: 'middle' as const };
+
+    const filaNombres_page1: RowInput = [
+        { content: 'Jugador', rowSpan: 2, styles: cellCenter },
+        ...filaSkillsContacto,
+        ...filaSkillsInfraccion,
+        { content: 'Total\nacciones\ncontacto', rowSpan: 2, styles: cellCenter },
+        { content: 'Efectividad\njuego en el\ncontacto', rowSpan: 2, styles: cellCenter },
+    ];
+
+    const filaNombres_page2: RowInput = [
+        { content: 'Jugador', rowSpan: 2, styles: cellCenter },
+        ...filaSkillsBall,
+        { content: 'Total\nacciones\npelota', rowSpan: 2, styles: cellCenter },
+        { content: 'Efectividad\njuego con\npelota', rowSpan: 2, styles: cellCenter },
+    ];
+
+    const filaNombres_page3: RowInput = [
+        { content: 'Jugador', rowSpan: 2, styles: cellCenter },
+        ...filaSkillsFoot,
+        { content: 'Total\nacciones\npie', rowSpan: 2, styles: cellCenter },
+        { content: 'Efectividad\njuego con el\npie', rowSpan: 2, styles: cellCenter },
+    ];
+
+    const encabezado_page1: RowInput[] = [filaNombres_page1, [...filaHead1_page1]];
+    const encabezado_page2: RowInput[] = [filaNombres_page2, [...filaHead1_page2]];
+    const encabezado_page3: RowInput[] = [filaNombres_page3, [...filaHead1_page3]];
 
     // 2. Mapear los datos respetando el orden de carga original del array 'equipo'
 
@@ -274,7 +235,7 @@ export async function descargarPDF(
             // Si por alguna razón no se procesó este jugador, devolvemos fila vacía o por defecto
             if (!datosJugador) return [];
 
-            const fila = [`${puesto.numero}. ${datosJugador.apellido}`];
+            const fila = [`${puesto.numero}. ${datosJugador.apellido}, ${datosJugador.nombre}`];
 
             CONTACT_SKILLS.forEach((skill) => {
                 const s = datosJugador.skills[skill];
@@ -316,7 +277,7 @@ export async function descargarPDF(
             // Si por alguna razón no se procesó este jugador, devolvemos fila vacía o por defecto
             if (!datosJugador) return [];
 
-            const fila = [`${puesto.numero}. ${datosJugador.apellido}`];
+            const fila = [`${puesto.numero}. ${datosJugador.apellido}, ${datosJugador.nombre}`];
 
             BALL_SKILLS.forEach((skill) => {
                 const s = datosJugador.skills[skill];
@@ -344,7 +305,7 @@ export async function descargarPDF(
             // Si por alguna razón no se procesó este jugador, devolvemos fila vacía o por defecto
             if (!datosJugador) return [];
 
-            const fila = [`${puesto.numero}. ${datosJugador.apellido}`];
+            const fila = [`${puesto.numero}. ${datosJugador.apellido}, ${datosJugador.nombre}`];
 
             FOOT_SKILLS.forEach((skill) => {
                 const s = datosJugador.skills[skill];
@@ -366,13 +327,14 @@ export async function descargarPDF(
     autoTable(doc, {
         head: encabezado_page1,
         body: filasBody_page1,
-        startY: 28,
+        startY: 32,
         theme: 'grid',
         styles: {
             fontSize: 8.5,
             cellPadding: 2,
             halign: 'center' as const
         },
+        columnStyles: { 0: { halign: 'left' } },
         headStyles: {
             fillColor: [37, 99, 235], // Azul #2563eb
             textColor: [255, 255, 255],
@@ -459,24 +421,25 @@ export async function descargarPDF(
     // 3. agregar page y Generar la Tabla con autoTable / page 2
 
     doc.addPage();
-    dibujarEncabezado(doc, pageWidth, partido, escudoLocal);
+    dibujarEncabezado(doc, pageWidth, partido, escudoLocal, 'juego con pelota');
 
     autoTable(doc, {
         head: encabezado_page2,
         body: filasBody_page2,
-        startY: 28,
+        startY: 32,
         theme: 'grid',
         styles: {
             fontSize: 8.5,
             cellPadding: 2,
             halign: 'center' as const
         },
+        columnStyles: { 0: { halign: 'left' } },
         headStyles: {
-            fillColor: [37, 99, 235], // Azul #2563eb
+            fillColor: [37, 99, 235],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             lineWidth: 0.3,
-            lineColor: [255, 255, 255] // Líneas blancas divisorias fijadas
+            lineColor: [255, 255, 255]
         },
         didDrawPage: () => {
             doc.setFontSize(9);
@@ -491,24 +454,25 @@ export async function descargarPDF(
     // 3. agregar page y Generar la Tabla con autoTable / page 3
 
     doc.addPage();
-    dibujarEncabezado(doc, pageWidth, partido, escudoLocal);
+    dibujarEncabezado(doc, pageWidth, partido, escudoLocal, 'juego con el pie');
 
     autoTable(doc, {
         head: encabezado_page3,
         body: filasBody_page3,
-        startY: 28,
+        startY: 32,
         theme: 'grid',
         styles: {
             fontSize: 8.5,
             cellPadding: 2,
             halign: 'center' as const
         },
+        columnStyles: { 0: { halign: 'left' } },
         headStyles: {
-            fillColor: [37, 99, 235], // Azul #2563eb
+            fillColor: [37, 99, 235],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             lineWidth: 0.3,
-            lineColor: [255, 255, 255] // Líneas blancas divisorias fijadas
+            lineColor: [255, 255, 255]
         },
         didDrawPage: () => {
             doc.setFontSize(9);
