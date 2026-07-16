@@ -6,7 +6,7 @@ import { type ModalidadClave, type PartidoContexto, type Puesto } from '$lib/typ
 import { type MatrizProcesada } from '$lib/processing/reporte-data';
 import { renderSVGaImagen } from '$lib/pdf/donuts';
 
-const COLOR = '#2563eb';
+const COLOR = '#0068CE';
 
 export interface GrupoRadar {
     label: string;
@@ -213,7 +213,7 @@ export async function agregarRadarAlPDF(
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(37, 99, 235);
+        doc.setTextColor(0, 104, 206);
         const lines = grupo.label.split(' ');
         if (lines.length === 2) {
             doc.text(lines[0], margen, currentY + 4);
@@ -253,7 +253,7 @@ export async function agregarRadarAlPDF(
     }
 
     const strokeY = footerY;
-    doc.setDrawColor(37, 99, 235);
+    doc.setDrawColor(0, 104, 206);
     doc.setLineWidth(0.3);
     doc.line(margen, strokeY, pageWidth - margen, strokeY);
 

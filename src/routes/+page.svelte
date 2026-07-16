@@ -122,7 +122,7 @@
 		color: white;
 		padding-left: 12px;
 		background: white;
-		color: #2563eb;
+		color: #0068CE;
 		padding: 4px 14px;
 		display: inline-block;
 	}
@@ -163,7 +163,7 @@
 
 	.text-band {
 		background: white;
-		color: #2563eb;
+		color: #0068CE;
 		padding: 0px 8px;
 		display: inline-block;
 		margin-bottom: 8px;
@@ -190,7 +190,7 @@
 	}
 	.btn-contratame {
 		background-color: #fff;
-		color: #2563eb;
+		color: #0068CE;
 		border: none;
 	}
 	.btn-contratame:hover {

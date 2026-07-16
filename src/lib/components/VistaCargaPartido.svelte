@@ -212,8 +212,8 @@
 		transition: border-color 0.15s ease;
 	}
 	.input-control:focus {
-		border-color: #2563eb;
-		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+		border-color: #0068CE;
+		box-shadow: 0 0 0 3px rgba(0, 104, 206, 0.1);
 	}
 	.separador {
 		border: 0;
@@ -227,7 +227,7 @@
 		text-align: right;
 	}
 	.btn-primary {
-		background-color: #2563eb;
+		background-color: #0068CE;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -238,7 +238,7 @@
 		transition: background-color 0.2s;
 	}
 	.btn-primary:hover {
-		background-color: #1d4ed8;
+		background-color: #0050A0;
 	}
 	.btn-primary:disabled {
 		background-color: #cbd5e1;

@@ -48,7 +48,7 @@
 	}
 
 	.btn-primary {
-		background-color: #2563eb;
+		background-color: #0068CE;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -59,6 +59,6 @@
 		transition: background-color 0.2s;
 	}
 	.btn-primary:hover {
-		background-color: #1d4ed8;
+		background-color: #0050A0;
 	}
 </style>

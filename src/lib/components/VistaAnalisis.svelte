@@ -317,7 +317,7 @@
 								class:activo={jugadoresElegidos.some((j) => j.id === p.player?.id)}
 								class="btn-chip"
 							>
-								{p.player.apellido}
+								{p.numero}. {p.player.apellido}
 							</button>
 						{/if}
 					{/each}
@@ -663,7 +663,7 @@
 		margin: 0 0 8px 0;
 		font-size: 0.95rem;
 		font-weight: bold;
-		color: #2563eb;
+		color: #0068CE;
 	}
 	.grupo-chips {
 		display: flex;
@@ -704,12 +704,12 @@
 		cursor: not-allowed;
 	}
 	.btn-chip.activo {
-		background-color: #2563eb !important;
+		background-color: #0068CE !important;
 		color: white !important;
-		border-color: #2563eb !important;
+		border-color: #0068CE !important;
 	}
 	.btn-primary {
-		background-color: #2563eb;
+		background-color: #0068CE;
 		color: white;
 		border: none;
 		padding: 10px 20px;
@@ -808,9 +808,9 @@
 		border-color: #cbd5e1;
 	}
 	.btn-calif.dom:not(:disabled) {
-		background-color: #eff6ff;
-		color: #2563eb;
-		border-color: #bfdbfe;
+		background-color: #F0F6FD;
+		color: #0068CE;
+		border-color: #99C9EF;
 	}
 
 	/* Cada línea de tarjetas de situación usa misma grilla que skills */
@@ -845,7 +845,7 @@
 	}
 
 	.contador-global {
-		color: #2563eb;
+		color: #0068CE;
 		font-weight: bold;
 		margin-left: 4px;
 	}
@@ -853,19 +853,19 @@
 	/* La clase que se inyecta temporalmente por 300ms */
 	.btn-calif.flash {
 		animation: pulso-flash 0.3s ease-out;
-		border-color: #2563eb !important;
-		box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+		border-color: #0068CE !important;
+		box-shadow: 0 0 8px rgba(0, 104, 206, 0.5);
 	}
 
 	/* Animación que genera el cambio de color rápido */
 	@keyframes pulso-flash {
 		0% {
-			background-color: #2563eb;
+			background-color: #0068CE;
 			color: white;
 			transform: scale(0.95);
 		}
 		50% {
-			background-color: #3b82f6;
+			background-color: #3399EE;
 			color: white;
 			transform: scale(1.05);
 		}
@@ -991,8 +991,8 @@
 		gap: 16px;
 		width: 100%;
 		aspect-ratio: 16 / 9;
-		background: #eff6ff;
-		border: 1px solid #bfdbfe;
+		background: #F0F6FD;
+		border: 1px solid #99C9EF;
 		border-radius: 8px;
 		padding: 24px 32px;
 		color: #1e40af;
@@ -1002,7 +1002,7 @@
 	}
 	.embed-bloqueado .btn-primary {
 		white-space: nowrap;
-		background: #2563eb;
+		background: #0068CE;
 		color: white;
 		padding: 10px 20px;
 		border-radius: 8px;

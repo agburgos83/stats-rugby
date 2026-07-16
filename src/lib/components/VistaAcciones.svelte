@@ -124,8 +124,8 @@
 	}
 
 	.badge-jugador {
-		background-color: #eff6ff;
-		color: #2563eb;
+		background-color: #F0F6FD;
+		color: #0068CE;
 		font-weight: bold;
 		padding: 4px 8px;
 		border-radius: 4px;
@@ -149,7 +149,7 @@
 	}
 
 	.btn-primary {
-		background-color: #2563eb;
+		background-color: #0068CE;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -160,6 +160,6 @@
 		transition: background-color 0.1s ease;
 	}
 	.btn-primary:hover {
-		background-color: #1d4ed8;
+		background-color: #0050A0;
 	}
 </style>

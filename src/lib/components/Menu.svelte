@@ -49,7 +49,7 @@
 		top: 0;
 		z-index: 50;
 		/* background: #ffffff; */
-		background-color: #2563ebff;
+		background-color: #0068CE;
 		border-bottom: 1px solid #e5e7eb;
 		/* border-bottom: 1px solid #ff2a2aff; */
 		padding: 0.75rem 2rem;
@@ -80,7 +80,7 @@
 		position: relative;
 		display: inline-block;
 		background: white;
-		color: #1d4ed8;
+		color: #0050A0;
 		font-weight: 600;
 		padding: 0.2rem 2rem 0.2rem 0.75rem;
 		border-radius: 4px;
@@ -116,7 +116,7 @@
 	}
 
 	.retomar-btn:hover {
-		background: #eff6ff;
+		background: #F0F6FD;
 		transform: scale(1.05);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	}

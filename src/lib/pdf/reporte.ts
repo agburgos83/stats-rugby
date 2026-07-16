@@ -12,7 +12,7 @@ function dibujarFooter(doc: jsPDF, logoDataUrl: string): void {
     const pageWidth = doc.internal.pageSize.width;
     const strokeY = pageHeight - 25;
 
-    doc.setDrawColor(37, 99, 235);
+    doc.setDrawColor(0, 104, 206);
     doc.setLineWidth(0.3);
     doc.line(margen, strokeY, pageWidth - margen, strokeY);
 
@@ -28,26 +28,27 @@ const onParseCell = (data: CellHookData) => {
     const cellText = data.cell.text?.[0];
     if (cellText === '-' || cellText === '=' || cellText === '+' || cellText === '++') {
         data.cell.styles.fillColor = [189, 204, 224];
-        data.cell.styles.textColor = [30, 64, 175];
+        data.cell.styles.textColor = [0, 53, 112];
     }
     if (data.section === 'body') {
         const esPar = data.row.index % 2 === 0;
         data.cell.styles.fillColor = esPar ? [236, 253, 245] : [209, 250, 229];
 
         if (['-', '=', '+', '++'].includes(cellText ?? '')) {
-            data.cell.styles.fillColor = [219, 234, 254];
-            data.cell.styles.textColor = [30, 64, 175];
+            data.cell.styles.fillColor = [204, 228, 247];
+            data.cell.styles.textColor = [0, 53, 112];
         }
     }
 };
 
 function dibujarEncabezado(doc: jsPDF, pageWidth: number, partido: PartidoContexto, escudoLocal: string | null, categoria: string = ''): void {
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(0);
     doc.setFontSize(16);
     const prefix = 'Acciones por jugador';
     if (categoria) {
         doc.text(prefix + ': ', 14, 12);
-        doc.setTextColor(37, 99, 235);
+        doc.setTextColor(0, 104, 206);
         doc.text(categoria, 14 + doc.getTextWidth(prefix + ': '), 12);
     } else {
         doc.text(prefix, 14, 12);
@@ -336,7 +337,7 @@ export async function descargarPDF(
         },
         columnStyles: { 0: { halign: 'left' } },
         headStyles: {
-            fillColor: [37, 99, 235], // Azul #2563eb
+            fillColor: [0, 104, 206], // Azul #0068CE
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             lineWidth: 0.3,
@@ -435,7 +436,7 @@ export async function descargarPDF(
         },
         columnStyles: { 0: { halign: 'left' } },
         headStyles: {
-            fillColor: [37, 99, 235],
+            fillColor: [0, 104, 206],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             lineWidth: 0.3,
@@ -468,7 +469,7 @@ export async function descargarPDF(
         },
         columnStyles: { 0: { halign: 'left' } },
         headStyles: {
-            fillColor: [37, 99, 235],
+            fillColor: [0, 104, 206],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             lineWidth: 0.3,

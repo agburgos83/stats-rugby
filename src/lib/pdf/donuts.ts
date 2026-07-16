@@ -99,7 +99,7 @@ function generarDonutSVG(positivos: number, negativos: number, situacion: string
         .sort(null);
 
     const valores = [positivos, negativos];
-    const colores = ['#2664eb', '#2664ebb8'];
+    const colores = ['#0068CE', '#0068CEB8'];
 
     const slices = pieGenerator(valores);
 
@@ -192,7 +192,7 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
 
     }
 
-    doc.setDrawColor(37, 99, 235);
+    doc.setDrawColor(0, 104, 206);
     doc.setLineWidth(0.3);
     doc.line(margen, strokeY, pageWidth - margen, strokeY);
 

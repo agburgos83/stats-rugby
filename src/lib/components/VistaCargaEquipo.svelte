@@ -213,8 +213,8 @@
 	}
 
 	.input-control:focus {
-		border-color: #2563eb;
-		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+		border-color: #0068CE;
+		box-shadow: 0 0 0 3px rgba(0, 104, 206, 0.1);
 	}
 
 	label {
@@ -293,8 +293,8 @@
 		align-items: center;
 		gap: 12px;
 		padding: 12px;
-		background: #eff6ff;
-		border: 1px solid #3b82f6;
+		background: #F0F6FD;
+		border: 1px solid #0068CE;
 		border-radius: 6px;
 	}
 
@@ -310,7 +310,7 @@
 	}
 
 	.estado-ocupado .numero {
-		background: #3b82f6;
+		background: #0068CE;
 		color: white;
 	}
 
@@ -347,7 +347,7 @@
 	}
 
 	.btn-primary {
-		background-color: #2563eb;
+		background-color: #0068CE;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -359,7 +359,7 @@
 	}
 
 	.btn-primary:hover {
-		background-color: #1d4ed8;
+		background-color: #0050A0;
 	}
 
 	.btn-primary:disabled {

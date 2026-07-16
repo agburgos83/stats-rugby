@@ -119,13 +119,13 @@
 
 	.input-form:focus {
 		outline: none;
-		border-color: #3b82f6;
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+		border-color: #0068CE;
+		box-shadow: 0 0 0 3px rgba(0, 104, 206, 0.3);
 	}
 
 	.btn-enviar {
 		width: 100%;
-		background-color: #2563eb;
+		background-color: #0068CE;
 		color: white;
 		border: none;
 		padding: 1rem;
@@ -139,6 +139,6 @@
 	}
 
 	.btn-enviar:hover {
-		background-color: #1d4ed8;
+		background-color: #0050A0;
 	}
 </style>

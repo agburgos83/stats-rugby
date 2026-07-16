@@ -261,7 +261,7 @@
 
 	/* ========== BOTONES ========== */
 	.btn-primary {
-		background-color: #2563eb;
+		background-color: #0068CE;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -274,7 +274,7 @@
 	}
 
 	.btn-primary:hover {
-		background-color: #1d4ed8;
+		background-color: #0050A0;
 	}
 
 	.btn-primary:disabled {
@@ -319,8 +319,8 @@
 	}
 
 	.zona-drop.drag-over {
-		border-color: #2563eb;
-		background-color: #eff6ff;
+		border-color: #0068CE;
+		background-color: #F0F6FD;
 	}
 
 	.input-hidden {
