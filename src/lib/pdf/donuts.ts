@@ -180,9 +180,9 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
         const x = colX[col];
         const y = rowY[row];
 
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 104, 206);
         doc.text(situacion, x + 30, y, { align: 'center' });
 
         const [negativos, positivos] = dixTotales[situacion];

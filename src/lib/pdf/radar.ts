@@ -212,7 +212,7 @@ export async function agregarRadarAlPDF(
         }
 
         doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 104, 206);
         const lines = grupo.label.split(' ');
         if (lines.length === 2) {
