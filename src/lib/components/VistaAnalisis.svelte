@@ -105,7 +105,7 @@
 		califGrupalElegida: CalificacionGrupal
 	) {
 		if (!sitJuegoElegida) {
-			alert('Primero selecciona un situaciòn de juego');
+			alert('Primero selecciona una situación de juego');
 			return;
 		}
 

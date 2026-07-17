@@ -18,6 +18,9 @@
 - `CalificacionIndividual`: `'Negativo' | 'Neutro' | 'Positivo' | 'Dominante'`
 - Skills: `CONTACT_SKILLS`, `BALL_SKILLS`, `FOOT_SKILLS`, `INFRACCION_SKILLS`
 - `Puesto` = `{ numero: number, posicionOriginal: string, player: Player | null }`
+- `Accion` = `{ id, player, skill, calificacion }` — **sin timestamp**
+- `TeamAccion` = `{ situacion, calificacion }` — **sin timestamp**
+- `PartidoContexto.urlVideo` — URL de video (Vimeo/YouTube/Veo)
 
 ### PDF (`src/lib/pdf/`)
 **`reporte.ts`** — Orquestador del PDF (A3 vertical 297×420mm):
@@ -59,9 +62,9 @@
 - Efectividad contacto usa `totalFavorable / totalAcciones`
 
 ### Componentes Svelte
-- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores
-- `VistaCargaEquipo.svelte` — grilla 4 columnas con drag & drop
-- `VistaAcciones.svelte` — botón "Generar reporte PDF"
+- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo).
+- `VistaCargaEquipo.svelte` — grilla 4 columnas con drag & drop (solo desktop, no touch)
+- `VistaAcciones.svelte` — revisión de acciones logueadas + botón "Generar reporte PDF". Props tipadas como `any`.
 - Todos los botones primarios usan `background-color: #0068CE`, hover `#0050A0`
 - Menú: navbar `#0068CE`
 - Footer: `background-color: #0068CE`, links hover `#CCE4F7`
@@ -86,7 +89,158 @@
 8. Donuts gap aumentado a rowY=[36,110,184]
 9. `obtenerGrupo` ahora usa `posicionOriginal` para todas las modalidades
 10. Encabezados del PDF sin bold
+11. Props de VistaAcciones tipadas (PropsAcciones + ModalidadClave), reemplazando `any`
+12. try/catch + loading state + error message en generación de PDF
+13. Guard en renderSVGaImagen contra canvas.getContext('2d') null
 
-## Pendientes / ideas
-- No hay issues conocidos abiertos
-- Instagram: plan de 6 publicaciones + historias semanales definido
+## Plan de Instagram
+
+### Formato general
+- **Días**: martes y jueves 20:00 (ARG)
+- **Aspecto**: 4:5 (1080×1350)
+- **Estilo**: azul `#0068CE` sobre fondo blanco, tipografía limpia, mismo branding que la app
+- **Hashtags**: `#StatsRugby #AnalisisRugby #RugbyArg #RugbyInteligente #ScoutingRugby`
+
+### Feed — 6 publicaciones
+
+| # | Tipo | Título | Contenido |
+|---|------|--------|-----------|
+| 1 | Carrusel (5 slides) | "Cómo analizar un partido en 5 pasos" | Slide 1: Cargá tu plantel desde CSV, Slide 2: Armá el equipo con drag & drop, Slide 3: Datos del partido + link al video, Slide 4: Analizá jugada por jugada, Slide 5: Descargá el PDF con estadísticas. CTA: link a la app |
+| 2 | Video (~30s) | "Así se ve un análisis en vivo" | Screen recording de VistaAnalisis: seleccionar jugador, pulsar skills, ver cómo se acumulan. Música de fondo, sin voz. Texto superpuesto indicando cada paso. |
+| 3 | Placa | "¿Qué dicen los números?" | Imagen del radar chart de un jugador con callouts explicando cada grupo de skills (contacto, pelota, pie). Texto: "Cada jugador tiene su huella digital". CTA: "Descargá el reporte de tu equipo". |
+| 4 | Carrusel (4 slides) | "3 métricas que todo entrenador debería mirar" | Slide 1: Efectividad en el contacto (Tackle + Duelo), Slide 2: Gestión de pelota (Pases + Offload), Slide 3: Juego al pie (Patada + Recepción), Slide 4: Cómo leer los donuts de situaciones de equipo. |
+| 5 | Video (~45s) | "De la cancha al PDF en 2 minutos" | Timelapse de flujo completo: cargar CSV → armar equipo → cargar partido → analizar → generar PDF. Muestra el PDF final con radares, tablas y donuts. |
+| 6 | Placa | "Stats Rugby — Free. Simple. Profesional." | Resumen de funcionalidades en viñetas. CTA final: "Probá la app gratis en statsrugby.com.ar". |
+
+### Stories semanales
+- **1 story por semana** (jueves o viernes post-partido)
+- Contenido: captura de pantalla de un radar real o tabla de estadísticas
+- Texto breve: "Partido de {local} vs {visitante}. {jugador} destacó en {skill}."
+- Opcional: encuesta "¿Qué skill querés que analicemos la próxima?" con opciones (Contacto / Pelota / Pie)
+- Stories destacadas en "Análisis" para guardar las mejores
+
+## Desktop-first
+Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido requiere pantalla grande para combinar video + botonera. La difusión enfatiza esto para evitar frustración en mobile/tablet.
+
+## Vulnerabilidades y deuda técnica
+
+### Críticas (pérdida de datos, funcionalidad rota, seguridad)
+
+1. ~~**Escudos URMDP sin extensión → 404 en PDF**~~ ✅ FIXED
+   - `src/lib/types.ts:298-319` — se agregó `.PNG` a los 20 slugs de URMDP.
+
+2. ~~**`obtenerEscudo()` duplicada en reporte.ts y donuts.ts**~~ ✅ FIXED
+   - Se eliminó la función duplicada de `donuts.ts`. Ahora solo vive en `reporte.ts`.
+
+3. ~~**PDF sin try/catch ni loading state**~~ ✅ FIXED
+   - `src/lib/components/VistaAcciones.svelte` — `generarReporte()` ahora tiene `try/catch`, estado `generando` que deshabilita el botón, y `errorMsg` reactivo mostrado como `.alerta-error` inline.
+
+4. ~~**`renderSVGaImagen()` usa non-null assertion en canvas**~~ ✅ FIXED
+   - `src/lib/pdf/donuts.ts:182-186` — se reemplazó `canvas.getContext('2d')!` con guard que rechaza la Promise si `ctx` es `null`.
+
+5. **`alert()` para validaciones — no funciona en mobile**
+   - `src/lib/components/VistaAnalisis.svelte:70,75,108` — por diseño: la app es desktop-first. Incluye typo "situaciòn" (è en vez de ó) en línea 108.
+
+6. **Drag & drop sin soporte táctil**
+   - `src/lib/components/VistaCargaEquipo.svelte` — HTML5 Drag & Drop API no funciona en touch. Sin fallback. Aceptado por diseño desktop-first.
+
+### Altas (bugs significativos, riesgo de integridad de datos)
+
+7. **CSV parser naive — se rompe con comillas o comas en nombres**
+   - `src/lib/components/VistaCargaCSV.svelte:24-36` — `l.split(',')` no cumple RFC 4180. Nombres como "Garcia, Juan" corrompen el parseo. Lógica duplicada en líneas 80-93.
+
+8. **`nextAccionId` no persiste → colisión tras recarga**
+   - `src/lib/components/VistaAnalisis.svelte:29` — variable plain que se resetea a 0 al recargar. IDs de acciones restauradas de localStorage colisionan con nuevas.
+
+9. **Efecto de persistencia en cada keystroke durante cambio de modalidad**
+   - `src/routes/app/+page.svelte:41-48` — el `$effect` reconstruye `equipo` desde cero al cambiar `usuarioModalidad`. Puede pisar el equipo recién restaurado de localStorage.
+
+10. **Acciones huérfanas al cambiar modalidad**
+    - `src/routes/app/+page.svelte:41-48` — al cambiar modalidad se reconstruye `equipo` pero NO se limpian `acciones` ni `teamAcciones`. Quedan referencias a jugadores que ya no existen.
+
+11. **Mismo equipo como local y visitante — sin validación**
+    - `src/lib/components/VistaCargaPartido.svelte:76-89` — ambos selectores usan la misma lista de clubes. Nada impide seleccionar el mismo club.
+
+### Medias (UX, bordes, faltantes)
+
+12. **Sin diseño responsive** — 4 componentes con layouts fijos:
+    - `VistaCargaEquipo.svelte:172` — grilla 4 columnas sin media queries
+    - `VistaAnalisis.svelte:613` — 2 paneles fijos
+    - `VistaAcciones.svelte:79` — flex 2 columnas sin breakpoints
+    - `VistaCargaPartido.svelte:180` — flex sin wrap
+
+13. **Sin navegación "atrás" entre vistas**
+    - `src/routes/app/+page.svelte` — `vistaActual` solo avanza 1→6. No hay historial ni botón "volver". Para corregir datos de vistas anteriores hay que perder todo.
+
+14. **Veo fetch sin AbortController — carreras concurrentes**
+    - `src/lib/components/VistaAnalisis.svelte:43-61` — si `urlVideo` cambia rápido, múltiples fetches pueden llegar out-of-order.
+
+15. **oembed de YouTube sin caché ni rate-limit**
+    - `src/lib/components/VistaAnalisis.svelte:244-252` — fetch a `youtube.com/oembed` en cada cambio de URL. Sin debounce ni caché.
+
+16. **`simularPlantel` falla silenciosamente**
+    - `src/lib/components/VistaCargaCSV.svelte:98-100` — si el fetch a `/plantilla-jugadores.csv` falla, solo `console.error`. El usuario no ve nada.
+
+### Bajas (calidad de código, typos, estilo)
+
+17. **`MatrizProcesada` tipeada como `Record<number, any>`**
+    - `src/lib/processing/reporte-data.ts:4`
+
+18. **`VistaAcciones` props tipadas como `any`**
+    - `src/lib/components/VistaAcciones.svelte:7` — existe `PropsAcciones` en types.ts pero no se usa.
+
+19. **Constante `SKILLS` sin usar en types.ts**
+    - `src/lib/types.ts:132-146` — nombres distintos a los de `BALL_SKILLS`/`CONTACT_SKILLS`/`FOOT_SKILLS`. Código muerto.
+
+20. **`console.error` en producción**
+    - `VistaAnalisis.svelte:53,55` y `VistaCargaCSV.svelte:99` — sin guard `import.meta.env.DEV`.
+
+21. **`label id="club-select"` duplicado**
+    - `src/lib/components/VistaCargaEquipo.svelte:74,81`
+
+22. **`limpiarAccionesIndividuales` asigna array vacío dos veces**
+    - `src/lib/components/VistaAnalisis.svelte:145-157` — `acciones = []; acciones = [...acciones];`
+
+## Feature: generación de clips (modelo pago)
+
+### Desafío principal: timestamps
+Hoy `Accion` y `TeamAccion` no tienen ningún campo de tiempo. Sin timestamps no se puede correlacionar una acción con un momento del video.
+
+### Arquitectura propuesta
+
+**Fase 1 — Captura de timestamps (gratis)**
+1. Agregar `videoTime: number | null` a `Accion` y `TeamAccion` en `types.ts`
+2. En `VistaAnalisis.svelte`, agregar `bind:this={videoEl}` al elemento `<video>` (Veo nativo) o integrar YouTube/Vimeo Player API para leer `currentTime`
+3. En `registrarAccionDirecta()` y `registrarAccionEquipo()`, capturar `videoEl?.currentTime ?? null` y guardarlo en la acción
+4. Mostrar timestamp en `VistaAcciones.svelte` (los comentarios `{a.timestamp}` ya existen)
+5. Actualizar mock data con `videoTime` simulado (3-5 min entre acciones)
+
+**Fase 2 — UI de revisión con timeline (gratis)**
+1. Ordenar acciones por `videoTime` en VistaAcciones
+2. Agregar slider / línea de tiempo que permita scrollear el video a la acción
+3. Botón "Ir al momento" en cada acción que haga seek al video (`videoEl.currentTime = a.videoTime`)
+
+**Fase 3 — Generación de clips (pago)**
+1. Servicio serverless (Netlify Function) que recibe URL de video + array de `{ start, end, label }`
+2. Desafíos técnicos:
+   - YouTube/Vimeo: no se puede recortar video server-side desde iframe. Solución: pedir al usuario que suba el video .mp4, o usar API de YouTube Data/ Vimeo API para descargar片段. Alternativa: usar `MediaRecorder` client-side para capturar la ventana del reproductor (baja calidad, requiere interacción del usuario).
+   - Veo: el video nativo se puede recortar con `MediaRecorder` + `HTMLCanvasElement.captureStream()` en el cliente, o con FFmpeg en el servidor si se tiene acceso al archivo .mp4.
+3. Formato de salida: video .mp4 por acción o reel compilado con todas las acciones destacadas
+4. Modelo de precio: ej. $3-5 USD por partido analizado con clips, o suscripción mensual
+
+### Técnicamente: opciones de clipping
+
+| Opción | Pros | Contras |
+|--------|------|---------|
+| **Client-side `MediaRecorder`** | Sin servidor, sin costo de CPU | Calidad limitada (codec del navegador), depende del player, no funciona con iframes cross-origin |
+| **Server-side FFmpeg (Netlify Function)** | Calidad máxima, formatos flexibles | Límite de 10s timeout en Netlify免费, costo de CPU, requiere el .mp4 original |
+| **API de terceros (Mux, api.video)** | Infraestructura lista, streaming incluido | Costo recurrente, dependencia externa |
+| **Enlaces con tiempo (`?t=120s`)** | Sin procesamiento de video, ultra simple | Solo YouTube/Vimeo, no es un clip descargable, UX pobre |
+
+**Recomendación inicial**: arrancar con enlaces con tiempo (?t=) para YouTube/Vimeo como feature gratis, y los clips reales como feature pago vía `MediaRecorder` client-side (para Veo) o FFmpeg server-side (para MP4 subido). Validar con usuarios antes de invertir en infraestructura pesada.
+
+### Roadmap resumido
+1. **Sprint 1** — Agregar `videoTime` a tipos, capturar en análisis, mostrar en revisión, mock data con tiempos
+2. **Sprint 2** — Timeline interactiva en VistaAcciones, seek al video desde cada acción
+3. **Sprint 3** — MVP de clipping: botón "Generar clip" que usa `MediaRecorder` para capturar ventana de 10s alrededor de la acción
+4. **Sprint 4** — Stripe/Pago online, suscripción mensual, clips compilados server-side con FFmpeg en Netlify Function

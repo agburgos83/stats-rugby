@@ -2,15 +2,29 @@
 	import { procesarReporte } from '$lib/processing/reporte-data';
 	import { descargarPDF } from '$lib/pdf/reporte';
 
-	import type { ModalidadClave } from '$lib/types';
+	import type { PropsAcciones, ModalidadClave } from '$lib/types';
 
-	let { equipo, partido, acciones, teamAcciones, cambiarVista, modalidad } = $props<{ equipo: any; partido: any; acciones: any; teamAcciones: any; cambiarVista: any; modalidad: ModalidadClave }>();
+	let { equipo, partido, acciones, teamAcciones, cambiarVista, modalidad } = $props<
+		PropsAcciones & { modalidad: ModalidadClave }
+	>();
+
+	let generando = $state(false);
+	let errorMsg = $state('');
 
 	async function generarReporte(): Promise<void> {
-		const { matrizProcesada, dixTotales } = procesarReporte(equipo, acciones, teamAcciones);
-		await descargarPDF(equipo, partido, matrizProcesada, dixTotales, modalidad);
+		generando = true;
+		errorMsg = '';
+		try {
+			const { matrizProcesada, dixTotales } = procesarReporte(equipo, acciones, teamAcciones);
+			await descargarPDF(equipo, partido, matrizProcesada, dixTotales, modalidad);
+			cambiarVista();
+		} catch (e) {
+			errorMsg =
+				'Error al generar el PDF: ' + (e instanceof Error ? e.message : 'error desconocido');
+		} finally {
+			generando = false;
+		}
 	}
-	
 </script>
 
 <div class="pantalla-reporte">
@@ -47,15 +61,15 @@
 	</div>
 
 	<div class="contenedor-acciones-pie">
-		<button
-			onclick={() => {
-				generarReporte();
-				cambiarVista();
-			}}
-			class="btn-primary"
-		>
-			Descargar Reporte PDF →
-		</button>
+		{#if errorMsg}
+			<div class="alerta-error">{errorMsg}</div>
+		{/if}
+
+		<div class="contenedor-acciones-pie">
+			<button onclick={generarReporte} disabled={generando} class="btn-primary">
+				{generando ? 'Generando PDF...' : 'Descargar Reporte PDF →'}
+			</button>
+		</div>
 	</div>
 </div>
 
@@ -124,8 +138,8 @@
 	}
 
 	.badge-jugador {
-		background-color: #F0F6FD;
-		color: #0068CE;
+		background-color: #f0f6fd;
+		color: #0068ce;
 		font-weight: bold;
 		padding: 4px 8px;
 		border-radius: 4px;
@@ -149,7 +163,7 @@
 	}
 
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -160,6 +174,16 @@
 		transition: background-color 0.1s ease;
 	}
 	.btn-primary:hover {
-		background-color: #0050A0;
+		background-color: #0050a0;
+	}
+
+	.alerta-error {
+		background-color: #fef2f2;
+		color: #dc2626;
+		border: 1px solid #fecaca;
+		border-radius: 6px;
+		padding: 12px 16px;
+		margin-bottom: 16px;
+		font-size: 0.9rem;
 	}
 </style>

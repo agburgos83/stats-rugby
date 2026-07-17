@@ -1,25 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { arc, pie } from 'd3';
 import { type PartidoContexto } from '$lib/types';
-import { type UnionClave, EQUIPOS_POR_UNION } from '$lib/types';
-
-async function obtenerEscudo(union: UnionClave, equipo: string): Promise<string | null> {
-    const team = EQUIPOS_POR_UNION[union].find(t => t.label === equipo);
-    if (!team) return null;
-    try {
-        const resp = await fetch(`/escudos-clubes/${team.slug}`);
-        if (!resp.ok) return null;
-        const blob = await resp.blob();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    } catch {
-        return null;
-    }
-}
 
 /**
  * Genera un string SVG con un donut (positivo/negativo) usando D3.
@@ -29,14 +10,14 @@ async function obtenerEscudo(union: UnionClave, equipo: string): Promise<string 
  * @returns String SVG listo para pasar a doc.addSvgAsImage()
  */
 const VERBOS: Record<string, [string, string, string]> = {
-    'Scrum propio':    ['Tiramos',   'scrums',             'obtuvimos'],
-    'Line propio':     ['Tiramos',   'lines',              'obtuvimos'],
-    'Salida recibida': ['Nos patearon', 'salidas',            'obtuvimos'],
-    'Scrum rival':     ['Tiraron',   'scrums',             'recuperamos'],
-    'Line rival':      ['Tiraron',   'lines',              'recuperamos'],
-    'Salida cargada':  ['Pateamos',  'salidas',            'recuperamos'],
-    'Efect. AT. 22m':  ['Llegamos',  'veces a 22 rival',  'anotamos'],
-    'Efect. DEF. 22m': ['Llegaron',  'veces a nuestros 22', 'evitamos'],
+    'Scrum propio': ['Tiramos', 'scrums', 'obtuvimos'],
+    'Line propio': ['Tiramos', 'lines', 'obtuvimos'],
+    'Salida recibida': ['Nos patearon', 'salidas', 'obtuvimos'],
+    'Scrum rival': ['Tiraron', 'scrums', 'recuperamos'],
+    'Line rival': ['Tiraron', 'lines', 'recuperamos'],
+    'Salida cargada': ['Pateamos', 'salidas', 'recuperamos'],
+    'Efect. AT. 22m': ['Llegamos', 'veces a 22 rival', 'anotamos'],
+    'Efect. DEF. 22m': ['Llegaron', 'veces a nuestros 22', 'evitamos'],
 };
 
 function generarDonutSVG(positivos: number, negativos: number, situacion: string): string {
@@ -137,10 +118,6 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
 
     doc.addPage([210, 297], 'portrait');
 
-    const [escudoLocal] = await Promise.all([
-        obtenerEscudo(partido.usuarioUnion, partido.usuarioClub),
-    ])
-
     // --- Header: título a la izquierda, escudos a la derecha ---
     doc.setTextColor(0);
     doc.setFontSize(16);
@@ -161,13 +138,6 @@ export async function agregarDonutsAlPDF(doc: jsPDF,
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
     const strokeY = pageHeight - 25;
-
-    const escudoSize = 18;
-    const escudoXLocal = pageWidth - 14 - escudoSize;
-    const escudoY = 6;
-    if (escudoLocal) {
-        doc.addImage(escudoLocal, 'PNG', escudoXLocal, escudoY, escudoSize, escudoSize);
-    }
 
     const colX = [18, 78, 138];
     const rowY = [36, 110, 184];
@@ -209,7 +179,11 @@ export function renderSVGaImagen(svgString: string, width = 300, height = 440): 
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            reject(new Error('No se pudo obtener el contexto 2D del canvas'));
+            return;
+        }
 
         const img = new Image();
         const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
