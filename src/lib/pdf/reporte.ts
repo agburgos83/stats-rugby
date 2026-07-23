@@ -382,7 +382,7 @@ export async function descargarPDF(
 
             const listaTackle = [
                 '\u2022 Errado -',
-                '\u2022 Negativo =',
+                '\u2022 Neutro =',
                 '\u2022 Positivo +',
                 '\u2022 Dominante ++'
             ];
