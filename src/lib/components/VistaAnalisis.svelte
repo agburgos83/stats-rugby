@@ -42,7 +42,6 @@
 	let veoVideoUrl = $state<string | null>(null);
 	let veoLoading = $state(false);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let videoEl = $state<HTMLVideoElement | null>(null);
 	let cachedYouTubeTime = $state(0);
 
@@ -745,11 +744,7 @@
 		border-radius: 8px;
 		cursor: pointer;
 	}
-	.btn-primary.outline {
-		background-color: transparent;
-		border: 1px solid #cbd5e1;
-		color: #475569;
-	}
+	
 	.btn-primary:disabled {
 		background-color: #cbd5e1;
 		color: #94a3b8;
@@ -869,12 +864,6 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-	}
-
-	.contador-global {
-		color: #0068ce;
-		font-weight: bold;
-		margin-left: 4px;
 	}
 
 	/* La clase que se inyecta temporalmente por 300ms */

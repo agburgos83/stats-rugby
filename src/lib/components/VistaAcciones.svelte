@@ -16,7 +16,6 @@
 	let embedPermitido = $state<boolean | null>(null);
 	let veoVideoUrl = $state<string | null>(null);
 	let veoLoading = $state(false);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let videoEl = $state<HTMLVideoElement | null>(null);
 
 	const urlEmbed = $derived(cocinarEnlaceVideo(partido.urlVideo));
@@ -331,22 +330,6 @@
 		justify-content: center;
 	}
 
-	.badge-jugador {
-		background-color: #f0f6fd;
-		color: #0068ce;
-		font-weight: bold;
-		padding: 4px 8px;
-		border-radius: 4px;
-	}
-
-	.badge-fase {
-		background-color: #f0fdf4;
-		color: #16a34a;
-		font-weight: bold;
-		padding: 4px 8px;
-		border-radius: 4px;
-	}
-
 	.badge-tiempo {
 		background-color: #f0f6fd;
 		color: #0068ce;
@@ -357,11 +340,6 @@
 		font-size: 0.8rem;
 		min-width: 45px;
 		text-align: center;
-	}
-
-	.texto-accion {
-		color: #334155;
-		font-weight: bold;
 	}
 
 	.contenedor-acciones-pie {
