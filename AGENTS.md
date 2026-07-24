@@ -4,6 +4,8 @@
 - Svelte 5 (runes: `$state`, `$effect`, `$props`, `$bindable`)
 - TypeScript, Vite, jsPDF + jspdf-autotable, D3 (arc, pie, scaleLinear, lineRadial)
 - Hosting: Netlify (SPA, `/escudos-clubes/*` redirect)
+- Backend: Supabase (PostgreSQL + Auth + API) — para salas de clips y auth de usuarios
+- Branches: `main` = producción (Netlify deploya desde aquí), `desa` = desarrollo
 
 ## Comandos
 - `npm run dev` — servidor local
@@ -18,8 +20,8 @@
 - `CalificacionIndividual`: `'Negativo' | 'Neutro' | 'Positivo' | 'Dominante'`
 - Skills: `CONTACT_SKILLS`, `BALL_SKILLS`, `FOOT_SKILLS`, `INFRACCION_SKILLS`
 - `Puesto` = `{ numero: number, posicionOriginal: string, player: Player | null }`
-- `Accion` = `{ id, player, skill, calificacion }` — **sin timestamp**
-- `TeamAccion` = `{ situacion, calificacion }` — **sin timestamp**
+- `Accion` = `{ id, player, skill, calificacion }` — **sin timestamp** (próximamente: `videoTime: number | null`)
+- `TeamAccion` = `{ situacion, calificacion }` — **sin timestamp** (próximamente: `videoTime: number | null`)
 - `PartidoContexto.urlVideo` — URL de video (Vimeo/YouTube/Veo)
 
 ### PDF (`src/lib/pdf/`)
@@ -201,46 +203,44 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
 22. **`limpiarAccionesIndividuales` asigna array vacío dos veces**
     - `src/lib/components/VistaAnalisis.svelte:145-157` — `acciones = []; acciones = [...acciones];`
 
-## Feature: generación de clips (modelo pago)
+## Feature: salas de clips (modelo free/pago)
 
-### Desafío principal: timestamps
-Hoy `Accion` y `TeamAccion` no tienen ningún campo de tiempo. Sin timestamps no se puede correlacionar una acción con un momento del video.
+### Concepto
+El analista comparte una "sala de clips" con su equipo. El veedor abre una URL y ve las acciones del partido filtrables por skill, con video embebido y seek por acción. Sin descarga de clips reales — solo enlaces con tiempo.
 
-### Arquitectura propuesta
+### Arquitectura
+- **Almacenamiento**: Supabase (PostgreSQL) — tabla `salas` con UUID, JSON de acciones, expiración
+- **API**: SvelteKit server routes (`/api/sala`) para crear/leer salas
+- **Página de sala**: `/sala/[token]` — renderiza video + filtros + playlist
+- **Auth**: Supabase Auth con Google OAuth (Fase 2)
+- **Planes**: free (72h, 4 skills) / partido $5 (permanente, todas las skills) / temporada $50 (permanente, 20 partidos)
 
-**Fase 1 — Captura de timestamps (gratis)**
-1. Agregar `videoTime: number | null` a `Accion` y `TeamAccion` en `types.ts`
-2. En `VistaAnalisis.svelte`, agregar `bind:this={videoEl}` al elemento `<video>` (Veo nativo) o integrar YouTube/Vimeo Player API para leer `currentTime`
-3. En `registrarAccionDirecta()` y `registrarAccionEquipo()`, capturar `videoEl?.currentTime ?? null` y guardarlo en la acción
-4. Mostrar timestamp en `VistaAcciones.svelte` (los comentarios `{a.timestamp}` ya existen)
-5. Actualizar mock data con `videoTime` simulado (3-5 min entre acciones)
+### Modelos de datos
 
-**Fase 2 — UI de revisión con timeline (gratis)**
-1. Ordenar acciones por `videoTime` en VistaAcciones
-2. Agregar slider / línea de tiempo que permita scrollear el video a la acción
-3. Botón "Ir al momento" en cada acción que haga seek al video (`videoEl.currentTime = a.videoTime`)
+**Tabla `salas` (Supabase):**
+```
+id              UUID PRIMARY KEY
+created_by      UUID (NULL para free)
+plan            TEXT ('free' | 'partido' | 'temporada')
+partido_json    JSONB
+acciones_json   JSONB
+team_acciones_json JSONB
+skills_visibles TEXT[]
+expires_at      TIMESTAMPTZ (NULL si es paga)
+created_at      TIMESTAMPTZ
+```
 
-**Fase 3 — Generación de clips (pago)**
-1. Servicio serverless (Netlify Function) que recibe URL de video + array de `{ start, end, label }`
-2. Desafíos técnicos:
-   - YouTube/Vimeo: no se puede recortar video server-side desde iframe. Solución: pedir al usuario que suba el video .mp4, o usar API de YouTube Data/ Vimeo API para descargar片段. Alternativa: usar `MediaRecorder` client-side para capturar la ventana del reproductor (baja calidad, requiere interacción del usuario).
-   - Veo: el video nativo se puede recortar con `MediaRecorder` + `HTMLCanvasElement.captureStream()` en el cliente, o con FFmpeg en el servidor si se tiene acceso al archivo .mp4.
-3. Formato de salida: video .mp4 por acción o reel compilado con todas las acciones destacadas
-4. Modelo de precio: ej. $3-5 USD por partido analizado con clips, o suscripción mensual
+### Sprints
+1. **Sprint 1 — Timestamps** (sin backend): agregar `videoTime` a tipos, capturar en análisis, integrar YouTube/Vimeo/Veo Player API
+2. **Sprint 2 — Supabase setup**: tablas, RLS, cliente, API routes, página de sala
+3. **Sprint 3 — VistaAcciones actualizada**: video embed, acciones cliqueables, botón compartir sala
+4. **Sprint 4 — Auth y planes**: Google OAuth, UI pricing, lógica de planes
 
-### Técnicamente: opciones de clipping
+### Decisiones clave
+- **Sin descarga de clips**: solo enlaces con tiempo (`?t=120s`) para YouTube/Vimeo, `currentTime` para Veo
+- **UUID para salas**: auto-generado, sin fricción. Permite futuro control de accesos
+- **Supabase gratis**: 500MB storage + 50K reads/mes. Suficiente para ~20 clientes activos
+- **Desktop-first**: la sala se ve mejor en PC (video + filtros + playlist)
 
-| Opción | Pros | Contras |
-|--------|------|---------|
-| **Client-side `MediaRecorder`** | Sin servidor, sin costo de CPU | Calidad limitada (codec del navegador), depende del player, no funciona con iframes cross-origin |
-| **Server-side FFmpeg (Netlify Function)** | Calidad máxima, formatos flexibles | Límite de 10s timeout en Netlify免费, costo de CPU, requiere el .mp4 original |
-| **API de terceros (Mux, api.video)** | Infraestructura lista, streaming incluido | Costo recurrente, dependencia externa |
-| **Enlaces con tiempo (`?t=120s`)** | Sin procesamiento de video, ultra simple | Solo YouTube/Vimeo, no es un clip descargable, UX pobre |
-
-**Recomendación inicial**: arrancar con enlaces con tiempo (?t=) para YouTube/Vimeo como feature gratis, y los clips reales como feature pago vía `MediaRecorder` client-side (para Veo) o FFmpeg server-side (para MP4 subido). Validar con usuarios antes de invertir en infraestructura pesada.
-
-### Roadmap resumido
-1. **Sprint 1** — Agregar `videoTime` a tipos, capturar en análisis, mostrar en revisión, mock data con tiempos
-2. **Sprint 2** — Timeline interactiva en VistaAcciones, seek al video desde cada acción
-3. **Sprint 3** — MVP de clipping: botón "Generar clip" que usa `MediaRecorder` para capturar ventana de 10s alrededor de la acción
-4. **Sprint 4** — Stripe/Pago online, suscripción mensual, clips compilados server-side con FFmpeg en Netlify Function
+### Documentación detallada
+Ver `docs/SALAS_CLIPS.md` para diseño completo, user flows, schema SQL, y detalles de implementación.

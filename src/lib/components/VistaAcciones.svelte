@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { procesarReporte } from '$lib/processing/reporte-data';
 	import { descargarPDF } from '$lib/pdf/reporte';
-
 	import type { PropsAcciones, ModalidadClave } from '$lib/types';
+	import { INFRACCION_SKILLS } from '$lib/types';
+	import { cocinarEnlaceVideo, formatTime } from '$lib/video';
+	import '$lib/video-types.d.ts';
 
 	let { equipo, partido, acciones, teamAcciones, cambiarVista, modalidad } = $props<
 		PropsAcciones & { modalidad: ModalidadClave }
@@ -10,6 +12,68 @@
 
 	let generando = $state(false);
 	let errorMsg = $state('');
+
+	let embedPermitido = $state<boolean | null>(null);
+	let veoVideoUrl = $state<string | null>(null);
+	let veoLoading = $state(false);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let videoEl = $state<HTMLVideoElement | null>(null);
+
+	const urlEmbed = $derived(cocinarEnlaceVideo(partido.urlVideo));
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		if (!url) {
+			embedPermitido = null;
+			return;
+		}
+
+		// Extraer ID de YouTube
+		// eslint-disable-next-line no-useless-assignment
+		let videoId = '';
+		if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1].split('&')[0];
+		else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+		else {
+			embedPermitido = true;
+			return;
+		} // no es YT, asumir permitido
+
+		if (!videoId) {
+			embedPermitido = true;
+			return;
+		}
+
+		embedPermitido = null; // loading
+		fetch(
+			`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+		)
+			.then((r) => {
+				embedPermitido = r.ok;
+			})
+			.catch(() => {
+				embedPermitido = true;
+			}); // si falla la consulta, asumir permitido
+	});
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		if (url && url.includes('veo.co') && url.includes('app.veo.co')) {
+			veoLoading = true;
+			veoVideoUrl = null;
+			const slug = url.replace(/\/$/, '').split('/').pop() || '';
+			fetch(`/api/veo-video?slug=${encodeURIComponent(slug)}`)
+				.then((r) => r.json())
+				.then((data) => {
+					if (data.videoUrl) veoVideoUrl = data.videoUrl;
+					else console.error('Veo API error:', data.error);
+				})
+				.catch((e) => console.error('Error fetching Veo video:', e))
+				.finally(() => (veoLoading = false));
+		} else {
+			veoVideoUrl = null;
+			veoLoading = false;
+		}
+	});
 
 	async function generarReporte(): Promise<void> {
 		generando = true;
@@ -25,77 +89,187 @@
 			generando = false;
 		}
 	}
+
+	// 1. FUNCIONES DE ACCIONES Y VIDEO
+
+	function seekToVideo(seconds: number | null): void {
+		if (seconds === null) return;
+		try {
+			if (videoEl) {
+				videoEl.currentTime = seconds;
+				videoEl.play();
+			} else if (
+				partido.urlVideo?.includes('youtube.com') ||
+				partido.urlVideo?.includes('youtu.be')
+			) {
+				const iframe = document.querySelector(
+					'iframe[src*="youtube.com/embed"]'
+				) as HTMLIFrameElement | null;
+				if (iframe?.contentWindow) {
+					iframe.contentWindow.postMessage(
+						JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }),
+						'*'
+					);
+					iframe.contentWindow.postMessage(
+						JSON.stringify({ event: 'command', func: 'playVideo' }),
+						'*'
+					);
+				}
+			}
+		} catch {
+			/* player no listo */
+		}
+	}
+
+	function colorCalificacion(skill: string, calificacion: string): string {
+		if ((INFRACCION_SKILLS as readonly string[]).includes(skill)) return 'negativa';
+		if (calificacion === 'Positivo' || calificacion === 'Dominante') return 'positiva';
+		if (calificacion === 'Negativo') return 'negativa';
+		if (calificacion === 'Neutro' && skill === 'Duelo') return 'negativa';
+		return '';
+	}
 </script>
 
 <div class="pantalla-reporte">
 	<h2>Resumen de acciones {partido.local} vs {partido.visitante}</h2>
-	<div class="contenedor-pilas">
-		<!-- pila acciones jugador -->
+
+	<!-- IZQUIERDA: Video -->
+	<div class="panel-video">
+		{#if urlEmbed}
+			{#if embedPermitido === null}
+				<div class="veo-loading">Verificando disponibilidad del video…</div>
+			{:else if embedPermitido}
+				<iframe
+					src={urlEmbed}
+					title="Video Player"
+					style="border: 0;"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+					allowfullscreen
+				></iframe>
+			{:else}
+				<div class="embed-bloqueado">
+					<span>El propietario del video inhabilitó la reproducción en otros sitios web.</span>
+				</div>
+			{/if}
+		{:else if veoVideoUrl}
+			<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"></video>
+		{:else if veoLoading}
+			<div class="veo-loading">Cargando video…</div>
+		{/if}
+	</div>
+
+	<!-- DERECHA: 2 columnas de acciones -->
+	<div class="panel-acciones">
 		<div class="columna-historial">
-			<h3>Historial de acciones individuales</h3>
+			<h3>Acciones individuales</h3>
 			<div class="lista-scroll">
 				{#each acciones as a (a)}
-					<div class="tarjeta-log individual">
-						<!-- <span class="badge-fase">{a.timestamp}</span> -->
-						<span class="badge-jugador">{a.player.apellido}</span>
-						<span class="texto-accion"><strong>{a.skill}</strong>: {a.calificacion}</span>
-					</div>
+					<button
+						class="tarjeta-log"
+						class:positiva={colorCalificacion(a.skill, a.calificacion) === 'positiva'}
+						class:negativa={colorCalificacion(a.skill, a.calificacion) === 'negativa'}
+						onclick={() => seekToVideo(a.videoTime)}
+					>
+						<span class="badge-tiempo">{formatTime(a.videoTime)}</span>
+						<span class="badge-tiempo">{a.skill}</span>
+					</button>
 				{/each}
 			</div>
 		</div>
-
-		<!-- pila situaciones juego -->
 		<div class="columna-historial">
-			<h3>Historial de situaciones de juego</h3>
+			<h3>Situaciones de juego</h3>
 			<div class="lista-scroll">
 				{#each teamAcciones as ta (ta)}
-					<div class="tarjeta-log equipo">
-						<!-- <span>Time: {new Date(ta.timestamp).toLocaleTimeString()}</span> -->
-						<!-- <span class="badge-fase">{ta.timestamp}</span> -->
-						<span class="badge-fase">{ta.situacion}</span>
-						<span class="texto-accion">Resultado: <strong>{ta.calificacion}</strong></span>
-					</div>
+					<button
+						class="tarjeta-log"
+						class:positiva={ta.calificacion === 'Positivo'}
+						class:negativa={ta.calificacion === 'Negativo'}
+						onclick={() => seekToVideo(ta.videoTime)}
+					>
+						<span class="badge-tiempo">{formatTime(ta.videoTime)}</span>
+						<span class="badge-tiempo">{ta.situacion}</span>
+					</button>
+					{#if errorMsg}
+						<p class="alerta-error">{errorMsg}</p>
+					{/if}
 				{/each}
 			</div>
 		</div>
 	</div>
 
 	<div class="contenedor-acciones-pie">
-		{#if errorMsg}
-			<div class="alerta-error">{errorMsg}</div>
-		{/if}
-
-		<div class="contenedor-acciones-pie">
-			<button onclick={generarReporte} disabled={generando} class="btn-primary">
-				{generando ? 'Generando PDF...' : 'Descargar Reporte PDF →'}
-			</button>
-		</div>
+		<button onclick={generarReporte} disabled={generando} class="btn-primary">
+			{generando ? 'Generando PDF...' : 'Descargar Reporte PDF →'}
+		</button>
 	</div>
 </div>
 
 <style>
+	.badge-tiempo {
+		background-color: black;
+		color: #0068ce;
+		font-family: monospace;
+		font-weight: bold;
+		padding: 4px 8px;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		min-width: 72px; /* H:MM:SS siempre cabe */
+		text-align: right; /* alineado a derecha */
+	}
+
+	.tarjeta-log.positiva {
+		/* background-color: #f0fdf4; */
+		background-color: #357c4a;
+		/* border-left: 3px solid #16a34a; */
+	}
+
+	.tarjeta-log.negativa {
+		/* background-color: #fef2f2; */
+		background-color: #a13838;
+		/* border-left: 3px solid #dc2626; */
+	}
+
+	.tarjeta-log.positiva:hover {
+		/* background-color: #dcfce7; */
+		background-color: #438055;
+	}
+
+	.tarjeta-log.negativa:hover {
+		/* background-color: #fee2e2; */
+		background-color: #a14747;
+	}
+
+	.alerta-error {
+		color: #dc2626;
+		font-size: 0.85rem;
+		margin-top: 8px;
+	}
 	.pantalla-reporte {
-		padding: 24px;
-		max-width: 1200px;
-		margin: 0 auto;
-	}
-
-	h2 {
-		color: #0f172a;
-		margin: 0 0 32px 0;
-		font-size: 1.35rem;
-		font-weight: 700;
-	}
-
-	/* Disposición en dos columnas paralelas */
-	.contenedor-pilas {
-		display: flex;
+		display: grid;
+		grid-template-columns: 1.8fr 1.2fr;
 		gap: 24px;
-		margin-bottom: 24px;
+		padding: 20px;
+	}
+
+	.pantalla-reporte h2 {
+		grid-column: 1 / -1;
+	}
+
+	.panel-video iframe,
+	.panel-video video {
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		border-radius: 8px;
+		background-color: #000;
+	}
+
+	.panel-acciones {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
 	}
 
 	.columna-historial {
-		flex: 1;
 		background-color: white;
 		border: 1px solid #e2e8f0;
 		border-radius: 8px;
@@ -114,7 +288,6 @@
 		padding-bottom: 8px;
 	}
 
-	/* LA CLAVE: Altura fija de 400px y scroll vertical automático si desborda */
 	.lista-scroll {
 		max-height: 400px;
 		overflow-y: auto;
@@ -124,7 +297,6 @@
 		padding-right: 4px;
 	}
 
-	/* Tarjetas visuales de cada fila del log */
 	.tarjeta-log {
 		display: flex;
 		align-items: center;
@@ -135,6 +307,28 @@
 		padding: 10px 12px;
 		font-size: 0.85rem;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+		cursor: pointer;
+		transition: background-color 0.1s ease;
+		border: none;
+		text-align: left;
+		width: 100%;
+		font-family: inherit;
+	}
+
+	.tarjeta-log:hover {
+		background-color: #f0f6fd;
+		border-color: #99c9ef;
+	}
+
+	.veo-loading {
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		border-radius: 8px;
+		background: #000;
+		color: #94a3b8;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.badge-jugador {
@@ -144,6 +338,7 @@
 		padding: 4px 8px;
 		border-radius: 4px;
 	}
+
 	.badge-fase {
 		background-color: #f0fdf4;
 		color: #16a34a;
@@ -151,15 +346,28 @@
 		padding: 4px 8px;
 		border-radius: 4px;
 	}
+
+	.badge-tiempo {
+		background-color: #f0f6fd;
+		color: #0068ce;
+		font-family: monospace;
+		font-weight: bold;
+		padding: 4px 8px;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		min-width: 45px;
+		text-align: center;
+	}
+
 	.texto-accion {
 		color: #334155;
+		font-weight: bold;
 	}
 
 	.contenedor-acciones-pie {
+		grid-column: 1 / -1;
 		display: flex;
 		justify-content: flex-end;
-		/* border-top: 1px solid #e2e8f0; */
-		/* padding-top: 16px; */
 	}
 
 	.btn-primary {
@@ -173,17 +381,8 @@
 		cursor: pointer;
 		transition: background-color 0.1s ease;
 	}
+
 	.btn-primary:hover {
 		background-color: #0050a0;
-	}
-
-	.alerta-error {
-		background-color: #fef2f2;
-		color: #dc2626;
-		border: 1px solid #fecaca;
-		border-radius: 6px;
-		padding: 12px 16px;
-		margin-bottom: 16px;
-		font-size: 0.9rem;
 	}
 </style>

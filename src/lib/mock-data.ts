@@ -23,7 +23,7 @@ export function generarMockData(
 	let nextId = 1;
 
 	function push(p: NonNullable<Puesto['player']>, skill: Skill, calif: CalificacionIndividual) {
-		acciones.push({ id: nextId++, player: p, skill, calificacion: calif });
+		acciones.push({ id: nextId++, player: p, skill, calificacion: calif, videoTime: rand(0, 2400) });
 	}
 
 	function buscarJug(numero: number) {
@@ -43,8 +43,8 @@ export function generarMockData(
 		// Pases
 		const pases = n === 9 || n === 10 ? rand(40, 60)
 			: n >= 1 && n <= 8 ? rand(5, 15)
-			: n >= 16 ? rand(5, 15)
-			: rand(10, 20);
+				: n >= 16 ? rand(5, 15)
+					: rand(10, 20);
 		for (let i = 0; i < pases; i++) {
 			push(p, 'Pase', pickCalif({ Negativo: 0.05, Positivo: 0.95 }));
 		}
@@ -189,7 +189,7 @@ export function generarMockData(
 	// Team acciones
 	const teamAcciones: TeamAccion[] = [];
 	function pushTeam(situacion: SituacionJuego, calif?: CalificacionGrupal) {
-		teamAcciones.push({situacion, calificacion: calif ?? (Math.random() > 0.3 ? 'Positivo' : 'Negativo') });
+		teamAcciones.push({ situacion, calificacion: calif ?? (Math.random() > 0.3 ? 'Positivo' : 'Negativo'), videoTime: rand(0, 2400) });
 	}
 
 	for (let i = 0; i < 5; i++) pushTeam('Scrum propio');

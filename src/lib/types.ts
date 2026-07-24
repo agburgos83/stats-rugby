@@ -29,11 +29,13 @@ export type Accion = {
 	player: Player;
 	skill: Skill;
 	calificacion: CalificacionIndividual;
+	videoTime: number | null;
 };
 
 export type TeamAccion = {
 	situacion: SituacionJuego;
 	calificacion: CalificacionGrupal;
+	videoTime: number | null;
 };
 
 export type ModalidadClave = 'seven' | 'ten' | 'doce' | 'quince';

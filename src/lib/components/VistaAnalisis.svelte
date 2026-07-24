@@ -13,7 +13,9 @@
 		type PropsAnalisis
 	} from '$lib/types';
 
-	/* eslint-disable svelte/no-navigation-without-resolve */
+	import '$lib/video-types.d.ts';
+
+	import { cocinarEnlaceVideo } from '$lib/video';
 
 	// importadas desde el orquestador
 	let {
@@ -40,6 +42,10 @@
 	let veoVideoUrl = $state<string | null>(null);
 	let veoLoading = $state(false);
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let videoEl = $state<HTMLVideoElement | null>(null);
+	let cachedYouTubeTime = $state(0);
+
 	$effect(() => {
 		const url = partido.urlVideo;
 		if (url && url.includes('veo.co') && url.includes('app.veo.co')) {
@@ -60,7 +66,63 @@
 		}
 	});
 
+	$effect(() => {
+		const url = partido.urlVideo;
+		const isYT = url?.includes('youtube.com') || url?.includes('youtu.be');
+		if (!isYT) return;
+
+		const handler = (event: MessageEvent) => {
+			if (event.origin !== 'https://www.youtube.com') return;
+			try {
+				const data = JSON.parse(event.data);
+				if (data.event === 'infoDelivery' && data.info?.currentTime !== undefined) {
+					cachedYouTubeTime = data.info.currentTime;
+				}
+			} catch {
+				/* not a JSON message from YT */
+			}
+		};
+
+		const sendListening = () => {
+			const iframe = document.querySelector(
+				'iframe[src*="youtube.com/embed"]'
+			) as HTMLIFrameElement | null;
+			if (iframe?.contentWindow) {
+				iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
+			}
+		};
+
+		window.addEventListener('message', handler);
+		sendListening();
+		const interval = setInterval(sendListening, 1000);
+		const timeout = setTimeout(() => clearInterval(interval), 10000);
+
+		return () => {
+			window.removeEventListener('message', handler);
+			clearInterval(interval);
+			clearTimeout(timeout);
+		};
+	});
+
 	// 1. FUNCIONES DE ACCIONES Y VIDEO
+
+	function obtenerTiempoVideo(offset: number = 0): number | null {
+		try {
+			let t: number | null = null;
+			if (videoEl) t = videoEl.currentTime;
+			else if (
+				partido.urlVideo?.includes('youtube.com') ||
+				partido.urlVideo?.includes('youtu.be')
+			) {
+				t = cachedYouTubeTime;
+			}
+			if (t === null) return null;
+			return Math.max(0, t - offset);
+		} catch {
+			return null;
+		}
+	}
+
 	function registrarAccionDirecta(
 		skillElegida: Skill,
 		califIndividualElegida: CalificacionIndividual,
@@ -83,7 +145,8 @@
 				id: nextAccionId++,
 				player: j,
 				skill: skillElegida,
-				calificacion: califIndividualElegida
+				calificacion: califIndividualElegida,
+				videoTime: obtenerTiempoVideo(2)
 			});
 		}
 
@@ -110,8 +173,9 @@
 		}
 
 		const nuevaTeamAccion: TeamAccion = {
-			situacion: sitJuegoElegida, // El que está activo en memoria
-			calificacion: califGrupalElegida // El del botón que tocó
+			situacion: sitJuegoElegida,
+			calificacion: califGrupalElegida,
+			videoTime: obtenerTiempoVideo(4)
 		};
 
 		teamAcciones.push(nuevaTeamAccion);
@@ -162,44 +226,6 @@
 
 	function hayAccionesGrupales(): boolean {
 		return teamAcciones.length > 0;
-	}
-
-	function cocinarEnlaceVideo(enlace: string): string | null {
-		if (!enlace) return '';
-
-		if (enlace.includes('vimeo.com')) {
-			if (enlace.includes('player.vimeo.com')) {
-				return enlace;
-			}
-			const id = enlace.split('vimeo.com/')[1]?.split('?')[0]?.split('/')[0];
-			return id ? `https://player.vimeo.com/video/${id}` : enlace;
-		}
-
-		// CASO YOUTUBE
-		if (enlace.includes('youtube.com') || enlace.includes('youtu.be')) {
-			let codigoFinal = '';
-
-			if (enlace.includes('watch?v=')) {
-				// [.split('watch?v=')[1]] extrae el ID, y el [.split('&')[0]] limpia parámetros extras
-				codigoFinal = enlace.split('watch?v=')[1].split('&')[0];
-			} else if (enlace.includes('youtu.be/')) {
-				codigoFinal = enlace.split('youtu.be/')[1].split('?')[0];
-			} else if (enlace.includes('/shorts/')) {
-				codigoFinal = enlace.split('/shorts/')[1].split('?')[0];
-			} else if (enlace.includes('/live/')) {
-				codigoFinal = enlace.split('/live/')[1].split('?')[0];
-			}
-
-			// Si logramos sacar el ID, armamos la URL de embed oficial
-			return codigoFinal ? 'https://www.youtube.com/embed/' + codigoFinal : enlace;
-		}
-
-		// CASO VEO (no soporta iframe, se usa <video> nativo vía API)
-		if (enlace.includes('veo.co') && enlace.includes('app.veo.co')) {
-			return null;
-		}
-
-		return enlace;
 	}
 
 	function toggleJugador(p: Player, ctrlKey: boolean): void {
@@ -276,6 +302,7 @@
 				{:else}
 					<div class="embed-bloqueado">
 						<span>El propietario del video inhabilitó la reproducción en otros sitios web.</span>
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 						<a href={partido.urlVideo} target="_blank" rel="noopener" class="btn-primary">
 							Abrir en YouTube ↗
 						</a>
@@ -283,7 +310,7 @@
 				{/if}
 			{:else if veoVideoUrl}
 				<!-- svelte-ignore a11y_media_has_caption -->
-				<video src={veoVideoUrl} controls preload="metadata"></video>
+				<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"></video>
 			{:else if veoLoading}
 				<div class="veo-loading">Cargando video de Veo…</div>
 			{/if}
@@ -663,7 +690,7 @@
 		margin: 0 0 8px 0;
 		font-size: 0.95rem;
 		font-weight: bold;
-		color: #0068CE;
+		color: #0068ce;
 	}
 	.grupo-chips {
 		display: flex;
@@ -704,12 +731,12 @@
 		cursor: not-allowed;
 	}
 	.btn-chip.activo {
-		background-color: #0068CE !important;
+		background-color: #0068ce !important;
 		color: white !important;
-		border-color: #0068CE !important;
+		border-color: #0068ce !important;
 	}
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 10px 20px;
@@ -808,9 +835,9 @@
 		border-color: #cbd5e1;
 	}
 	.btn-calif.dom:not(:disabled) {
-		background-color: #F0F6FD;
-		color: #0068CE;
-		border-color: #99C9EF;
+		background-color: #f0f6fd;
+		color: #0068ce;
+		border-color: #99c9ef;
 	}
 
 	/* Cada línea de tarjetas de situación usa misma grilla que skills */
@@ -845,7 +872,7 @@
 	}
 
 	.contador-global {
-		color: #0068CE;
+		color: #0068ce;
 		font-weight: bold;
 		margin-left: 4px;
 	}
@@ -853,19 +880,19 @@
 	/* La clase que se inyecta temporalmente por 300ms */
 	.btn-calif.flash {
 		animation: pulso-flash 0.3s ease-out;
-		border-color: #0068CE !important;
+		border-color: #0068ce !important;
 		box-shadow: 0 0 8px rgba(0, 104, 206, 0.5);
 	}
 
 	/* Animación que genera el cambio de color rápido */
 	@keyframes pulso-flash {
 		0% {
-			background-color: #0068CE;
+			background-color: #0068ce;
 			color: white;
 			transform: scale(0.95);
 		}
 		50% {
-			background-color: #3399EE;
+			background-color: #3399ee;
 			color: white;
 			transform: scale(1.05);
 		}
@@ -991,8 +1018,8 @@
 		gap: 16px;
 		width: 100%;
 		aspect-ratio: 16 / 9;
-		background: #F0F6FD;
-		border: 1px solid #99C9EF;
+		background: #f0f6fd;
+		border: 1px solid #99c9ef;
 		border-radius: 8px;
 		padding: 24px 32px;
 		color: #1e40af;
@@ -1002,7 +1029,7 @@
 	}
 	.embed-bloqueado .btn-primary {
 		white-space: nowrap;
-		background: #0068CE;
+		background: #0068ce;
 		color: white;
 		padding: 10px 20px;
 		border-radius: 8px;
