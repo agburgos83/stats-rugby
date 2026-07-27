@@ -122,7 +122,7 @@
 
 	function colorCalificacion(skill: string, calificacion: string): string {
 		if ((INFRACCION_SKILLS as readonly string[]).includes(skill)) return 'negativa';
-		if (calificacion === 'Positivo' || calificacion === 'Dominante') return 'positiva';
+		if (calificacion === 'Positivo' || calificacion === 'Dominante'  || (calificacion === 'Neutro' && skill === 'Tackle')) return 'positiva';
 		if (calificacion === 'Negativo') return 'negativa';
 		if (calificacion === 'Neutro' && skill === 'Duelo') return 'negativa';
 		return '';
