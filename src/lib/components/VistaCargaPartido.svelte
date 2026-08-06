@@ -19,17 +19,18 @@
 			partido.visitante.trim() !== '' &&
 			esPuntajeValido(partido.puntosLocal) &&
 			esPuntajeValido(partido.puntosVisitante) &&
-		(partido.usuarioUnion ?? '').trim() !== '' &&
-		(partido.usuarioClub ?? '').trim() !== '' &&
+			(partido.usuarioUnion ?? '').trim() !== '' &&
+			(partido.usuarioClub ?? '').trim() !== '' &&
 			partido.division.trim() !== '' &&
 			partido.fecha.trim() !== '' &&
-			partido.urlVideo.trim() !== ''
+			partido.urlVideo.trim() !== '' &&
+			partido.local !== partido.visitante
 	);
 
 	let botonHabilitado = $derived(esUrlValida(partido.urlVideo) && formValido);
 
 	function esPuntajeValido(n: number | null): boolean {
-		if (n === null || n < 0) return false;
+		if (n === null) return false;
 		return n !== 1 && n !== 2 && n !== 4;
 	}
 </script>
@@ -72,18 +73,22 @@
 			<div class="campo-formulario flex-1">
 				<div class="fila-formulario">
 					<div class="campo-formulario flex-1">
-						<label for="division-select">Equipo Local</label>
-						<select bind:value={partido.local} class="input-control">
-							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []) as equipo (equipo)}
+						<label for="equipo-local-select">Equipo Local</label>
+						<select id="equipo-local-select" bind:value={partido.local} class="input-control">
+							{#each partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : [] as equipo (equipo)}
 								<option value={equipo.label}>{equipo.label}</option>
 							{/each}
 						</select>
 					</div>
 
 					<div class="campo-formulario flex-1">
-						<label for="division-select">Equipo Visitante</label>
-						<select bind:value={partido.visitante} class="input-control">
-							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []) as equipo (equipo)}
+						<label for="equipo-visitante-select">Equipo Visitante</label>
+						<select
+							id="equipo-visitante-select"
+							bind:value={partido.visitante}
+							class="input-control"
+						>
+							{#each partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : [] as equipo (equipo)}
 								<option value={equipo.label}>{equipo.label}</option>
 							{/each}
 						</select>
@@ -95,8 +100,9 @@
 		<!-- Fila 3: Tanteador y Fecha balanceados -->
 		<div class="fila-formulario">
 			<div class="campo-formulario flex-sub">
-				<label>Puntos Local</label>
+				<label for="partido-puntos-local">Puntos Local</label>
 				<input
+					id="partido-puntos-local"
 					type="number"
 					min="0"
 					bind:value={partido.puntosLocal}
@@ -108,8 +114,9 @@
 				{/if}
 			</div>
 			<div class="campo-formulario flex-sub">
-				<label>Puntos Visitante</label>
+				<label for="partido-puntos-visitante">Puntos Visitante</label>
 				<input
+					id="partido-puntos-visitante"
 					type="number"
 					min="0"
 					bind:value={partido.puntosVisitante}
@@ -138,7 +145,7 @@
 		/>
 
 		<div class="contenedor-boton">
-			<button disabled={!botonHabilitado} onclick={cambiarVista} class="btn-primary">
+			<button disabled={!botonHabilitado} onclick={() => cambiarVista(4)} class="btn-primary">
 				Comenzar Análisis →
 			</button>
 		</div>
@@ -212,7 +219,7 @@
 		transition: border-color 0.15s ease;
 	}
 	.input-control:focus {
-		border-color: #0068CE;
+		border-color: #0068ce;
 		box-shadow: 0 0 0 3px rgba(0, 104, 206, 0.1);
 	}
 	.separador {
@@ -227,7 +234,7 @@
 		text-align: right;
 	}
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -238,7 +245,7 @@
 		transition: background-color 0.2s;
 	}
 	.btn-primary:hover {
-		background-color: #0050A0;
+		background-color: #0050a0;
 	}
 	.btn-primary:disabled {
 		background-color: #cbd5e1;

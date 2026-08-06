@@ -16,6 +16,7 @@
 	import '$lib/video-types.d.ts';
 
 	import { cocinarEnlaceVideo } from '$lib/video';
+	import { logError } from '$lib/debug';
 
 	// importadas desde el orquestador
 	let {
@@ -28,7 +29,7 @@
 
 	// let jugadorElegido = $state<Player | null>(null);
 	let jugadoresElegidos = $state<Player[]>([]);
-	let nextAccionId = 0;
+	let nextAccionId = acciones.reduce((max, a) => Math.max(max, a.id), -1) + 1;
 	let ultimaAccionClickeada = $state<string | null>(null);
 	let prevAccionesLength = $state(0);
 	let puedeDeshacerIndividual = $state(false);
@@ -55,9 +56,11 @@
 				.then((r) => r.json())
 				.then((data) => {
 					if (data.videoUrl) veoVideoUrl = data.videoUrl;
-					else console.error('Veo API error:', data.error);
+					else logError('Error de la API de Veo:', data.error);
 				})
-				.catch((e) => console.error('Error fetching Veo video:', e))
+				.catch((e) => {
+					logError('Error al traer video de Veo:', e);
+				})
 				.finally(() => (veoLoading = false));
 		} else {
 			veoVideoUrl = null;
@@ -286,7 +289,7 @@
 			<h2>
 				Análisis {partido.local} vs {partido.visitante} ({partido.puntosLocal} - {partido.puntosVisitante})
 			</h2>
-			<p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p>
+			<!-- <p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p> -->
 			{#if urlEmbed}
 				{#if embedPermitido === null}
 					<div class="veo-loading">Verificando disponibilidad del video…</div>
@@ -308,18 +311,20 @@
 					</div>
 				{/if}
 			{:else if veoVideoUrl}
-				<!-- svelte-ignore a11y_media_has_caption -->
-				<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"></video>
+				<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"
+					><track kind="captions" /></video
+				>
 			{:else if veoLoading}
 				<div class="veo-loading">Cargando video de Veo…</div>
 			{/if}
 		</div>
 
 		<div class="acciones-finales">
+			<button onclick={() => cambiarVista(3)} class="btn-secundario">← Editar partido</button>
 			<div class="contenedor-boton">
 				<button
 					disabled={!hayAccionesGrupales() && !hayAccionesIndividuales()}
-					onclick={cambiarVista}
+					onclick={() => cambiarVista(5)}
 					class="btn-primary"
 				>
 					Terminar análisis →
@@ -642,6 +647,8 @@
 		padding: 20px;
 	}
 	.panel-video h2 {
+		font-size: 1.35rem;
+		font-weight: 700;
 		margin-top: 0;
 		margin-bottom: 0px;
 		color: #1e293b;
@@ -662,6 +669,11 @@
 		border-radius: 8px;
 		background-color: #000;
 		border: 1px solid #e2e8f0;
+	}
+
+	.subtitulo-torneo {
+		color: #64748b;
+		font-size: 0.88rem;
 	}
 
 	.veo-loading {
@@ -744,7 +756,7 @@
 		border-radius: 8px;
 		cursor: pointer;
 	}
-	
+
 	.btn-primary:disabled {
 		background-color: #cbd5e1;
 		color: #94a3b8;
@@ -931,6 +943,23 @@
 
 	.contenedor-boton .btn-primary {
 		flex: 1; /* Hace que si hay dos botones, midan exactamente lo mismo */
+	}
+
+	.btn-secundario {
+		background-color: white;
+		color: #0068ce;
+		border: 1px solid #0068ce;
+		padding: 12px 24px;
+		font-size: 1rem;
+		font-weight: bold;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: background-color 0.1s ease;
+		text-decoration: none;
+	}
+
+	.btn-secundario:hover {
+		background-color: #f0f6fd;
 	}
 
 	/* Contenedor horizontal que distribuye el total a la izquierda y botones a la derecha */

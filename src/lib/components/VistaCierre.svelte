@@ -8,7 +8,7 @@
 
 <section class="pantalla-cierre">
 	<h2>Muchas gracias por elegir</h2>
-	<br/>
+	<br />
 	<img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" class="logo-cierre" />
 	<hr class="separador" />
 	<button onclick={nuevoAnalisis} class="btn-primary"> Nuevo análisis </button>
@@ -48,7 +48,7 @@
 	}
 
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -59,6 +59,6 @@
 		transition: background-color 0.2s;
 	}
 	.btn-primary:hover {
-		background-color: #0050A0;
+		background-color: #0050a0;
 	}
 </style>

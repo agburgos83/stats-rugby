@@ -37,6 +37,9 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		return json({ videoUrl: standard.url });
 	} catch (err) {
-		return json({ error: err instanceof Error ? err.message : 'Error desconocido' }, { status: 500 });
+		return json(
+			{ error: err instanceof Error ? err.message : 'Error desconocido' },
+			{ status: 500 }
+		);
 	}
 };

@@ -40,12 +40,12 @@
 
 	$effect(() => {
 		const total = MODALIDADES[usuarioModalidad].total;
-		equipo = Array.from({ length: total}, (_, i) => ({
+		equipo = Array.from({ length: total }, (_, i) => ({
 			numero: i + 1,
 			posicionOriginal: obtenerPosicionTeorica(usuarioModalidad, i + 1),
 			player: null
 		}));
-	})
+	});
 
 	let partido = $state<PartidoContexto>({
 		fecha: '',
@@ -100,7 +100,13 @@
 					acciones,
 					teamAcciones
 				);
-				await descargarPDF(equipoInicial, partidoInicial, matrizProcesada, dixTotales, usuarioModalidad);
+				await descargarPDF(
+					equipoInicial,
+					partidoInicial,
+					matrizProcesada,
+					dixTotales,
+					usuarioModalidad
+				);
 			});
 		}
 	}
@@ -124,7 +130,7 @@
 
 <!-- 6. Renderizado condicional -->
 {#if vistaActual === 1}
-	<VistaCargaCSV bind:jugadores cambiarVista={() => cambiarVista(2)} />
+	<VistaCargaCSV bind:jugadores cambiarVista={(v) => cambiarVista(v)} />
 {:else if vistaActual === 2}
 	<VistaCargaEquipo
 		{jugadores}
@@ -132,17 +138,17 @@
 		bind:usuarioUnion
 		bind:usuarioClub
 		bind:usuarioModalidad
-		cambiarVista={() => cambiarVista(3)}
+		cambiarVista={(v) => cambiarVista(v)}
 	/>
 {:else if vistaActual === 3}
-	<VistaCargaPartido bind:partido cambiarVista={() => cambiarVista(4)} />
+	<VistaCargaPartido bind:partido cambiarVista={(v) => cambiarVista(v)} />
 {:else if vistaActual === 4}
 	<VistaAnalisis
 		{equipo}
 		{partido}
 		bind:acciones
 		bind:teamAcciones
-		cambiarVista={() => cambiarVista(5)}
+		cambiarVista={(v) => cambiarVista(v)}
 	/>
 {:else if vistaActual === 5}
 	<VistaAcciones
@@ -151,7 +157,7 @@
 		{acciones}
 		{teamAcciones}
 		modalidad={usuarioModalidad}
-		cambiarVista={() => cambiarVista(6)}
+		cambiarVista={(v) => cambiarVista(v)}
 	/>
 {:else if vistaActual === 6}
 	<VistaCierre

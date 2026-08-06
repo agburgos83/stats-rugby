@@ -64,7 +64,7 @@
 
 <style>
 	.site-footer {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		text-align: left;
 		padding: 24px 2rem;
@@ -89,7 +89,7 @@
 		text-underline-offset: 2px;
 	}
 	.footer-links a:hover {
-		color: #CCE4F7;
+		color: #cce4f7;
 	}
 	.ig-link {
 		display: inline-flex;

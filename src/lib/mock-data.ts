@@ -1,10 +1,20 @@
-import type { Puesto, Accion, TeamAccion, Skill, SituacionJuego, CalificacionIndividual, CalificacionGrupal } from './types';
+import type {
+	Puesto,
+	Accion,
+	TeamAccion,
+	Skill,
+	SituacionJuego,
+	CalificacionIndividual,
+	CalificacionGrupal
+} from './types';
 
 function rand(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pickCalif(weights: Partial<Record<CalificacionIndividual, number>>): CalificacionIndividual {
+function pickCalif(
+	weights: Partial<Record<CalificacionIndividual, number>>
+): CalificacionIndividual {
 	const entries = Object.entries(weights) as [CalificacionIndividual, number][];
 	const total = entries.reduce((s, [, w]) => s + w, 0);
 	let r = Math.random() * total;
@@ -23,11 +33,17 @@ export function generarMockData(
 	let nextId = 1;
 
 	function push(p: NonNullable<Puesto['player']>, skill: Skill, calif: CalificacionIndividual) {
-		acciones.push({ id: nextId++, player: p, skill, calificacion: calif, videoTime: rand(0, 2400) });
+		acciones.push({
+			id: nextId++,
+			player: p,
+			skill,
+			calificacion: calif,
+			videoTime: rand(0, 2400)
+		});
 	}
 
 	function buscarJug(numero: number) {
-		return equipo.find(e => e.numero === numero)?.player ?? null;
+		return equipo.find((e) => e.numero === numero)?.player ?? null;
 	}
 
 	const ourScore = partido.puntosLocal ?? 20;
@@ -41,10 +57,14 @@ export function generarMockData(
 		const n = puesto.numero;
 
 		// Pases
-		const pases = n === 9 || n === 10 ? rand(40, 60)
-			: n >= 1 && n <= 8 ? rand(5, 15)
-				: n >= 16 ? rand(5, 15)
-					: rand(10, 20);
+		const pases =
+			n === 9 || n === 10
+				? rand(40, 60)
+				: n >= 1 && n <= 8
+					? rand(5, 15)
+					: n >= 16
+						? rand(5, 15)
+						: rand(10, 20);
 		for (let i = 0; i < pases; i++) {
 			push(p, 'Pase', pickCalif({ Negativo: 0.05, Positivo: 0.95 }));
 		}
@@ -52,13 +72,13 @@ export function generarMockData(
 		// Tackles
 		const tackles = rand(2, 12);
 		for (let i = 0; i < tackles; i++) {
-			push(p, 'Tackle', pickCalif({ Negativo: 0.15, Neutro: 0.30, Positivo: 0.40, Dominante: 0.15 }));
+			push(p, 'Tackle', pickCalif({ Negativo: 0.15, Neutro: 0.3, Positivo: 0.4, Dominante: 0.15 }));
 		}
 
 		// Duelos (8, 12, 13 tienen mas)
 		const duelos = n === 8 || n === 12 || n === 13 ? rand(5, 12) : rand(2, 6);
 		for (let i = 0; i < duelos; i++) {
-			push(p, 'Duelo', pickCalif({ Negativo: 0.20, Neutro: 0.30, Positivo: 0.30, Dominante: 0.20 }));
+			push(p, 'Duelo', pickCalif({ Negativo: 0.2, Neutro: 0.3, Positivo: 0.3, Dominante: 0.2 }));
 		}
 
 		// Rec. line (4, 5)
@@ -73,7 +93,7 @@ export function generarMockData(
 		if (n === 2) {
 			const lanzs = rand(10, 18);
 			for (let i = 0; i < lanzs; i++) {
-				push(p, 'Lanz. line', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+				push(p, 'Lanz. line', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 			}
 		}
 
@@ -81,37 +101,37 @@ export function generarMockData(
 		if (n >= 1 && n <= 8) {
 			const rucks = rand(6, 12);
 			for (let i = 0; i < rucks; i++) {
-				push(p, 'Ruck', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+				push(p, 'Ruck', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 			}
 		} else if (n >= 11 && n <= 15) {
 			const rucks = rand(0, 4);
 			for (let i = 0; i < rucks; i++) {
-				push(p, 'Ruck', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+				push(p, 'Ruck', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 			}
 		}
 
 		// Ast. tackle (1-8: 2-3, resto: 0-2)
 		const astTackles = n >= 1 && n <= 8 ? rand(2, 3) : rand(0, 2);
 		for (let i = 0; i < astTackles; i++) {
-			push(p, 'Ast. tackle', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+			push(p, 'Ast. tackle', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 		}
 
 		// Ast. duelo (1-8: 2-3, resto: 0-1)
 		const astDuelos = n >= 1 && n <= 8 ? rand(2, 3) : rand(0, 1);
 		for (let i = 0; i < astDuelos; i++) {
-			push(p, 'Ast. duelo', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+			push(p, 'Ast. duelo', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 		}
 
 		// Kicks (9, 10, 11, 14, 15)
 		if (n === 10) {
 			const kicks = rand(10, 15);
 			for (let i = 0; i < kicks; i++) {
-				push(p, 'Kick', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+				push(p, 'Kick', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 			}
 		} else if ([9, 11, 14, 15].includes(n)) {
 			const kicks = rand(2, 5);
 			for (let i = 0; i < kicks; i++) {
-				push(p, 'Kick', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+				push(p, 'Kick', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 			}
 		}
 
@@ -119,17 +139,17 @@ export function generarMockData(
 		if ([4, 5, 6, 7, 8, 11, 14, 15].includes(n)) {
 			const recs = rand(2, 3);
 			for (let i = 0; i < recs; i++) {
-				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 			}
 		} else {
 			const recs = rand(0, 1);
 			for (let i = 0; i < recs; i++) {
-				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+				push(p, 'Rec. aérea', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 			}
 		}
 	}
 
-	const jugs = equipo.map(p => p.player).filter((p): p is NonNullable<typeof p> => p !== null);
+	const jugs = equipo.map((p) => p.player).filter((p): p is NonNullable<typeof p> => p !== null);
 	const poolJug = () => jugs[rand(0, jugs.length - 1)];
 
 	// Kick off (por #10; mas si el resultado es en contra)
@@ -139,7 +159,7 @@ export function generarMockData(
 	const totalKickOffs = baseKickOffs + extraKickOffs;
 	if (diez) {
 		for (let i = 0; i < totalKickOffs; i++) {
-			push(diez, 'Kick off', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+			push(diez, 'Kick off', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 		}
 	}
 
@@ -147,35 +167,41 @@ export function generarMockData(
 	const pateador = diez || buscarJug(15) || poolJug();
 	const palosAttempts = rand(4, 8);
 	for (let i = 0; i < palosAttempts; i++) {
-		push(pateador, 'Palos', pickCalif({ Negativo: 0.20, Positivo: 0.80 }));
+		push(pateador, 'Palos', pickCalif({ Negativo: 0.2, Positivo: 0.8 }));
 	}
 
 	// Off load (~5 total, mayormente backs 9-15)
 	const offLoads = rand(4, 6);
 	for (let i = 0; i < offLoads; i++) {
-		const backs = jugs.filter(j => {
-			const p = equipo.find(e => e.player?.id === j.id);
+		const backs = jugs.filter((j) => {
+			const p = equipo.find((e) => e.player?.id === j.id);
 			return p && p.numero >= 9 && p.numero <= 15;
 		});
-		push(backs.length > 0 ? backs[rand(0, backs.length - 1)] : poolJug(), 'Off load',
-			pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+		push(
+			backs.length > 0 ? backs[rand(0, backs.length - 1)] : poolJug(),
+			'Off load',
+			pickCalif({ Negativo: 0.1, Positivo: 0.9 })
+		);
 	}
 
 	// Recu. div. (2-3 total)
 	const recuDivs = rand(2, 3);
 	for (let i = 0; i < recuDivs; i++) {
-		push(poolJug(), 'Recu. div.', pickCalif({ Negativo: 0.10, Positivo: 0.90 }));
+		push(poolJug(), 'Recu. div.', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 	}
 
 	// Intercep. (1-2 total, tipicamente backs)
 	const interceps = rand(1, 2);
 	for (let i = 0; i < interceps; i++) {
-		const backs = jugs.filter(j => {
-			const p = equipo.find(e => e.player?.id === j.id);
+		const backs = jugs.filter((j) => {
+			const p = equipo.find((e) => e.player?.id === j.id);
 			return p && p.numero >= 11 && p.numero <= 15;
 		});
-		push(backs.length > 0 ? backs[rand(0, backs.length - 1)] : poolJug(), 'Intercep.',
-			pickCalif({ Negativo: 0.05, Positivo: 0.95 }));
+		push(
+			backs.length > 0 ? backs[rand(0, backs.length - 1)] : poolJug(),
+			'Intercep.',
+			pickCalif({ Negativo: 0.05, Positivo: 0.95 })
+		);
 	}
 
 	// Infracciones (se contabilizan en Positivo = ocurrio la infraccion)
@@ -189,7 +215,11 @@ export function generarMockData(
 	// Team acciones
 	const teamAcciones: TeamAccion[] = [];
 	function pushTeam(situacion: SituacionJuego, calif?: CalificacionGrupal) {
-		teamAcciones.push({ situacion, calificacion: calif ?? (Math.random() > 0.3 ? 'Positivo' : 'Negativo'), videoTime: rand(0, 2400) });
+		teamAcciones.push({
+			situacion,
+			calificacion: calif ?? (Math.random() > 0.3 ? 'Positivo' : 'Negativo'),
+			videoTime: rand(0, 2400)
+		});
 	}
 
 	for (let i = 0; i < 5; i++) pushTeam('Scrum propio');

@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { logError } from '$lib/debug';
 	import type { Player } from '$lib/types';
 
-	let { jugadores = $bindable(), cambiarVista }: { jugadores: Player[]; cambiarVista: () => void } =
+	let { jugadores = $bindable(), cambiarVista }: { jugadores: Player[]; cambiarVista: (v: number) => void } =
 		$props();
 
 	let error = $state('');
@@ -54,7 +55,7 @@
 
 	function confirmar() {
 		jugadores = parsed;
-		cambiarVista();
+		cambiarVista(2);
 	}
 
 	function replaceCSV(): void {
@@ -96,7 +97,7 @@
 				confirmar(); // Se ejecuta dentro del flujo asíncrono
 			})
 			.catch((error) => {
-				console.error('Error al simular plantel:', error);
+				logError('Error al simular plantel:', error);
 			});
 	}
 </script>
@@ -261,7 +262,7 @@
 
 	/* ========== BOTONES ========== */
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -274,7 +275,7 @@
 	}
 
 	.btn-primary:hover {
-		background-color: #0050A0;
+		background-color: #0050a0;
 	}
 
 	.btn-primary:disabled {
@@ -319,8 +320,8 @@
 	}
 
 	.zona-drop.drag-over {
-		border-color: #0068CE;
-		background-color: #F0F6FD;
+		border-color: #0068ce;
+		background-color: #f0f6fd;
 	}
 
 	.input-hidden {

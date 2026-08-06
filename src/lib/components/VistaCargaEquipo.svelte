@@ -78,13 +78,18 @@
 			</select>
 
 			<label for="modalidad-select">Elegí la modalidad</label>
-			<select id="club-select" bind:value={usuarioModalidad} class="input-control">
+			<select id="modalidad-select" bind:value={usuarioModalidad} class="input-control">
 				{#each Object.keys(POSICIONES_POR_MODALIDAD) as mod (mod)}
 					<option value={mod}>{mod}</option>
 				{/each}
 			</select>
 
-			<button disabled={!formularioCompleto()} onclick={cambiarVista} class="btn-primary" style="width:100%;margin-top:4px">
+			<button
+				disabled={!formularioCompleto()}
+				onclick={() => cambiarVista(3)}
+				class="btn-primary"
+				style="width:100%;margin-top:4px"
+			>
 				Confirmar equipo →
 			</button>
 		</div>
@@ -151,7 +156,6 @@
 				</div>
 			{/each}
 		</div>
-
 	</div>
 </div>
 
@@ -171,7 +175,7 @@
 		display: grid;
 		grid-template-columns: 280px 1fr 1fr 1fr;
 		gap: 20px;
-		align-items: start; 
+		align-items: start;
 		width: 100%;
 		max-width: 1400px;
 		/* sin grid-template-rows ni min-height */
@@ -213,7 +217,7 @@
 	}
 
 	.input-control:focus {
-		border-color: #0068CE;
+		border-color: #0068ce;
 		box-shadow: 0 0 0 3px rgba(0, 104, 206, 0.1);
 	}
 
@@ -293,8 +297,8 @@
 		align-items: center;
 		gap: 12px;
 		padding: 12px;
-		background: #F0F6FD;
-		border: 1px solid #0068CE;
+		background: #f0f6fd;
+		border: 1px solid #0068ce;
 		border-radius: 6px;
 	}
 
@@ -310,7 +314,7 @@
 	}
 
 	.estado-ocupado .numero {
-		background: #0068CE;
+		background: #0068ce;
 		color: white;
 	}
 
@@ -347,7 +351,7 @@
 	}
 
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -359,7 +363,7 @@
 	}
 
 	.btn-primary:hover {
-		background-color: #0050A0;
+		background-color: #0050a0;
 	}
 
 	.btn-primary:disabled {
