@@ -4,6 +4,15 @@
 
 El analista comparte una "sala de clips" con su equipo. El veedor abre una URL y ve las acciones del partido filtrables por skill, con video embebido y seek por acción. No hay descarga de clips reales — solo enlaces con tiempo al video original.
 
+## Estado actual (checkpoint)
+
+- **Sprint 1 — Timestamps**: ✅ completo. `videoTime` en `Accion`/`TeamAccion`, captura en `VistaAnalisis` (`obtenerTiempoVideo`), `formatTime` + seek en `VistaAcciones`.
+- **Sprint 2 — Supabase**: ✅ funcional. Cliente en `$lib/supabase.ts`, `/api/sala` (POST/GET), RLS, página `/sala/[token]` con `VistaSala.svelte`.
+- **Sprint 3 — VistaAcciones**: ✅ funcional. Video embebido, acciones cliqueables (seek), botón "Compartir sala" con selector de skills y topes `LIMITES_FREE` por grupo.
+- **Sprint 4 — Auth y planes**: ⏳ no empezado.
+- ✅ **TTL**: las salas free expiran a las 72h (`src/routes/api/sala/+server.ts:13`).
+- **Overlay de felicitaciones**: descartado por decisión. La sala vence a las 72h y el modal de VistaAcciones lo indica; sin countdown.
+
 ---
 
 ## User flows
@@ -14,7 +23,8 @@ El analista comparte una "sala de clips" con su equipo. El veedor abre una URL y
 1. Abre la app → hace los 6 pasos (CSV → Equipo → Partido → Análisis → Acciones)
 2. En VistaAcciones: video embebido + acciones cliqueables (con seek)
 3. Click "Compartir sala de clips":
-   - Se crea sala en Supabase (plan='free', expires_at=now()+72h, skills_visibles=4 fijas)
+   - Modal: el analista elige qué skills/situaciones entran, con topes `LIMITES_FREE` por grupo (2 contacto, 2 pelota, 1 pie, 1 infracción, 2 situaciones)
+   - Se crea sala en Supabase (plan='free', expires_at=now()+72h, skills_visibles elegidas)
    - Se copia el link /sala/{UUID} al clipboard
    - Feedback visual: "Link copiado ✓"
 4. El veedor abre /sala/{UUID} → ve la sala
@@ -63,6 +73,7 @@ CREATE TABLE salas (
   acciones_json     JSONB NOT NULL,
   team_acciones_json JSONB NOT NULL,
   skills_visibles   TEXT[] NOT NULL,
+  limites           JSONB,             -- LIMITES_FREE del plan (ver $lib/planes.ts)
   expires_at        TIMESTAMPTZ,
   created_at        TIMESTAMPTZ DEFAULT now()
 );
@@ -81,7 +92,7 @@ ALTER TABLE salas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Lectura pública" ON salas
   FOR SELECT USING (true);
 
--- Solo autENTICADOS pueden crear salas pagas
+-- Solo autenticados pueden crear salas pagas
 CREATE POLICY "Crear sala paga" ON salas
   FOR INSERT WITH CHECK (
     auth.uid() = created_by
@@ -105,16 +116,16 @@ CREATE POLICY "Borrar sala" ON salas
 
 ### Modelos de planes
 
-| Característica | Gratis | Partido ($5) | Temporada ($50, 20 partidos) |
-|---|---|---|---|
-| Skills visibles | 4 fijas (a definir) | Todas, elegidas por el analista | Todas, elegidas por el analista |
-| Caducidad | 72 horas | Sin expiración | Sin expiración por partido |
-| Accesos | Ilimitados (quien tenga URL) | Ilimitados | Ilimitados |
-| Video embebido | Sí | Sí | Sí |
-| Seek por acción | Sí | Sí | Sí |
-| Filtros | Solo skills visibles | Todos | Todos |
-| Filtro por jugador | No | Sí | Sí |
-| Filtro por calificación | No | Sí | Sí |
+| Característica          | Gratis                       | Partido ($5)                    | Temporada ($50, 20 partidos)    |
+| ----------------------- | ---------------------------- | ------------------------------- | ------------------------------- |
+| Skills visibles         | Topes por grupo (2/2/1/1/2)   | Todas, elegidas por el analista | Todas, elegidas por el analista |
+| Caducidad               | 72 horas                     | Sin expiración                  | Sin expiración por partido      |
+| Accesos                 | Ilimitados (quien tenga URL) | Ilimitados                      | Ilimitados                      |
+| Video embebido          | Sí                           | Sí                              | Sí                              |
+| Seek por acción         | Sí                           | Sí                              | Sí                              |
+| Filtros                 | Solo skills visibles         | Todos                           | Todos                           |
+| Filtro por jugador      | No                           | Sí                              | Sí                              |
+| Filtro por calificación | No                           | Sí                              | Sí                              |
 
 ---
 
@@ -157,13 +168,14 @@ CREATE POLICY "Borrar sala" ON salas
 
 ### Integración con video players
 
-| Player | Cómo leer `currentTime` | Cómo hacer seek | Cómo embeber |
-|--------|------------------------|-----------------|--------------|
-| YouTube | YouTube IFrame API: `player.getCurrentTime()` | `player.seekTo(t, true)` | `<iframe src="https://youtube.com/embed/{id}">` |
-| Vimeo | Vimeo Player API: `player.getCurrentTime()` | `player.setCurrentTime(t)` | `<iframe src="https://player.vimeo.com/video/{id}">` |
-| Veo | `videoEl.currentTime` | `videoEl.currentTime = t` | `<video src="{videoUrl}">` |
+| Player  | Cómo leer `currentTime`                       | Cómo hacer seek            | Cómo embeber                                         |
+| ------- | --------------------------------------------- | -------------------------- | ---------------------------------------------------- |
+| YouTube | YouTube IFrame API: `player.getCurrentTime()` | `player.seekTo(t, true)`   | `<iframe src="https://youtube.com/embed/{id}">`      |
+| Vimeo   | Vimeo Player API: `player.getCurrentTime()`   | `player.setCurrentTime(t)` | `<iframe src="https://player.vimeo.com/video/{id}">` |
+| Veo     | `videoEl.currentTime`                         | `videoEl.currentTime = t`  | `<video src="{videoUrl}">`                           |
 
 **Carga de APIs:**
+
 - YouTube IFrame API: se carga dinámicamente vía `<script src="https://www.youtube.com/iframe_api">`
 - Vimeo Player API: se carga dinámicamente vía `<script src="https://player.vimeo.com/api/player.js">`
 - Veo: ya se resuelve vía `/api/veo-video` (server-side proxy)
@@ -177,6 +189,7 @@ CREATE POLICY "Borrar sala" ON salas
 **Layout actual:** 2 columnas (acciones individuales + situaciones de juego) + botón PDF.
 
 **Layout nuevo:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │  Resumen: Equipo Local vs Equipo Visitante      │
@@ -199,6 +212,7 @@ CREATE POLICY "Borrar sala" ON salas
 ```
 
 **Cambios:**
+
 1. Agregar video embed (mismo patrón que VistaAnalisis)
 2. Hacer acciones clickable (seek al video)
 3. Agregar botón "Compartir sala de clips"
@@ -207,6 +221,7 @@ CREATE POLICY "Borrar sala" ON salas
 ### VistaSala.svelte (nuevo)
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │  Equipo Local vs Equipo Visitante               │
@@ -228,6 +243,7 @@ CREATE POLICY "Borrar sala" ON salas
 ```
 
 **Funcionamiento:**
+
 - Video embebido: YouTube/Vimeo/Veo (mismo patrón que VistaAnalisis)
 - Filtros: checkboxes que muestran/ocultan acciones en la playlist
 - Cada acción es un botón que hace seek al video en `videoTime`
@@ -236,9 +252,10 @@ CREATE POLICY "Borrar sala" ON salas
 
 ---
 
-## Sprint 1 — Timestamps (sin backend)
+## Sprint 1 — Timestamps (✅ completo)
 
 ### Objetivo
+
 Capturar el momento del video donde ocurre cada acción. Sin esto, no hay sala.
 
 ### Archivos a modificar
@@ -254,34 +271,38 @@ Capturar el momento del video donde ocurre cada acción. Sin esto, no hay sala.
 ### Detalles de implementación
 
 **Captura de timestamp en VistaAnalisis:**
+
 ```typescript
 // En registrarAccionDirecta():
-const currentTime = videoEl?.currentTime ?? ytPlayer?.getCurrentTime() ?? vimeoPlayer?.getCurrentTime() ?? null;
+const currentTime =
+	videoEl?.currentTime ?? ytPlayer?.getCurrentTime() ?? vimeoPlayer?.getCurrentTime() ?? null;
 
 acciones.push({
-  id: nextAccionId++,
-  player: j,
-  skill: skillElegida,
-  calificacion: califIndividualElegida,
-  videoTime: currentTime
+	id: nextAccionId++,
+	player: j,
+	skill: skillElegida,
+	calificacion: califIndividualElegida,
+	videoTime: currentTime
 });
 ```
 
 **Helper de formato:**
+
 ```typescript
 function formatTime(seconds: number | null): string {
-  if (seconds === null) return '--:--';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
+	if (seconds === null) return '--:--';
+	const m = Math.floor(seconds / 60);
+	const s = Math.floor(seconds % 60);
+	return `${m}:${s.toString().padStart(2, '0')}`;
 }
 ```
 
 ---
 
-## Sprint 2 — Supabase setup
+## Sprint 2 — Supabase setup (✅ funcional)
 
 ### Objetivo
+
 Configurar tablas, cliente, API routes y página de sala.
 
 ### Pasos
@@ -297,9 +318,10 @@ Configurar tablas, cliente, API routes y página de sala.
 
 ---
 
-## Sprint 3 — VistaAcciones actualizada
+## Sprint 3 — VistaAcciones actualizada (✅ funcional)
 
 ### Objetivo
+
 Vista previa mejorada con video + acciones cliqueables + botón compartir.
 
 ### Pasos
@@ -315,6 +337,7 @@ Vista previa mejorada con video + acciones cliqueables + botón compartir.
 ## Sprint 4 — Auth y planes (futuro)
 
 ### Objetivo
+
 Registro de usuarios, diferenciación free/pago.
 
 ### Pasos
@@ -331,7 +354,7 @@ Registro de usuarios, diferenciación free/pago.
 ## Decisiones técnicas pendientes
 
 1. **Skills fijas para sala gratuita**: ¿cuáles? (Tackle, Pase, Scrum propio, Line propio — a confirmar)
-2. **Comportamiento al expirar**: ¿mostrar mensaje simple o redirigir a la app?
+2. **Comportamiento al expirar**: ✅ resuelto — la API devuelve 410 `"Esta sala expiró"` y se muestra el mensaje en la sala. El overlay de felicitaciones se descartó (sin countdown).
 3. **Límite de acciones por sala**: ¿hay un máximo? (400 acciones ≈ 4KB JSON, bien dentro de los límites de Supabase)
 4. **Cache de la sala**: ¿cachear en el cliente? (para que el veedor no recargue Supabase en cada filtro)
 5. **Video embebido en sala gratuita**: ¿siempre embebido o con link a la plataforma?

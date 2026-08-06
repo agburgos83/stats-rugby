@@ -1,6 +1,7 @@
 # Stats Rugby — Contexto del proyecto
 
 ## Stack
+
 - Svelte 5 (runes: `$state`, `$effect`, `$props`, `$bindable`)
 - TypeScript, Vite, jsPDF + jspdf-autotable, D3 (arc, pie, scaleLinear, lineRadial)
 - Hosting: Netlify (SPA, `/escudos-clubes/*` redirect)
@@ -8,6 +9,7 @@
 - Branches: `main` = producción (Netlify deploya desde aquí), `desa` = desarrollo
 
 ## Comandos
+
 - `npm run dev` — servidor local
 - `npx svelte-check --tsconfig ./tsconfig.json` — typecheck + lint
 - `npm run build` — build producción
@@ -15,17 +17,20 @@
 ## Estructura relevante
 
 ### Tipos (`src/lib/types.ts`)
+
 - `ModalidadClave`: `'seven' | 'ten' | 'doce' | 'quince'`
 - `POSICIONES_POR_MODALIDAD`: map `{ mod: { numero: posicion } }` — incluye suplentes para todas las modalidades
 - `CalificacionIndividual`: `'Negativo' | 'Neutro' | 'Positivo' | 'Dominante'`
 - Skills: `CONTACT_SKILLS`, `BALL_SKILLS`, `FOOT_SKILLS`, `INFRACCION_SKILLS`
 - `Puesto` = `{ numero: number, posicionOriginal: string, player: Player | null }`
-- `Accion` = `{ id, player, skill, calificacion }` — **sin timestamp** (próximamente: `videoTime: number | null`)
-- `TeamAccion` = `{ situacion, calificacion }` — **sin timestamp** (próximamente: `videoTime: number | null`)
+- `Accion` = `{ id, player, skill, calificacion, videoTime }` — con `videoTime: number | null` (Sprint 1 de salas completo)
+- `TeamAccion` = `{ situacion, calificacion, videoTime }` — con `videoTime: number | null`
 - `PartidoContexto.urlVideo` — URL de video (Vimeo/YouTube/Veo)
 
 ### PDF (`src/lib/pdf/`)
+
 **`reporte.ts`** — Orquestador del PDF (A3 vertical 297×420mm):
+
 - `descargarPDF(equipo, partido, matrizProcesada, dixTotales, modalidad)` → genera todo el reporte
 - `dibujarEncabezado(doc, pageWidth, partido, escudoLocal, categoria)` — pinta título + escudo (18mm, de y=6 a y=24) + info partido
 - `dibujarFooter(doc, logoDataUrl)` — stroke azul + logo centrado
@@ -36,6 +41,7 @@
 - Encabezado usa `doc.setFont('helvetica', 'normal')` — sin bold
 
 **`radar.ts`** — Página 0 del PDF:
+
 - `agregarRadarAlPDF(doc, equipo, matrizProcesada, partido, escudoLocal, logoDataUrl, modalidad)`
 - `GROUP_SKILLS`: 5 grupos (`primera`/`segunda`/`tercera`/`medios`/`backs`), cada uno con 5 skills, mismo color `#0068CE`
 - `obtenerGrupo(puesto)` — mapea por `posicionOriginal` primero, con fallback numérico. Soporta `'octavo'` en regex de tercera línea
@@ -48,6 +54,7 @@
 - `efectividadSkill(s, skill)` — para Duelo: Positivo+Dominante; otras skills: Positivo+Dominante+Neutro
 
 **`donuts.ts`** — Última página (A4 portrait 210×297mm):
+
 - `agregarDonutsAlPDF(doc, dixTotales, partido, logoDataUrl)`
 - 8 situaciones en grilla 3×3: colX=[18,78,138], rowY=[36,110,184]
 - Donut slices: `#0068CE` (positivo) y `#0068CEB8` (negativo)
@@ -55,23 +62,33 @@
 - `renderSVGaImagen(svgString, width, height)` — helper usado también por radar.ts
 
 ### Mock data (`src/lib/mock-data.ts`)
+
 - `pickCalif` acepta `Partial<Record<CalificacionIndividual, number>>` — keys faltantes = prob 0
 - Todas las skills excepto Tackle/Duelo solo generan Negativo/Positivo
 
 ### Procesamiento (`src/lib/processing/reporte-data.ts`)
-- `MatrizProcesada` = `{ skills: { [skill]: { Negativo, Neutro, Positivo, Dominante, Total } } }`
+
+- `MatrizProcesada` = `Record<number, FilaJugador>` — `FilaJugador` = `{ id, nombre, apellido, skills: Record<Skill, Contador>, totales (general/pelota/contacto/pie), efectividades (pelota/contacto/pie) }`
 - Guard para `matrizProcesada[jugadorID]` ya existente
 - Efectividad contacto usa `totalFavorable / totalAcciones`
 
 ### Componentes Svelte
-- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo).
+
+- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo) con captura de `videoTime`.
 - `VistaCargaEquipo.svelte` — grilla 4 columnas con drag & drop (solo desktop, no touch)
-- `VistaAcciones.svelte` — revisión de acciones logueadas + botón "Generar reporte PDF". Props tipadas como `any`.
+- `VistaAcciones.svelte` — revisión de acciones logueadas, video embebido con seek (`seekToVideo`), botones "Descargar PDF" y "Compartir sala". Props: `PropsAcciones & { modalidad: ModalidadClave }`.
+- `VistaSala.svelte` — sala de clips para el veedor (`/sala/[token]`): video + filtros por skill + playlist con seek.
+- `src/routes/api/sala/+server.ts` — POST/GET de salas (Supabase). TTL free 72h.
+- `$lib/planes.ts` — `LIMITES_FREE` (topes por grupo: contacto 2, pelota 2, pie 1, infracción 1, situaciones 2), `SITUACIONES`, `grupoDeSkill`.
+- `$lib/debug.ts` — `logError(...args)` con guard `import.meta.env.DEV`.
+- `$lib/video.ts` — `cocinarEnlaceVideo`, `formatTime`.
+- `$lib/supabase.ts` — cliente Supabase (`PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY`).
 - Todos los botones primarios usan `background-color: #0068CE`, hover `#0050A0`
 - Menú: navbar `#0068CE`
 - Footer: `background-color: #0068CE`, links hover `#CCE4F7`
 
 ### Estilo visual global
+
 - **Azul primario**: `#0068CE` (`rgb(0, 104, 206)`)
 - **Hover**: `#0050A0`
 - **Flash animation**: 0% `#0068CE` → 50% `#3399EE`
@@ -81,6 +98,7 @@
 - Logo SVG (`static/logo-se-ss.svg`): fill `#0068CE`
 
 ## Cambios relevantes en sesiones anteriores
+
 1. Mock data: pickCalif relajado a Partial, non-Duelo/Tackle skills solo ±
 2. Radars: grupo por línea de posición, vistaBox 500×440, labels en 1.3×radius
 3. Reporte: A3, radar como página 0, tabla headers simplificados
@@ -94,10 +112,18 @@
 11. Props de VistaAcciones tipadas (PropsAcciones + ModalidadClave), reemplazando `any`
 12. try/catch + loading state + error message en generación de PDF
 13. Guard en renderSVGaImagen contra canvas.getContext('2d') null
+14. Timestamps `videoTime` en `Accion`/`TeamAccion` (Sprint 1 salas) + captura en VistaAnalisis + `formatTime`/seek en VistaAcciones
+15. Navegación 3↔4↔5: `cambiarVista: (v: number) => void` tipado en los 4 tipos de props; botones "← Editar partido" (Analisis→3) y "← Volver al análisis" (Acciones→4)
+16. `nextAccionId` inicializado desde `acciones.reduce((max, a) => Math.max(max, a.id), -1) + 1` — sin colisión tras recarga (#8)
+17. `MatrizProcesada` tipada `Record<number, FilaJugador>` (#17); radar `skills: Skill[]`
+18. `logError` de `$lib/debug.ts` reemplaza `console.error` (#20)
+19. Video YouTube: listener `postMessage` para leer `currentTime` (`cachedYouTubeTime`), además del check de embed por oembed
+20. Salas: cliente Supabase + `/api/sala` + `VistaSala.svelte` + botón "Compartir sala" (Sprints 2-3)
 
 ## Plan de Instagram
 
 ### Formato general
+
 - **Días**: martes y jueves 20:00 (ARG)
 - **Aspecto**: 4:5 (1080×1350)
 - **Estilo**: azul `#0068CE` sobre fondo blanco, tipografía limpia, mismo branding que la app
@@ -105,16 +131,17 @@
 
 ### Feed — 6 publicaciones
 
-| # | Tipo | Título | Contenido |
-|---|------|--------|-----------|
-| 1 | Carrusel (5 slides) | "Cómo analizar un partido en 5 pasos" | Slide 1: Cargá tu plantel desde CSV, Slide 2: Armá el equipo con drag & drop, Slide 3: Datos del partido + link al video, Slide 4: Analizá jugada por jugada, Slide 5: Descargá el PDF con estadísticas. CTA: link a la app |
-| 2 | Video (~30s) | "Así se ve un análisis en vivo" | Screen recording de VistaAnalisis: seleccionar jugador, pulsar skills, ver cómo se acumulan. Música de fondo, sin voz. Texto superpuesto indicando cada paso. |
-| 3 | Placa | "¿Qué dicen los números?" | Imagen del radar chart de un jugador con callouts explicando cada grupo de skills (contacto, pelota, pie). Texto: "Cada jugador tiene su huella digital". CTA: "Descargá el reporte de tu equipo". |
-| 4 | Carrusel (4 slides) | "3 métricas que todo entrenador debería mirar" | Slide 1: Efectividad en el contacto (Tackle + Duelo), Slide 2: Gestión de pelota (Pases + Offload), Slide 3: Juego al pie (Patada + Recepción), Slide 4: Cómo leer los donuts de situaciones de equipo. |
-| 5 | Video (~45s) | "De la cancha al PDF en 2 minutos" | Timelapse de flujo completo: cargar CSV → armar equipo → cargar partido → analizar → generar PDF. Muestra el PDF final con radares, tablas y donuts. |
-| 6 | Placa | "Stats Rugby — Free. Simple. Profesional." | Resumen de funcionalidades en viñetas. CTA final: "Probá la app gratis en statsrugby.com.ar". |
+| #   | Tipo                | Título                                         | Contenido                                                                                                                                                                                                                   |
+| --- | ------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Carrusel (5 slides) | "Cómo analizar un partido en 5 pasos"          | Slide 1: Cargá tu plantel desde CSV, Slide 2: Armá el equipo con drag & drop, Slide 3: Datos del partido + link al video, Slide 4: Analizá jugada por jugada, Slide 5: Descargá el PDF con estadísticas. CTA: link a la app |
+| 2   | Video (~30s)        | "Así se ve un análisis en vivo"                | Screen recording de VistaAnalisis: seleccionar jugador, pulsar skills, ver cómo se acumulan. Música de fondo, sin voz. Texto superpuesto indicando cada paso.                                                               |
+| 3   | Placa               | "¿Qué dicen los números?"                      | Imagen del radar chart de un jugador con callouts explicando cada grupo de skills (contacto, pelota, pie). Texto: "Cada jugador tiene su huella digital". CTA: "Descargá el reporte de tu equipo".                          |
+| 4   | Carrusel (4 slides) | "3 métricas que todo entrenador debería mirar" | Slide 1: Efectividad en el contacto (Tackle + Duelo), Slide 2: Gestión de pelota (Pases + Offload), Slide 3: Juego al pie (Patada + Recepción), Slide 4: Cómo leer los donuts de situaciones de equipo.                     |
+| 5   | Video (~45s)        | "De la cancha al PDF en 2 minutos"             | Timelapse de flujo completo: cargar CSV → armar equipo → cargar partido → analizar → generar PDF. Muestra el PDF final con radares, tablas y donuts.                                                                        |
+| 6   | Placa               | "Stats Rugby — Free. Simple. Profesional."     | Resumen de funcionalidades en viñetas. CTA final: "Probá la app gratis en statsrugby.com.ar".                                                                                                                               |
 
 ### Stories semanales
+
 - **1 story por semana** (jueves o viernes post-partido)
 - Contenido: captura de pantalla de un radar real o tabla de estadísticas
 - Texto breve: "Partido de {local} vs {visitante}. {jugador} destacó en {skill}."
@@ -122,6 +149,7 @@
 - Stories destacadas en "Análisis" para guardar las mejores
 
 ## Desktop-first
+
 Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido requiere pantalla grande para combinar video + botonera. La difusión enfatiza esto para evitar frustración en mobile/tablet.
 
 ## Vulnerabilidades y deuda técnica
@@ -141,7 +169,7 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
    - `src/lib/pdf/donuts.ts:182-186` — se reemplazó `canvas.getContext('2d')!` con guard que rechaza la Promise si `ctx` es `null`.
 
 5. **`alert()` para validaciones — no funciona en mobile**
-   - `src/lib/components/VistaAnalisis.svelte:70,75,108` — por diseño: la app es desktop-first. Incluye typo "situaciòn" (è en vez de ó) en línea 108.
+   - `src/lib/components/VistaAnalisis.svelte:134,139,173` y `src/routes/contacto/+page.svelte:18,20` — por diseño: la app es desktop-first. El typo "situaciòn" ya está corregido.
 
 6. **Drag & drop sin soporte táctil**
    - `src/lib/components/VistaCargaEquipo.svelte` — HTML5 Drag & Drop API no funciona en touch. Sin fallback. Aceptado por diseño desktop-first.
@@ -149,10 +177,10 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
 ### Altas (bugs significativos, riesgo de integridad de datos)
 
 7. **CSV parser naive — se rompe con comillas o comas en nombres**
-   - `src/lib/components/VistaCargaCSV.svelte:24-36` — `l.split(',')` no cumple RFC 4180. Nombres como "Garcia, Juan" corrompen el parseo. Lógica duplicada en líneas 80-93.
+   - `src/lib/components/VistaCargaCSV.svelte:24-37` y `80-94` — `l.split(',')` no cumple RFC 4180. Nombres como "Garcia, Juan" corrompen el parseo. Lógica duplicada en ambos lugares.
 
-8. **`nextAccionId` no persiste → colisión tras recarga**
-   - `src/lib/components/VistaAnalisis.svelte:29` — variable plain que se resetea a 0 al recargar. IDs de acciones restauradas de localStorage colisionan con nuevas.
+8. ~~**`nextAccionId` no persiste → colisión tras recarga**~~ ✅ FIXED
+   - `src/lib/components/VistaAnalisis.svelte:32` — ahora `nextAccionId = acciones.reduce((max, a) => Math.max(max, a.id), -1) + 1`; arranca desde el máximo id de las acciones restauradas de localStorage.
 
 9. **Efecto de persistencia en cada keystroke durante cambio de modalidad**
    - `src/routes/app/+page.svelte:41-48` — el `$effect` reconstruye `equipo` desde cero al cambiar `usuarioModalidad`. Puede pisar el equipo recién restaurado de localStorage.
@@ -161,7 +189,7 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
     - `src/routes/app/+page.svelte:41-48` — al cambiar modalidad se reconstruye `equipo` pero NO se limpian `acciones` ni `teamAcciones`. Quedan referencias a jugadores que ya no existen.
 
 11. **Mismo equipo como local y visitante — sin validación**
-    - `src/lib/components/VistaCargaPartido.svelte:76-89` — ambos selectores usan la misma lista de clubes. Nada impide seleccionar el mismo club.
+    - `src/lib/components/VistaCargaPartido.svelte:76-95` — ambos selectores usan la misma lista de clubes. Nada impide seleccionar el mismo club.
 
 ### Medias (UX, bordes, faltantes)
 
@@ -171,44 +199,46 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
     - `VistaAcciones.svelte:79` — flex 2 columnas sin breakpoints
     - `VistaCargaPartido.svelte:180` — flex sin wrap
 
-13. **Sin navegación "atrás" entre vistas**
-    - `src/routes/app/+page.svelte` — `vistaActual` solo avanza 1→6. No hay historial ni botón "volver". Para corregir datos de vistas anteriores hay que perder todo.
+13. **Navegación "atrás" parcial**
+    - Botones de ida y vuelta 3↔4↔5 funcionando (`cambiarVista`). Falta: historial de pila (no hay volver desde 1/2/3) y acceso a vistas previas sin perder datos.
 
 14. **Veo fetch sin AbortController — carreras concurrentes**
-    - `src/lib/components/VistaAnalisis.svelte:43-61` — si `urlVideo` cambia rápido, múltiples fetches pueden llegar out-of-order.
+    - `src/lib/components/VistaAnalisis.svelte:49-69` — si `urlVideo` cambia rápido, múltiples fetches pueden llegar out-of-order.
 
 15. **oembed de YouTube sin caché ni rate-limit**
-    - `src/lib/components/VistaAnalisis.svelte:244-252` — fetch a `youtube.com/oembed` en cada cambio de URL. Sin debounce ni caché.
+    - `VistaAnalisis.svelte:273`, `VistaAcciones.svelte:78`, `VistaSala.svelte:127` — fetch a `youtube.com/oembed` para chequear si el video se puede embeber. Sin debounce ni caché. Lógica duplicada en 3 componentes.
 
 16. **`simularPlantel` falla silenciosamente**
-    - `src/lib/components/VistaCargaCSV.svelte:98-100` — si el fetch a `/plantilla-jugadores.csv` falla, solo `console.error`. El usuario no ve nada.
+    - `src/lib/components/VistaCargaCSV.svelte:99-101` — si el fetch a `/plantilla-jugadores.csv` falla, solo `logError` (visible en DEV). El usuario no ve nada.
 
 ### Bajas (calidad de código, typos, estilo)
 
-17. **`MatrizProcesada` tipeada como `Record<number, any>`**
-    - `src/lib/processing/reporte-data.ts:4`
+17. ~~**`MatrizProcesada` tipeada como `Record<number, any>`**~~ ✅ FIXED
+    - `src/lib/processing/reporte-data.ts:21` — ahora `Record<number, FilaJugador>`.
 
-18. **`VistaAcciones` props tipadas como `any`**
-    - `src/lib/components/VistaAcciones.svelte:7` — existe `PropsAcciones` en types.ts pero no se usa.
+18. ~~**`VistaAcciones` props tipadas como `any`**~~ ✅ FIXED
+    - `src/lib/components/VistaAcciones.svelte:12-14` — `$props<PropsAcciones & { modalidad: ModalidadClave }>()`.
 
-19. **Constante `SKILLS` sin usar en types.ts**
-    - `src/lib/types.ts:132-146` — nombres distintos a los de `BALL_SKILLS`/`CONTACT_SKILLS`/`FOOT_SKILLS`. Código muerto.
+19. ~~**Constante `SKILLS` sin usar en types.ts**~~ ✅ FIXED
+    - Eliminada. En `src/lib/types.ts` solo existen `BALL_SKILLS`/`CONTACT_SKILLS`/`FOOT_SKILLS`/`INFRACCION_SKILLS` (+ tipos `BallSkill`/`ContactSkill`/`FootSkill`/`InfraccionSkill`).
 
-20. **`console.error` en producción**
-    - `VistaAnalisis.svelte:53,55` y `VistaCargaCSV.svelte:99` — sin guard `import.meta.env.DEV`.
+20. ~~**`console.error` en producción**~~ ✅ FIXED
+    - Se usa `logError` de `src/lib/debug.ts` (guard `import.meta.env.DEV`) en `VistaAnalisis.svelte:59,62` y `VistaCargaCSV.svelte:100`.
 
-21. **`label id="club-select"` duplicado**
-    - `src/lib/components/VistaCargaEquipo.svelte:74,81`
+21. ~~**`label id="club-select"` duplicado**~~ ✅ FIXED
+    - `src/lib/components/VistaCargaEquipo.svelte:73-85` — labels/ids `club-select` y `modalidad-select` únicos.
 
 22. **`limpiarAccionesIndividuales` asigna array vacío dos veces**
-    - `src/lib/components/VistaAnalisis.svelte:145-157` — `acciones = []; acciones = [...acciones];`
+    - `src/lib/components/VistaAnalisis.svelte:211-216` (y `limpiarAccionesGrupales` 218-223) — `acciones = []; acciones = [...acciones];`
 
 ## Feature: salas de clips (modelo free/pago)
 
 ### Concepto
+
 El analista comparte una "sala de clips" con su equipo. El veedor abre una URL y ve las acciones del partido filtrables por skill, con video embebido y seek por acción. Sin descarga de clips reales — solo enlaces con tiempo.
 
 ### Arquitectura
+
 - **Almacenamiento**: Supabase (PostgreSQL) — tabla `salas` con UUID, JSON de acciones, expiración
 - **API**: SvelteKit server routes (`/api/sala`) para crear/leer salas
 - **Página de sala**: `/sala/[token]` — renderiza video + filtros + playlist
@@ -218,6 +248,7 @@ El analista comparte una "sala de clips" con su equipo. El veedor abre una URL y
 ### Modelos de datos
 
 **Tabla `salas` (Supabase):**
+
 ```
 id              UUID PRIMARY KEY
 created_by      UUID (NULL para free)
@@ -231,16 +262,35 @@ created_at      TIMESTAMPTZ
 ```
 
 ### Sprints
-1. **Sprint 1 — Timestamps** (sin backend): agregar `videoTime` a tipos, capturar en análisis, integrar YouTube/Vimeo/Veo Player API
-2. **Sprint 2 — Supabase setup**: tablas, RLS, cliente, API routes, página de sala
-3. **Sprint 3 — VistaAcciones actualizada**: video embed, acciones cliqueables, botón compartir sala
-4. **Sprint 4 — Auth y planes**: Google OAuth, UI pricing, lógica de planes
+
+1. **Sprint 1 — Timestamps** ✅ completo: `videoTime` en tipos, captura en análisis, `formatTime`/seek
+2. **Sprint 2 — Supabase setup** ✅ funcional: tablas, RLS, cliente, `/api/sala`, página de sala
+3. **Sprint 3 — VistaAcciones actualizada** ✅ funcional: video embed, acciones cliqueables, botón compartir sala
+4. **Sprint 4 — Auth y planes** ⏳ no empezado: Google OAuth, UI pricing, lógica de planes
+
+> ✅ TTL de salas free en 72h (`src/routes/api/sala/+server.ts:13`).
 
 ### Decisiones clave
+
 - **Sin descarga de clips**: solo enlaces con tiempo (`?t=120s`) para YouTube/Vimeo, `currentTime` para Veo
 - **UUID para salas**: auto-generado, sin fricción. Permite futuro control de accesos
 - **Supabase gratis**: 500MB storage + 50K reads/mes. Suficiente para ~20 clientes activos
 - **Desktop-first**: la sala se ve mejor en PC (video + filtros + playlist)
 
 ### Documentación detallada
+
 Ver `docs/SALAS_CLIPS.md` para diseño completo, user flows, schema SQL, y detalles de implementación.
+
+## Próximos cambios de UX (diseño aprobado, sin implementar)
+
+**Cabecera-analisis** (en `/app`):
+
+- Barra sticky blanca full-width arriba en `/app`, ocupando el espacio que hoy usa el menú (el nav azul deja de renderizarse en `/app`).
+- Vista 4 (Análisis): título `Análisis {local} vs {visitante} ({pts})` + botones `[← Editar partido] [Terminar análisis →]` arriba a la derecha.
+- Vista 5 (Acciones): título `Resumen de acciones {local} vs {visitante}` + `[← Volver al análisis] [Finalizar]`.
+- Vistas 1/2/3/6: solo la marca "Stats Rugby" (sin botones; cada vista conserva su `h2`).
+- `Terminar análisis →` deshabilitado si `acciones.length === 0 && teamAcciones.length === 0`.
+- El modal de confirmación de Finalizar pasa a ser prop de `VistaAcciones` (`confirmarFinalizar` + `onCancelarFinalizar`/`onConfirmarFinalizar`), moviendo el estado al page.
+- Se quitan los subtítulos del analista de VistaAnalisis y VistaAcciones (el dato queda en el PDF).
+
+**Menú global**: se reduce a marca "Stats Rugby" + botón "Retomar análisis" (cuando `hayDatos` y no está en `/app`). Los links Inicio/Acerca de/Contacto se mueven al footer (`.footer-links` de `+layout.svelte`).
