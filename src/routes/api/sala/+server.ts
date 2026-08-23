@@ -2,6 +2,16 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { supabase } from '$lib/supabase';
 import { LIMITES_FREE } from '$lib/planes';
+import { createHash } from 'crypto';
+
+function calcularContentHash(
+	partido: Record<string, unknown>,
+	acciones: unknown[],
+	teamAcciones: unknown[],
+): string {
+	const payload = JSON.stringify({ partido, acciones, teamAcciones });
+	return createHash('sha256').update(payload).digest('hex');
+}
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json();
@@ -16,6 +26,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ error: 'No hay skills seleccionadas.' }, { status: 400 });
 	}
 
+	const contentHash = calcularContentHash(partido, acciones, teamAcciones);
+
 	const { data, error } = await supabase
 		.from('salas')
 		.insert({
@@ -26,7 +38,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			limites,
 			expires_at: expiresAt,
 			created_by: null,
-			skills_visibles: skillsVisibles
+			skills_visibles: skillsVisibles,
+			content_hash: contentHash
 		})
 		.select('id')
 		.single();
