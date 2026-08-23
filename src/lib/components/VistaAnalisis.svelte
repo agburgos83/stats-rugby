@@ -13,20 +13,22 @@
 		type PropsAnalisis
 	} from '$lib/types';
 
-	/* eslint-disable svelte/no-navigation-without-resolve */
+	import '$lib/video-types.d.ts';
+
+	import { cocinarEnlaceVideo, extraerYouTubeId, chequearEmbedYouTube, obtenerVideoVeo } from '$lib/video';
+	import { logError } from '$lib/debug';
 
 	// importadas desde el orquestador
 	let {
 		equipo,
 		partido,
 		acciones = $bindable(),
-		teamAcciones = $bindable(),
-		cambiarVista
+		teamAcciones = $bindable()
 	}: PropsAnalisis = $props();
 
 	// let jugadorElegido = $state<Player | null>(null);
 	let jugadoresElegidos = $state<Player[]>([]);
-	let nextAccionId = 0;
+	let nextAccionId = acciones.reduce((max, a) => Math.max(max, a.id), -1) + 1;
 	let ultimaAccionClickeada = $state<string | null>(null);
 	let prevAccionesLength = $state(0);
 	let puedeDeshacerIndividual = $state(false);
@@ -40,27 +42,86 @@
 	let veoVideoUrl = $state<string | null>(null);
 	let veoLoading = $state(false);
 
+	let videoEl = $state<HTMLVideoElement | null>(null);
+	let cachedYouTubeTime = $state(0);
+
 	$effect(() => {
 		const url = partido.urlVideo;
-		if (url && url.includes('veo.co') && url.includes('app.veo.co')) {
-			veoLoading = true;
-			veoVideoUrl = null;
-			const slug = url.replace(/\/$/, '').split('/').pop() || '';
-			fetch(`/api/veo-video?slug=${encodeURIComponent(slug)}`)
-				.then((r) => r.json())
-				.then((data) => {
-					if (data.videoUrl) veoVideoUrl = data.videoUrl;
-					else console.error('Veo API error:', data.error);
-				})
-				.catch((e) => console.error('Error fetching Veo video:', e))
-				.finally(() => (veoLoading = false));
-		} else {
+		if (!url || !url.includes('veo.co') || !url.includes('app.veo.co')) {
 			veoVideoUrl = null;
 			veoLoading = false;
+			return;
 		}
+		veoLoading = true;
+		veoVideoUrl = null;
+		const slug = url.replace(/\/$/, '').split('/').pop() || '';
+		const controller = new AbortController();
+		obtenerVideoVeo(slug, controller.signal)
+			.then((videoUrl) => {
+				if (videoUrl) veoVideoUrl = videoUrl;
+			})
+			.catch((e) => logError('Error al traer video de Veo:', e))
+			.finally(() => (veoLoading = false));
+		return () => controller.abort();
+	});
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		const isYT = url?.includes('youtube.com') || url?.includes('youtu.be');
+		if (!isYT) return;
+
+		const handler = (event: MessageEvent) => {
+			if (event.origin !== 'https://www.youtube.com') return;
+			try {
+				const data = JSON.parse(event.data);
+				if (data.event === 'infoDelivery' && data.info?.currentTime !== undefined) {
+					cachedYouTubeTime = data.info.currentTime;
+				}
+			} catch {
+				/* not a JSON message from YT */
+			}
+		};
+
+		const sendListening = () => {
+			const iframe = document.querySelector(
+				'iframe[src*="youtube.com/embed"]'
+			) as HTMLIFrameElement | null;
+			if (iframe?.contentWindow) {
+				iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
+			}
+		};
+
+		window.addEventListener('message', handler);
+		sendListening();
+		const interval = setInterval(sendListening, 1000);
+		const timeout = setTimeout(() => clearInterval(interval), 10000);
+
+		return () => {
+			window.removeEventListener('message', handler);
+			clearInterval(interval);
+			clearTimeout(timeout);
+		};
 	});
 
 	// 1. FUNCIONES DE ACCIONES Y VIDEO
+
+	function obtenerTiempoVideo(offset: number = 0): number | null {
+		try {
+			let t: number | null = null;
+			if (videoEl) t = videoEl.currentTime;
+			else if (
+				partido.urlVideo?.includes('youtube.com') ||
+				partido.urlVideo?.includes('youtu.be')
+			) {
+				t = cachedYouTubeTime;
+			}
+			if (t === null) return null;
+			return Math.max(0, t - offset);
+		} catch {
+			return null;
+		}
+	}
+
 	function registrarAccionDirecta(
 		skillElegida: Skill,
 		califIndividualElegida: CalificacionIndividual,
@@ -83,7 +144,8 @@
 				id: nextAccionId++,
 				player: j,
 				skill: skillElegida,
-				calificacion: califIndividualElegida
+				calificacion: califIndividualElegida,
+				videoTime: obtenerTiempoVideo(2)
 			});
 		}
 
@@ -110,8 +172,9 @@
 		}
 
 		const nuevaTeamAccion: TeamAccion = {
-			situacion: sitJuegoElegida, // El que está activo en memoria
-			calificacion: califGrupalElegida // El del botón que tocó
+			situacion: sitJuegoElegida,
+			calificacion: califGrupalElegida,
+			videoTime: obtenerTiempoVideo(4)
 		};
 
 		teamAcciones.push(nuevaTeamAccion);
@@ -131,7 +194,6 @@
 	function deshacerAccionIndividual() {
 		if (!puedeDeshacerIndividual) return;
 		acciones = acciones.slice(0, prevAccionesLength);
-		acciones = [...acciones];
 		puedeDeshacerIndividual = false;
 	}
 
@@ -145,14 +207,12 @@
 	function limpiarAccionesIndividuales(): void {
 		if (acciones.length === 0) return;
 		acciones = [];
-		acciones = [...acciones];
 		puedeDeshacerIndividual = false;
 	}
 
 	function limpiarAccionesGrupales(): void {
 		if (teamAcciones.length === 0) return;
 		teamAcciones = [];
-		teamAcciones = [...teamAcciones];
 		puedeDeshacerGrupal = false;
 	}
 
@@ -162,44 +222,6 @@
 
 	function hayAccionesGrupales(): boolean {
 		return teamAcciones.length > 0;
-	}
-
-	function cocinarEnlaceVideo(enlace: string): string | null {
-		if (!enlace) return '';
-
-		if (enlace.includes('vimeo.com')) {
-			if (enlace.includes('player.vimeo.com')) {
-				return enlace;
-			}
-			const id = enlace.split('vimeo.com/')[1]?.split('?')[0]?.split('/')[0];
-			return id ? `https://player.vimeo.com/video/${id}` : enlace;
-		}
-
-		// CASO YOUTUBE
-		if (enlace.includes('youtube.com') || enlace.includes('youtu.be')) {
-			let codigoFinal = '';
-
-			if (enlace.includes('watch?v=')) {
-				// [.split('watch?v=')[1]] extrae el ID, y el [.split('&')[0]] limpia parámetros extras
-				codigoFinal = enlace.split('watch?v=')[1].split('&')[0];
-			} else if (enlace.includes('youtu.be/')) {
-				codigoFinal = enlace.split('youtu.be/')[1].split('?')[0];
-			} else if (enlace.includes('/shorts/')) {
-				codigoFinal = enlace.split('/shorts/')[1].split('?')[0];
-			} else if (enlace.includes('/live/')) {
-				codigoFinal = enlace.split('/live/')[1].split('?')[0];
-			}
-
-			// Si logramos sacar el ID, armamos la URL de embed oficial
-			return codigoFinal ? 'https://www.youtube.com/embed/' + codigoFinal : enlace;
-		}
-
-		// CASO VEO (no soporta iframe, se usa <video> nativo vía API)
-		if (enlace.includes('veo.co') && enlace.includes('app.veo.co')) {
-			return null;
-		}
-
-		return enlace;
 	}
 
 	function toggleJugador(p: Player, ctrlKey: boolean): void {
@@ -224,44 +246,48 @@
 			embedPermitido = null;
 			return;
 		}
-
-		// Extraer ID de YouTube
-		// eslint-disable-next-line no-useless-assignment
-		let videoId = '';
-		if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1].split('&')[0];
-		else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-		else {
-			embedPermitido = true;
-			return;
-		} // no es YT, asumir permitido
-
+		const videoId = extraerYouTubeId(url);
 		if (!videoId) {
 			embedPermitido = true;
 			return;
 		}
-
-		embedPermitido = null; // loading
-		fetch(
-			`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-		)
-			.then((r) => {
-				embedPermitido = r.ok;
-			})
-			.catch(() => {
-				embedPermitido = true;
-			}); // si falla la consulta, asumir permitido
+		embedPermitido = null;
+		let activo = true;
+		chequearEmbedYouTube(videoId).then((permitido) => {
+			if (activo) embedPermitido = permitido;
+		});
+		return () => {
+			activo = false;
+		};
 	});
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		if (!url) {
+			embedPermitido = null;
+			return;
+		}
+		const videoId = extraerYouTubeId(url);
+		if (!videoId) {
+			embedPermitido = true;
+			return;
+		}
+		embedPermitido = null;
+		let activo = true;
+		chequearEmbedYouTube(videoId).then((permitido) => {
+			if (activo) embedPermitido = permitido;
+		});
+		return () => {
+			activo = false;
+		};
+	});
+
 </script>
 
 <div class="pantalla-analisis">
 	<!-- PANEL IZQUIERDO: REPRODUCTOR DE VIDEO -->
-
 	<div class="bloque-paneles-izquierda">
 		<div class="panel-video">
-			<h2>
-				Análisis {partido.local} vs {partido.visitante} ({partido.puntosLocal} - {partido.puntosVisitante})
-			</h2>
-			<p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p>
 			{#if urlEmbed}
 				{#if embedPermitido === null}
 					<div class="veo-loading">Verificando disponibilidad del video…</div>
@@ -276,29 +302,19 @@
 				{:else}
 					<div class="embed-bloqueado">
 						<span>El propietario del video inhabilitó la reproducción en otros sitios web.</span>
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 						<a href={partido.urlVideo} target="_blank" rel="noopener" class="btn-primary">
 							Abrir en YouTube ↗
 						</a>
 					</div>
 				{/if}
 			{:else if veoVideoUrl}
-				<!-- svelte-ignore a11y_media_has_caption -->
-				<video src={veoVideoUrl} controls preload="metadata"></video>
+				<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"
+					><track kind="captions" /></video
+				>
 			{:else if veoLoading}
 				<div class="veo-loading">Cargando video de Veo…</div>
 			{/if}
-		</div>
-
-		<div class="acciones-finales">
-			<div class="contenedor-boton">
-				<button
-					disabled={!hayAccionesGrupales() && !hayAccionesIndividuales()}
-					onclick={cambiarVista}
-					class="btn-primary"
-				>
-					Terminar análisis →
-				</button>
-			</div>
 		</div>
 	</div>
 
@@ -615,11 +631,6 @@
 		gap: 24px;
 		padding: 20px;
 	}
-	.panel-video h2 {
-		margin-top: 0;
-		margin-bottom: 0px;
-		color: #1e293b;
-	}
 
 	.panel-video {
 		display: flex;
@@ -663,7 +674,7 @@
 		margin: 0 0 8px 0;
 		font-size: 0.95rem;
 		font-weight: bold;
-		color: #0068CE;
+		color: #0068ce;
 	}
 	.grupo-chips {
 		display: flex;
@@ -680,12 +691,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
-		background-color: #f8fafc;
 	}
 
-	.contenedor-boton {
-		margin-top: 12px;
-	}
 	.btn-chip {
 		padding: 8px 12px;
 		font-weight: bold;
@@ -704,12 +711,12 @@
 		cursor: not-allowed;
 	}
 	.btn-chip.activo {
-		background-color: #0068CE !important;
+		background-color: #0068ce !important;
 		color: white !important;
-		border-color: #0068CE !important;
+		border-color: #0068ce !important;
 	}
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 10px 20px;
@@ -718,34 +725,11 @@
 		border-radius: 8px;
 		cursor: pointer;
 	}
-	.btn-primary.outline {
-		background-color: transparent;
-		border: 1px solid #cbd5e1;
-		color: #475569;
-	}
+
 	.btn-primary:disabled {
 		background-color: #cbd5e1;
 		color: #94a3b8;
 		cursor: not-allowed;
-	}
-	.acciones-finales {
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
-		margin-top: 8px;
-		padding-top: 12px;
-		border-top: 1px solid #e2e8f0;
-	}
-	.acciones-finales .btn-primary {
-		flex: 1;
-		text-align: center;
-	}
-
-	h2 {
-		color: #0f172a;
-		margin: 0 0 4px 0;
-		font-size: 1.35rem;
-		font-weight: 700;
 	}
 
 	.tarjeta-skill {
@@ -808,9 +792,9 @@
 		border-color: #cbd5e1;
 	}
 	.btn-calif.dom:not(:disabled) {
-		background-color: #F0F6FD;
-		color: #0068CE;
-		border-color: #99C9EF;
+		background-color: #f0f6fd;
+		color: #0068ce;
+		border-color: #99c9ef;
 	}
 
 	/* Cada línea de tarjetas de situación usa misma grilla que skills */
@@ -844,28 +828,22 @@
 		text-overflow: ellipsis;
 	}
 
-	.contador-global {
-		color: #0068CE;
-		font-weight: bold;
-		margin-left: 4px;
-	}
-
 	/* La clase que se inyecta temporalmente por 300ms */
 	.btn-calif.flash {
 		animation: pulso-flash 0.3s ease-out;
-		border-color: #0068CE !important;
+		border-color: #0068ce !important;
 		box-shadow: 0 0 8px rgba(0, 104, 206, 0.5);
 	}
 
 	/* Animación que genera el cambio de color rápido */
 	@keyframes pulso-flash {
 		0% {
-			background-color: #0068CE;
+			background-color: #0068ce;
 			color: white;
 			transform: scale(0.95);
 		}
 		50% {
-			background-color: #3399EE;
+			background-color: #3399ee;
 			color: white;
 			transform: scale(1.05);
 		}
@@ -903,18 +881,6 @@
 		gap: 8px;
 		margin-bottom: 16px;
 		flex-grow: 1;
-	}
-
-	/* 3. El contenedor de los botones se pega al fondo */
-	.contenedor-boton {
-		margin-top: auto; /* Truco de Flexbox: empuja el contenedor al límite inferior */
-		padding-top: 16px;
-		display: flex;
-		gap: 10px; /* Si hay dos botones (como en individual), los pone lado a lado */
-	}
-
-	.contenedor-boton .btn-primary {
-		flex: 1; /* Hace que si hay dos botones, midan exactamente lo mismo */
 	}
 
 	/* Contenedor horizontal que distribuye el total a la izquierda y botones a la derecha */
@@ -991,8 +957,8 @@
 		gap: 16px;
 		width: 100%;
 		aspect-ratio: 16 / 9;
-		background: #F0F6FD;
-		border: 1px solid #99C9EF;
+		background: #f0f6fd;
+		border: 1px solid #99c9ef;
 		border-radius: 8px;
 		padding: 24px 32px;
 		color: #1e40af;
@@ -1002,7 +968,7 @@
 	}
 	.embed-bloqueado .btn-primary {
 		white-space: nowrap;
-		background: #0068CE;
+		background: #0068ce;
 		color: white;
 		padding: 10px 20px;
 		border-radius: 8px;

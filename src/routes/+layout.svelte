@@ -1,9 +1,10 @@
 <script lang="ts">
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import Menu from '$lib/components/Menu.svelte';
-	import fondo from '$lib/assets/fondo.svg';
+	import Cabecera from '$lib/components/Cabecera.svelte';
+	import fondo from '$lib/assets/fondo2.svg';
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 
 	let { children } = $props();
 </script>
@@ -22,12 +23,14 @@
 	<meta property="og:url" content="https://stats-rugby.netlify.app/" />
 </svelte:head>
 
-<Menu />
+{#if !$page.url.pathname.startsWith('/app')}
+	<Cabecera />
+{/if}
 
 <main
 	class="min-h-screen"
 	class:with-bg={$page.url.pathname !== '/'}
-	style:background-image={$page.url.pathname !== '/' ? `url("${fondo}")` : ''}
+	style:background-image={`url("${fondo}")`}
 	style:background-size="cover"
 	style:background-position="center"
 	style:background-repeat="no-repeat"
@@ -37,34 +40,34 @@
 
 <footer class="site-footer">
 	<div class="footer-inner">
-		<p class="footer-desc">Stats Rugby — App gratuita para entrenadores y analistas de rugby</p>
-		<div class="footer-links">
+		<div class="footer-col">
+			<a href={resolve('/')} class="footer-marca">Stats Rugby</a>
+			<p class="footer-tagline">App gratuita para analistas de rugby</p>
+			<p class="footer-license">
+				<a
+					href="https://creativecommons.org/licenses/by-nc-nd/4.0/"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="ig-link">CC BY-NC-ND 4.0 — © 2025 Agustín Burgos</a
+				>
+			</p>
+		</div>
+		<div class="footer-col">
+			<a href={resolve('/acerca-de')}>Acerca de</a>
+			<a href={resolve('/contacto')}>Contacto</a>
 			<a
 				href="https://www.instagram.com/stats.rugby/"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="ig-link"
+				class="ig-link">@stats.rugby</a
 			>
-				<img src="/logo-instagram-svgrepo-com.svg" alt="Instagram" class="ig-icon" />
-				@stats.rugby
-			</a>
-			<span class="footer-sep">·</span>
-			<a href="mailto:agburgos83@gmail.com">agburgos83@gmail.com</a>
 		</div>
-		<p class="footer-license">
-			CC BY-NC-ND 4.0 — © 2025 Agustín Burgos —
-			<a
-				href="https://creativecommons.org/licenses/by-nc-nd/4.0/"
-				target="_blank"
-				rel="noopener noreferrer">Ver licencia</a
-			>
-		</p>
 	</div>
 </footer>
 
 <style>
 	.site-footer {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		text-align: left;
 		padding: 24px 2rem;
@@ -73,24 +76,6 @@
 	.footer-inner p {
 		margin: 0;
 	}
-	.footer-desc {
-		font-size: 0.9rem;
-		font-weight: 600;
-	}
-	.footer-links {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		flex-wrap: wrap;
-	}
-	.footer-links a {
-		color: white;
-		text-decoration: underline;
-		text-underline-offset: 2px;
-	}
-	.footer-links a:hover {
-		color: #CCE4F7;
-	}
 	.ig-link {
 		display: inline-flex;
 		align-items: center;
@@ -98,23 +83,53 @@
 		text-decoration: none !important;
 	}
 	.ig-link:hover {
-		text-decoration: underline !important;
-	}
-	.ig-icon {
-		width: 18px;
-		height: 18px;
-		display: block;
-	}
-	.footer-sep {
-		opacity: 0.5;
+		text-decoration: none !important;
 	}
 	.footer-license {
-		opacity: 0.75;
 		font-size: 0.8rem;
 	}
 	.footer-license a {
 		color: white;
-		text-decoration: underline;
-		text-underline-offset: 2px;
+	}
+
+	.site-footer {
+		background-color: #0068ce;
+		color: white;
+		padding: 32px 2rem;
+		font-size: 0.85rem;
+	}
+	.footer-inner {
+		display: flex;
+		justify-content: space-between;
+		gap: 2rem;
+		max-width: 1100px;
+		margin: 0 auto;
+		flex-wrap: wrap;
+	}
+	.footer-col {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		font-weight: bold;
+	}
+	.footer-marca {
+		font-weight: 700;
+		font-size: 1.1rem;
+		color: white;
+		text-decoration: none;
+	}
+	.footer-tagline {
+		margin: 0;
+	}
+	.footer-license {
+		margin: 0;
+		font-size: 0.8rem;
+	}
+	.footer-col a {
+		color: white;
+		width: fit-content;
+	}
+	.footer-col a:hover {
+		color: #cce4f7;
 	}
 </style>

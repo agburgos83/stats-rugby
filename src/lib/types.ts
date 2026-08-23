@@ -3,12 +3,12 @@
 export type Club = {
 	id: number;
 	nombre: string;
-}
+};
 
 export type Union = {
 	id: number;
 	nombre: string;
-}
+};
 
 export type Player = {
 	id: number;
@@ -29,55 +29,103 @@ export type Accion = {
 	player: Player;
 	skill: Skill;
 	calificacion: CalificacionIndividual;
+	videoTime: number | null;
 };
 
 export type TeamAccion = {
 	situacion: SituacionJuego;
 	calificacion: CalificacionGrupal;
+	videoTime: number | null;
 };
 
 export type ModalidadClave = 'seven' | 'ten' | 'doce' | 'quince';
 
-export const MODALIDADES: Record<ModalidadClave, { label: string; total: number; titulares: number }> = {
-    seven: { label: 'Seven', total: 12, titulares: 7 },
-    ten:   { label: 'Ten',   total: 15, titulares: 10 },
-    doce:  { label: 'Doce',  total: 17, titulares: 12 },
-    quince:{ label: 'Quince', total: 23, titulares: 15 },
+export const MODALIDADES: Record<
+	ModalidadClave,
+	{ label: string; total: number; titulares: number }
+> = {
+	seven: { label: 'Seven', total: 12, titulares: 7 },
+	ten: { label: 'Ten', total: 15, titulares: 10 },
+	doce: { label: 'Doce', total: 17, titulares: 12 },
+	quince: { label: 'Quince', total: 23, titulares: 15 }
 };
 
 export const POSICIONES_POR_MODALIDAD: Record<ModalidadClave, Record<number, string>> = {
-    seven: {
-        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
-        4: 'Medio scrum', 5: 'Apertura',
-        6: 'Centro', 7: 'Wing',
-        8: 'Hooker', 9: 'Pilar', 10: 'Medio scrum',
-        11: 'Centro', 12: 'Wing',
-    },
-    ten:   {
-        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
-		4: 'Segunda línea', 5: 'Segunda línea',
-        6: 'Medio scrum', 7: 'Apertura',
-        8: 'Centro', 9: 'Wing', 10: 'Fullback',
-        11: 'Hooker', 12: 'Pilar', 13: 'Segunda línea',
-        14: 'Medio scrum', 15: 'Centro',
-    },
-    doce:  {
-        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
-		4: 'Segunda línea', 5: 'Segunda línea', 6: 'Octavo',
-        7: 'Medio scrum', 8: 'Apertura', 9: 'Centro',
-        10: 'Wing', 11: 'Wing', 12: 'Fullback',
-        13: 'Hooker', 14: 'Pilar', 15: 'Segunda línea',
-        16: 'Ala', 17: 'Centro',
-    },
-    quince: {
-        1: 'Pilar izquierdo', 2: 'Hooker', 3: 'Pilar derecho',
-		4: 'Segunda línea', 5: 'Segunda línea', 6: 'Ala', 7: 'Ala',
-		8: 'Octavo', 9: 'Medio scrum', 10: 'Apertura', 11: 'Wing', 
-		12: 'Centro', 13: 'Centro', 14: 'Wing', 15: 'Fullback',
-		16: 'Pilar', 17: 'Hooker', 18: 'Pilar',
-		19: 'Segunda línea', 20: 'Ala',
-		21: 'Medio scrum', 22: 'Centro', 23: 'Wing',
-    },
+	seven: {
+		1: 'Pilar izquierdo',
+		2: 'Hooker',
+		3: 'Pilar derecho',
+		4: 'Medio scrum',
+		5: 'Apertura',
+		6: 'Centro',
+		7: 'Wing',
+		8: 'Hooker',
+		9: 'Pilar',
+		10: 'Medio scrum',
+		11: 'Centro',
+		12: 'Wing'
+	},
+	ten: {
+		1: 'Pilar izquierdo',
+		2: 'Hooker',
+		3: 'Pilar derecho',
+		4: 'Segunda línea',
+		5: 'Segunda línea',
+		6: 'Medio scrum',
+		7: 'Apertura',
+		8: 'Centro',
+		9: 'Wing',
+		10: 'Fullback',
+		11: 'Hooker',
+		12: 'Pilar',
+		13: 'Segunda línea',
+		14: 'Medio scrum',
+		15: 'Centro'
+	},
+	doce: {
+		1: 'Pilar izquierdo',
+		2: 'Hooker',
+		3: 'Pilar derecho',
+		4: 'Segunda línea',
+		5: 'Segunda línea',
+		6: 'Octavo',
+		7: 'Medio scrum',
+		8: 'Apertura',
+		9: 'Centro',
+		10: 'Wing',
+		11: 'Wing',
+		12: 'Fullback',
+		13: 'Hooker',
+		14: 'Pilar',
+		15: 'Segunda línea',
+		16: 'Ala',
+		17: 'Centro'
+	},
+	quince: {
+		1: 'Pilar izquierdo',
+		2: 'Hooker',
+		3: 'Pilar derecho',
+		4: 'Segunda línea',
+		5: 'Segunda línea',
+		6: 'Ala',
+		7: 'Ala',
+		8: 'Octavo',
+		9: 'Medio scrum',
+		10: 'Apertura',
+		11: 'Wing',
+		12: 'Centro',
+		13: 'Centro',
+		14: 'Wing',
+		15: 'Fullback',
+		16: 'Pilar',
+		17: 'Hooker',
+		18: 'Pilar',
+		19: 'Segunda línea',
+		20: 'Ala',
+		21: 'Medio scrum',
+		22: 'Centro',
+		23: 'Wing'
+	}
 };
 
 export type UnionClave = keyof typeof EQUIPOS_POR_UNION;
@@ -94,12 +142,7 @@ export type PartidoContexto = {
 	urlVideo: string;
 };
 
-export const INFRACCION_SKILLS = [
-	'Penal',
-	'Free kick',
-	'Knock on',
-	'Fwd. pass',
-] as const;
+export const INFRACCION_SKILLS = ['Penal', 'Free kick', 'Knock on', 'Fwd. pass'] as const;
 
 export const BALL_SKILLS = [
 	'Pase',
@@ -108,8 +151,7 @@ export const BALL_SKILLS = [
 	'Rec. line',
 	'Lanz. line',
 	'Intercep.',
-	'Recu. div.',
-
+	'Recu. div.'
 ] as const;
 
 export const CONTACT_SKILLS = [
@@ -119,33 +161,10 @@ export const CONTACT_SKILLS = [
 	'Ast. tackle',
 	'Ruck',
 	'Ctr. ruck',
-	'Pesca',
+	'Pesca'
 ] as const;
 
-export const FOOT_SKILLS = [
-	'Kick',
-	'Kick off',
-	'Palos',
-	'Drop',
-] as const;
-
-export const SKILLS = [
-	'Duelo',
-	'Tackle',
-	'Pase',
-	'Ruck',
-	'Pesca',
-	'Contraruck',
-	'Recepción',
-	'Intercepción',
-	'Patada',
-	'Drop',
-	'Palos',
-	'Salida',
-	'Tirada line'
-] as const;
-
-export const SKILLS_CON_NEUTRO = ['Tackle', 'Duelo'];
+export const FOOT_SKILLS = ['Kick', 'Kick off', 'Palos', 'Drop'] as const;
 
 export const EQUIPOS_POR_UNION = {
 	URBA: [
@@ -330,16 +349,22 @@ export type FootSkill = (typeof FOOT_SKILLS)[number];
 // 2. Unificamos todo en el tipo Skill general
 export type Skill = BallSkill | ContactSkill | FootSkill | InfraccionSkill;
 
-// export type Skill = (typeof SKILLS)[number];
 export type CalificacionIndividual = 'Negativo' | 'Neutro' | 'Positivo' | 'Dominante';
 export type CalificacionGrupal = 'Negativo' | 'Positivo';
-export type SituacionJuego = 'Scrum propio' | 'Line propio' | 'Salida recibida' | 'Scrum rival' | 'Line rival' | 'Salida cargada' | 'Efect. AT. 22m' | 'Efect. DEF. 22m';
-
+export type SituacionJuego =
+	| 'Scrum propio'
+	| 'Line propio'
+	| 'Salida recibida'
+	| 'Scrum rival'
+	| 'Line rival'
+	| 'Salida cargada'
+	| 'Efect. AT. 22m'
+	| 'Efect. DEF. 22m';
 
 // props
 export interface PropsCargaPartido {
 	partido: PartidoContexto;
-	cambiarVista: () => void;
+	cambiarVista: (v: number) => void;
 }
 
 export interface PropsCargaEquipo {
@@ -348,7 +373,7 @@ export interface PropsCargaEquipo {
 	usuarioUnion: UnionClave;
 	usuarioClub: string;
 	usuarioModalidad: ModalidadClave;
-	cambiarVista: () => void;
+	cambiarVista: (v: number) => void;
 }
 
 export interface PropsAnalisis {
@@ -356,7 +381,6 @@ export interface PropsAnalisis {
 	equipo: Puesto[];
 	acciones: Accion[];
 	teamAcciones: TeamAccion[];
-	cambiarVista: () => void;
 }
 
 export interface PropsAcciones {
@@ -364,5 +388,7 @@ export interface PropsAcciones {
 	partido: PartidoContexto;
 	acciones: Accion[];
 	teamAcciones: TeamAccion[];
-	cambiarVista: () => void;
+	confirmarFinalizar: boolean;
+	onCancelarFinalizar: () => void;
+	onConfirmarFinalizar:() => void;
 }

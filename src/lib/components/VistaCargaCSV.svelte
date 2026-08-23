@@ -1,12 +1,28 @@
 <script lang="ts">
+	import { logError } from '$lib/debug';
+	import { parseCSV } from '$lib/csv';
 	import type { Player } from '$lib/types';
 
-	let { jugadores = $bindable(), cambiarVista }: { jugadores: Player[]; cambiarVista: () => void } =
-		$props();
+	let {
+		jugadores = $bindable(),
+		cambiarVista
+	}: { jugadores: Player[]; cambiarVista: (v: number) => void } = $props();
 
 	let error = $state('');
 	let parsed = $state<Player[]>([]);
 	let dragOver = $state(false);
+
+	function filasAJugadores(filas: string[][]): Player[] {
+		return filas
+			.filter((fila) => fila.length >= 4)
+			.map((c, i) => ({
+				id: i + 1,
+				nombre: c[0].trim(),
+				apellido: c[1].trim(),
+				posicion: c[2].trim(),
+				categoria: c[3].trim().toLowerCase() as 'forward' | 'back'
+			}));
+	}
 
 	function handleFile(file: File) {
 		error = '';
@@ -20,20 +36,7 @@
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			const text = e.target?.result as string;
-			const lines = text.trim().split(/\r?\n/);
-			const data = lines
-				.slice(1)
-				.filter((l) => l.split(',').length >= 4)
-				.map((l, i) => {
-					const c = l.split(',');
-					return {
-						id: i + 1,
-						nombre: c[0].trim(),
-						apellido: c[1].trim(),
-						posicion: c[2].trim(),
-						categoria: c[3].trim().toLowerCase() as 'forward' | 'back'
-					};
-				});
+			const data = filasAJugadores(parseCSV(text).slice(1));
 
 			if (!data.length) {
 				error = 'No se encontraron jugadores válidos en el CSV';
@@ -54,17 +57,16 @@
 
 	function confirmar() {
 		jugadores = parsed;
-		cambiarVista();
+		cambiarVista(2);
 	}
 
 	function replaceCSV(): void {
 		if (jugadores.length === 0 && parsed.length === 0) return;
 		jugadores = [];
-		jugadores = [...jugadores];
 		parsed = [];
 		error = '';
 	}
-
+	
 	function simularPlantel(): void {
 		const fileUrl = '/plantilla-jugadores.csv';
 		parsed = [];
@@ -77,26 +79,12 @@
 				return response.text();
 			})
 			.then((text) => {
-				const lines = text.trim().split(/\r?\n/);
-				const data = lines
-					.slice(1)
-					.filter((l) => l.split(',').length >= 4)
-					.map((l, i) => {
-						const c = l.split(',');
-						return {
-							id: i + 1,
-							nombre: c[0].trim(),
-							apellido: c[1].trim(),
-							posicion: c[2].trim(),
-							categoria: c[3].trim().toLowerCase() as 'forward' | 'back'
-						};
-					});
-
-				parsed = data;
+				parsed = filasAJugadores(parseCSV(text).slice(1));
 				confirmar(); // Se ejecuta dentro del flujo asíncrono
 			})
-			.catch((error) => {
-				console.error('Error al simular plantel:', error);
+			.catch((e) => {
+				logError('Error al simular plantel:', e);
+				error = 'No se pudo cargar el plantel simulado. Verificá tu conexión e intentá de nuevo.';
 			});
 	}
 </script>
@@ -261,7 +249,7 @@
 
 	/* ========== BOTONES ========== */
 	.btn-primary {
-		background-color: #0068CE;
+		background-color: #0068ce;
 		color: white;
 		border: none;
 		padding: 12px 24px;
@@ -274,7 +262,7 @@
 	}
 
 	.btn-primary:hover {
-		background-color: #0050A0;
+		background-color: #0050a0;
 	}
 
 	.btn-primary:disabled {
@@ -319,8 +307,8 @@
 	}
 
 	.zona-drop.drag-over {
-		border-color: #0068CE;
-		background-color: #F0F6FD;
+		border-color: #0068ce;
+		background-color: #f0f6fd;
 	}
 
 	.input-hidden {

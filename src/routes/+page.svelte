@@ -12,19 +12,19 @@
 </script>
 
 <section class="hero">
-	<video class="hero-video" muted autoplay loop playsinline disablepictureinpicture>
+	<!-- <video class="hero-video" muted autoplay loop playsinline disablepictureinpicture>
 		<source src="/bg-stats-rugby4.webm" type="video/webm" />
-	</video>
+	</video> -->
 
 	<div class="hero-grid">
 		<div class="hero-texto">
-			<img src="/logo-app-white-400.svg" alt="Stats Rugby Logo" class="hero-logo" />
+			<img src="/logo-app-blue-400.svg" alt="Stats Rugby Logo" class="hero-logo" />
 			<p class="hero-descripcion">
 				<span class="text-band">App gratuita para entrenadores y analistas de rugby. <br /></span>
 				<span class="text-band"
 					>Cargá tu equipo, registrá acciones individuales y grupales <br /></span
 				>
-				<span class="text-band">y compartí el análisis con tus jugadores.</span>
+				<span class="text-band">y compartí clips y reportes con tus jugadores.</span>
 			</p>
 			<div class="hero-botones">
 				<button onclick={empezarNuevo} class="btn-contratame"> Analizar partido </button>
@@ -75,12 +75,13 @@
 	.hero-grid {
 		position: relative;
 		z-index: 10;
-		margin: 0 auto;
+		/* margin: 0 auto; */
+		margin: -8rem auto 0 auto;
 		width: 100%;
 		max-width: 1280px;
 		display: grid;
 		grid-template-columns: 1fr;
-		gap: 2rem;
+		gap: 8rem;
 		padding: 0 1.5rem;
 	}
 	@media (min-width: 1024px) {
@@ -122,7 +123,7 @@
 		color: white;
 		padding-left: 12px;
 		background: white;
-		color: #0068CE;
+		color: #0068ce;
 		padding: 4px 14px;
 		display: inline-block;
 	}
@@ -163,18 +164,11 @@
 
 	.text-band {
 		background: white;
-		color: #0068CE;
+		color: #666666fe;
 		padding: 0px 8px;
 		display: inline-block;
 		margin-bottom: 8px;
 		font-weight: 600;
-	}
-
-	.panel-video iframe {
-		width: 100%;
-		aspect-ratio: 16 / 9;
-		/* border-radius: 12px; */
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 	}
 
 	.btn-contratame {
@@ -190,7 +184,7 @@
 	}
 	.btn-contratame {
 		background-color: #fff;
-		color: #0068CE;
+		color: #0068ce;
 		border: none;
 	}
 	.btn-contratame:hover {
