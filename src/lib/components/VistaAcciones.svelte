@@ -3,21 +3,37 @@
 	import { descargarPDF } from '$lib/pdf/reporte';
 	import type { PropsAcciones, ModalidadClave } from '$lib/types';
 	import { INFRACCION_SKILLS, CONTACT_SKILLS, BALL_SKILLS, FOOT_SKILLS } from '$lib/types';
-	import { cocinarEnlaceVideo, formatTime } from '$lib/video';
+	import {
+		cocinarEnlaceVideo,
+		formatTime,
+		extraerYouTubeId,
+		chequearEmbedYouTube,
+		obtenerVideoVeo
+	} from '$lib/video';
 	import '$lib/video-types.d.ts';
 	import { LIMITES_FREE, grupoDeSkill, SITUACIONES, type GrupoClave } from '$lib/planes';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { logError } from '$lib/debug';
 
-	let { equipo, partido, acciones, teamAcciones, cambiarVista, modalidad } = $props<
-		PropsAcciones & { modalidad: ModalidadClave }
-	>();
+	let {
+		equipo,
+		partido,
+		acciones,
+		teamAcciones,
+		confirmarFinalizar,
+		onCancelarFinalizar,
+		onConfirmarFinalizar,
+		modalidad
+	} = $props<PropsAcciones & { modalidad: ModalidadClave }>();
 
 	let generando = $state(false);
 	let errorMsg = $state('');
 	let creandoSala = $state(false);
 	let salaError = $state('');
 	let salaUrl = $state('');
+	let salaCreada = $state(false);
+	let salaYaExistia = $state(false);
+	let chequeandoSala = $state(false);
 	let copiado = $state(false);
 	let pasoSala = $state<'cerrado' | 'elegir' | 'lista'>('cerrado');
 	let skillsSala = $state<string[]>([]); // nada marcado al abrir
@@ -27,7 +43,6 @@
 	let videoEl = $state<HTMLVideoElement | null>(null);
 	// eslint-disable-next-line svelte/prefer-writable-derived
 	let urlEmbed = $state<string | null>(null);
-	let confirmarFinalizar = $state(false);
 
 	const skillsRegistradas = $derived.by(() => {
 		const set = new SvelteSet<string>();
@@ -57,52 +72,39 @@
 			embedPermitido = null;
 			return;
 		}
-
-		// Extraer ID de YouTube
-		// eslint-disable-next-line no-useless-assignment
-		let videoId = '';
-		if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1].split('&')[0];
-		else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-		else {
-			embedPermitido = true;
-			return;
-		} // no es YT, asumir permitido
-
+		const videoId = extraerYouTubeId(url);
 		if (!videoId) {
 			embedPermitido = true;
 			return;
 		}
-
-		embedPermitido = null; // loading
-		fetch(
-			`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-		)
-			.then((r) => {
-				embedPermitido = r.ok;
-			})
-			.catch(() => {
-				embedPermitido = true;
-			}); // si falla la consulta, asumir permitido
+		embedPermitido = null;
+		let activo = true;
+		chequearEmbedYouTube(videoId).then((permitido) => {
+			if (activo) embedPermitido = permitido;
+		});
+		return () => {
+			activo = false;
+		};
 	});
 
 	$effect(() => {
 		const url = partido.urlVideo;
-		if (url && url.includes('veo.co') && url.includes('app.veo.co')) {
-			veoLoading = true;
-			veoVideoUrl = null;
-			const slug = url.replace(/\/$/, '').split('/').pop() || '';
-			fetch(`/api/veo-video?slug=${encodeURIComponent(slug)}`)
-				.then((r) => r.json())
-				.then((data) => {
-					if (data.videoUrl) veoVideoUrl = data.videoUrl;
-					else logError('Veo API error:', data.error);
-				})
-				.catch((e) => logError('Error fetching Veo video:', e))
-				.finally(() => (veoLoading = false));
-		} else {
+		if (!url || !url.includes('veo.co') || !url.includes('app.veo.co')) {
 			veoVideoUrl = null;
 			veoLoading = false;
+			return;
 		}
+		veoLoading = true;
+		veoVideoUrl = null;
+		const slug = url.replace(/\/$/, '').split('/').pop() || '';
+		const controller = new AbortController();
+		obtenerVideoVeo(slug, controller.signal)
+			.then((videoUrl) => {
+				if (videoUrl) veoVideoUrl = videoUrl;
+			})
+			.catch((e) => logError('Error al traer video de Veo:', e))
+			.finally(() => (veoLoading = false));
+		return () => controller.abort();
 	});
 
 	function contarEnGrupo(grupo: GrupoClave): number {
@@ -179,6 +181,7 @@
 				'Error al crear la sala: ' + (e instanceof Error ? e.message : 'error desconocido');
 		} finally {
 			creandoSala = false;
+			salaCreada = true;
 		}
 	}
 
@@ -204,24 +207,44 @@
 		return contarEnGrupo(grupo) >= LIMITES_FREE[grupo];
 	}
 
-	function abrirSeleccion() {
+	async function abrirSeleccion() {
+		// Si ya tenemos URL en memoria, ir directo
+		if (salaCreada && salaUrl) {
+			pasoSala = 'lista';
+			return;
+		}
+
+		// Chequear server-side si ya existe una sala para este análisis
+		chequeandoSala = true;
 		salaError = '';
-		pasoSala = 'elegir';
+		try {
+			const res = await fetch('/api/sala/check', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ partido, acciones, teamAcciones })
+			});
+			const data = await res.json();
+
+			if (data.existente) {
+				// Ya existe → ir directo al modal con la URL
+				salaUrl = window.location.origin + data.url;
+				salaYaExistia = true;
+				salaCreada = true;
+				pasoSala = 'lista';
+			} else {
+				// No existe → abrir modal de selección de skills
+				pasoSala = 'elegir';
+			}
+		} catch {
+			// Si falla el chequeo, abrir modal de todos modos
+			pasoSala = 'elegir';
+		} finally {
+			chequeandoSala = false;
+		}
 	}
 </script>
 
 <div class="pantalla-reporte">
-	<!-- <h2>Resumen de acciones {partido.local} vs {partido.visitante}</h2>
-	<p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p> -->
-
-	<div class="cabecera-acciones">
-		<div class="cabecera-texto">
-			<h2>Resumen de acciones {partido.local} vs {partido.visitante}</h2>
-			<!-- <p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p> -->
-		</div>
-		<button onclick={() => cambiarVista(4)} class="btn-secundario">← Volver al análisis</button>
-	</div>
-
 	<!-- IZQUIERDA: Video -->
 	<div class="panel-video">
 		{#if urlEmbed}
@@ -293,29 +316,22 @@
 		<div class="tarjeta-op">
 			<h3>Sala de clips</h3>
 			<p>Link para que tu equipo vea cada acción registrada con su video.</p>
-			<button onclick={abrirSeleccion} disabled={creandoSala} class="btn-primary">
-				{creandoSala ? 'Creando...' : 'Compartir sala'}
+			<button onclick={abrirSeleccion} disabled={creandoSala || chequeandoSala} class="btn-primary">
+				{creandoSala ? 'Creando...' : chequeandoSala ? 'Chequeando...' : 'Compartir sala'}
 			</button>
-		</div>
-
-		<div class="tarjeta-op">
-			<h3>Finalizar</h3>
-			<p>Limpia los datos de este análisis y vuelve al inicio.</p>
-			<button onclick={() => (confirmarFinalizar = true)} class="btn-primary"> Finalizar </button>
 		</div>
 
 		{#if confirmarFinalizar}
 			<div class="modal-overlay" role="dialog" aria-modal="true">
 				<div class="modal modal-chico">
-					<h3>Finalizar</h3>
+					<h3>¡Atención!</h3>
 					<p class="modal-sub">Si finalizás se perderá tu análisis.</p>
 					<p class="modal-sub">
-						Asegurate de haber compartido la sala de clips y descargado el reporte del partido.
+						Asegurate de haber creado la sala de clips y descargado el reporte del partido.
 					</p>
 					<div class="modal-botones">
-						<button onclick={() => (confirmarFinalizar = false)} class="btn-cerrar">Cancelar</button
-						>
-						<button onclick={() => cambiarVista(6)} class="btn-primary">Confirmar</button>
+						<button onclick={onCancelarFinalizar} class="btn-cerrar">Cancelar</button>
+						<button onclick={onConfirmarFinalizar} class="btn-primary">Confirmar</button>
 					</div>
 				</div>
 			</div>
@@ -386,21 +402,28 @@
 		<div class="modal-overlay" role="dialog" aria-modal="true">
 			<div class="modal">
 				<h3>Sala creada</h3>
-				<p class="modal-sub">Compartí este enlace con tu equipo.</p>
-				<p class="modal-sub">Una vez creada la sala expira en 72 hs (plan free).</p>
+
+				{#if salaYaExistia}
+					<p class="modal-sub">Este análisis ya tenía una sala. Compartí el mismo link.</p>
+				{:else}
+					<p class="modal-sub">Compartí este enlace con tu equipo.</p>
+					<p class="modal-sub">Expira en 72 hs (plan free).</p>
+				{/if}
+
 				<input
 					class="modal-link"
 					readonly
 					value={salaUrl}
 					onfocus={(e) => e.currentTarget.select()}
 				/>
+
 				<div class="modal-botones">
 					<a href={salaUrl} target="_blank" rel="external noopener" class="btn-secundario"
 						>Abrir sala</a
 					>
-					<button onclick={copiarLink} class="btn-primary"
-						>{copiado ? '¡Copiado!' : 'Copiar link'}</button
-					>
+					<button onclick={copiarLink} class="btn-primary">
+						{copiado ? '¡Copiado!' : 'Copiar link'}
+					</button>
 					<button onclick={() => (pasoSala = 'cerrado')} class="btn-cerrar">Cerrar</button>
 				</div>
 			</div>
@@ -415,29 +438,6 @@
 		grid-template-columns: 1.8fr 1.2fr;
 		gap: 24px;
 		padding: 20px;
-	}
-
-	.pantalla-reporte h2 {
-		/* grid-column: 1 / -1; */
-		margin: 0;
-		color: #0f172a;
-		font-size: 1.35rem;
-		font-weight: 700;
-	}
-
-	.subtitulo-torneo {
-		/* grid-column: 1 / -1; */
-		margin: 0;
-		color: #64748b;
-		font-size: 0.9rem;
-	}
-
-	.cabecera-acciones {
-		grid-column: 1 / -1;
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		gap: 16px;
 	}
 
 	/* ===== VIDEO ===== */

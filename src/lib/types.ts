@@ -381,7 +381,6 @@ export interface PropsAnalisis {
 	equipo: Puesto[];
 	acciones: Accion[];
 	teamAcciones: TeamAccion[];
-	cambiarVista: (v: number) => void;
 }
 
 export interface PropsAcciones {
@@ -389,5 +388,7 @@ export interface PropsAcciones {
 	partido: PartidoContexto;
 	acciones: Accion[];
 	teamAcciones: TeamAccion[];
-	cambiarVista: (v: number) => void;
+	confirmarFinalizar: boolean;
+	onCancelarFinalizar: () => void;
+	onConfirmarFinalizar:() => void;
 }
