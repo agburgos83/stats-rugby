@@ -15,7 +15,7 @@
 
 	import '$lib/video-types.d.ts';
 
-	import { cocinarEnlaceVideo } from '$lib/video';
+	import { cocinarEnlaceVideo, extraerYouTubeId, chequearEmbedYouTube, obtenerVideoVeo } from '$lib/video';
 	import { logError } from '$lib/debug';
 
 	// importadas desde el orquestador
@@ -23,8 +23,7 @@
 		equipo,
 		partido,
 		acciones = $bindable(),
-		teamAcciones = $bindable(),
-		cambiarVista
+		teamAcciones = $bindable()
 	}: PropsAnalisis = $props();
 
 	// let jugadorElegido = $state<Player | null>(null);
@@ -48,24 +47,22 @@
 
 	$effect(() => {
 		const url = partido.urlVideo;
-		if (url && url.includes('veo.co') && url.includes('app.veo.co')) {
-			veoLoading = true;
-			veoVideoUrl = null;
-			const slug = url.replace(/\/$/, '').split('/').pop() || '';
-			fetch(`/api/veo-video?slug=${encodeURIComponent(slug)}`)
-				.then((r) => r.json())
-				.then((data) => {
-					if (data.videoUrl) veoVideoUrl = data.videoUrl;
-					else logError('Error de la API de Veo:', data.error);
-				})
-				.catch((e) => {
-					logError('Error al traer video de Veo:', e);
-				})
-				.finally(() => (veoLoading = false));
-		} else {
+		if (!url || !url.includes('veo.co') || !url.includes('app.veo.co')) {
 			veoVideoUrl = null;
 			veoLoading = false;
+			return;
 		}
+		veoLoading = true;
+		veoVideoUrl = null;
+		const slug = url.replace(/\/$/, '').split('/').pop() || '';
+		const controller = new AbortController();
+		obtenerVideoVeo(slug, controller.signal)
+			.then((videoUrl) => {
+				if (videoUrl) veoVideoUrl = videoUrl;
+			})
+			.catch((e) => logError('Error al traer video de Veo:', e))
+			.finally(() => (veoLoading = false));
+		return () => controller.abort();
 	});
 
 	$effect(() => {
@@ -197,7 +194,6 @@
 	function deshacerAccionIndividual() {
 		if (!puedeDeshacerIndividual) return;
 		acciones = acciones.slice(0, prevAccionesLength);
-		acciones = [...acciones];
 		puedeDeshacerIndividual = false;
 	}
 
@@ -211,14 +207,12 @@
 	function limpiarAccionesIndividuales(): void {
 		if (acciones.length === 0) return;
 		acciones = [];
-		acciones = [...acciones];
 		puedeDeshacerIndividual = false;
 	}
 
 	function limpiarAccionesGrupales(): void {
 		if (teamAcciones.length === 0) return;
 		teamAcciones = [];
-		teamAcciones = [...teamAcciones];
 		puedeDeshacerGrupal = false;
 	}
 
@@ -252,44 +246,48 @@
 			embedPermitido = null;
 			return;
 		}
-
-		// Extraer ID de YouTube
-		// eslint-disable-next-line no-useless-assignment
-		let videoId = '';
-		if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1].split('&')[0];
-		else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-		else {
-			embedPermitido = true;
-			return;
-		} // no es YT, asumir permitido
-
+		const videoId = extraerYouTubeId(url);
 		if (!videoId) {
 			embedPermitido = true;
 			return;
 		}
-
-		embedPermitido = null; // loading
-		fetch(
-			`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-		)
-			.then((r) => {
-				embedPermitido = r.ok;
-			})
-			.catch(() => {
-				embedPermitido = true;
-			}); // si falla la consulta, asumir permitido
+		embedPermitido = null;
+		let activo = true;
+		chequearEmbedYouTube(videoId).then((permitido) => {
+			if (activo) embedPermitido = permitido;
+		});
+		return () => {
+			activo = false;
+		};
 	});
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		if (!url) {
+			embedPermitido = null;
+			return;
+		}
+		const videoId = extraerYouTubeId(url);
+		if (!videoId) {
+			embedPermitido = true;
+			return;
+		}
+		embedPermitido = null;
+		let activo = true;
+		chequearEmbedYouTube(videoId).then((permitido) => {
+			if (activo) embedPermitido = permitido;
+		});
+		return () => {
+			activo = false;
+		};
+	});
+
 </script>
 
 <div class="pantalla-analisis">
 	<!-- PANEL IZQUIERDO: REPRODUCTOR DE VIDEO -->
-
 	<div class="bloque-paneles-izquierda">
 		<div class="panel-video">
-			<h2>
-				Análisis {partido.local} vs {partido.visitante} ({partido.puntosLocal} - {partido.puntosVisitante})
-			</h2>
-			<!-- <p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p> -->
 			{#if urlEmbed}
 				{#if embedPermitido === null}
 					<div class="veo-loading">Verificando disponibilidad del video…</div>
@@ -317,19 +315,6 @@
 			{:else if veoLoading}
 				<div class="veo-loading">Cargando video de Veo…</div>
 			{/if}
-		</div>
-
-		<div class="acciones-finales">
-			<button onclick={() => cambiarVista(3)} class="btn-secundario">← Editar partido</button>
-			<div class="contenedor-boton">
-				<button
-					disabled={!hayAccionesGrupales() && !hayAccionesIndividuales()}
-					onclick={() => cambiarVista(5)}
-					class="btn-primary"
-				>
-					Terminar análisis →
-				</button>
-			</div>
 		</div>
 	</div>
 
@@ -646,13 +631,6 @@
 		gap: 24px;
 		padding: 20px;
 	}
-	.panel-video h2 {
-		font-size: 1.35rem;
-		font-weight: 700;
-		margin-top: 0;
-		margin-bottom: 0px;
-		color: #1e293b;
-	}
 
 	.panel-video {
 		display: flex;
@@ -669,11 +647,6 @@
 		border-radius: 8px;
 		background-color: #000;
 		border: 1px solid #e2e8f0;
-	}
-
-	.subtitulo-torneo {
-		color: #64748b;
-		font-size: 0.88rem;
 	}
 
 	.veo-loading {
@@ -718,12 +691,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
-		background-color: #f8fafc;
 	}
 
-	.contenedor-boton {
-		margin-top: 12px;
-	}
 	.btn-chip {
 		padding: 8px 12px;
 		font-weight: bold;
@@ -761,25 +730,6 @@
 		background-color: #cbd5e1;
 		color: #94a3b8;
 		cursor: not-allowed;
-	}
-	.acciones-finales {
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
-		margin-top: 8px;
-		padding-top: 12px;
-		border-top: 1px solid #e2e8f0;
-	}
-	.acciones-finales .btn-primary {
-		flex: 1;
-		text-align: center;
-	}
-
-	h2 {
-		color: #0f172a;
-		margin: 0 0 4px 0;
-		font-size: 1.35rem;
-		font-weight: 700;
 	}
 
 	.tarjeta-skill {
@@ -931,35 +881,6 @@
 		gap: 8px;
 		margin-bottom: 16px;
 		flex-grow: 1;
-	}
-
-	/* 3. El contenedor de los botones se pega al fondo */
-	.contenedor-boton {
-		margin-top: auto; /* Truco de Flexbox: empuja el contenedor al límite inferior */
-		padding-top: 16px;
-		display: flex;
-		gap: 10px; /* Si hay dos botones (como en individual), los pone lado a lado */
-	}
-
-	.contenedor-boton .btn-primary {
-		flex: 1; /* Hace que si hay dos botones, midan exactamente lo mismo */
-	}
-
-	.btn-secundario {
-		background-color: white;
-		color: #0068ce;
-		border: 1px solid #0068ce;
-		padding: 12px 24px;
-		font-size: 1rem;
-		font-weight: bold;
-		border-radius: 6px;
-		cursor: pointer;
-		transition: background-color 0.1s ease;
-		text-decoration: none;
-	}
-
-	.btn-secundario:hover {
-		background-color: #f0f6fd;
 	}
 
 	/* Contenedor horizontal que distribuye el total a la izquierda y botones a la derecha */

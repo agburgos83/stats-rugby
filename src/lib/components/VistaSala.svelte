@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { type PartidoContexto, type Accion, type TeamAccion, type Player } from '$lib/types';
-	import { cocinarEnlaceVideo, formatTime } from '$lib/video';
+	import {
+		cocinarEnlaceVideo,
+		formatTime,
+		extraerYouTubeId,
+		chequearEmbedYouTube,
+		obtenerVideoVeo
+	} from '$lib/video';
 	import '$lib/video-types.d.ts';
 	import { grupoDeSkill } from '$lib/planes';
 	import { logError } from '$lib/debug';
@@ -106,56 +112,60 @@
 			embedPermitido = null;
 			return;
 		}
-
-		// Extraer ID de YouTube
-		// eslint-disable-next-line no-useless-assignment
-		let videoId = '';
-		if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1].split('&')[0];
-		else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-		else {
-			embedPermitido = true;
-			return;
-		} // no es YT, asumir permitido
-
+		const videoId = extraerYouTubeId(url);
 		if (!videoId) {
 			embedPermitido = true;
 			return;
 		}
-
-		embedPermitido = null; // loading
-		fetch(
-			`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-		)
-			.then((r) => {
-				embedPermitido = r.ok;
-			})
-			.catch(() => {
-				embedPermitido = true;
-			}); // si falla la consulta, asumir permitido
+		embedPermitido = null;
+		let activo = true;
+		chequearEmbedYouTube(videoId).then((permitido) => {
+			if (activo) embedPermitido = permitido;
+		});
+		return () => {
+			activo = false;
+		};
 	});
 
 	$effect(() => {
 		const url = partido.urlVideo;
-		if (url && url.includes('veo.co') && url.includes('app.veo.co')) {
-			veoLoading = true;
-			veoVideoUrl = null;
-			const slug = url.replace(/\/$/, '').split('/').pop() || '';
-			fetch(`/api/veo-video?slug=${encodeURIComponent(slug)}`)
-				.then((r) => r.json())
-				.then((data) => {
-					if (data.videoUrl) veoVideoUrl = data.videoUrl;
-					else console.error('Veo API error:', data.error);
-				})
-				.catch((error) => {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					((error = 'Error fetching Veo video:'), error);
-					logError('Error al simular plantel:', error);
-				})
-				.finally(() => (veoLoading = false));
-		} else {
+		if (!url) {
+			embedPermitido = null;
+			return;
+		}
+		const videoId = extraerYouTubeId(url);
+		if (!videoId) {
+			embedPermitido = true;
+			return;
+		}
+		embedPermitido = null;
+		let activo = true;
+		chequearEmbedYouTube(videoId).then((permitido) => {
+			if (activo) embedPermitido = permitido;
+		});
+		return () => {
+			activo = false;
+		};
+	});
+
+	$effect(() => {
+		const url = partido.urlVideo;
+		if (!url || !url.includes('veo.co') || !url.includes('app.veo.co')) {
 			veoVideoUrl = null;
 			veoLoading = false;
+			return;
 		}
+		veoLoading = true;
+		veoVideoUrl = null;
+		const slug = url.replace(/\/$/, '').split('/').pop() || '';
+		const controller = new AbortController();
+		obtenerVideoVeo(slug, controller.signal)
+			.then((videoUrl) => {
+				if (videoUrl) veoVideoUrl = videoUrl;
+			})
+			.catch((e) => logError('Error al traer video de Veo:', e))
+			.finally(() => (veoLoading = false));
+		return () => controller.abort();
 	});
 
 	// 1. FUNCIONES DE ACCIONES Y VIDEO
@@ -239,7 +249,9 @@
 					</div>
 				{/if}
 			{:else if veoVideoUrl}
-				<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"></video>
+				<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"
+					><track kind="captions" /></video
+				>
 			{:else if veoLoading}
 				<div class="veo-loading">Cargando video…</div>
 			{/if}
