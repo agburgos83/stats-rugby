@@ -16,19 +16,19 @@
 		usuarioModalidad = $bindable(),
 		cambiarVista
 	}: PropsCargaEquipo = $props();
+
 	let jugadorSiendoArrastrado: Player | null = null;
+
 
 	function removerJugador(numeroCamiseta: number): void {
 		if (numeroCamiseta >= 1 && numeroCamiseta <= equipo.length) {
 			equipo[numeroCamiseta - 1].player = null;
 		}
-		equipo = [...equipo];
 	}
 
 	function asignarJugador(player: Player | null, numeroCamiseta: number): void {
 		if (!player) return;
 		equipo[numeroCamiseta - 1].player = player;
-		equipo = [...equipo];
 	}
 
 	function jugando(jug: Player): boolean {
@@ -49,6 +49,7 @@
 		const req = MODALIDADES[usuarioModalidad].titulares;
 		return usuarioClub !== '' && equipo.slice(0, req).every((p) => p.player !== null);
 	}
+
 </script>
 
 <div class="contenedor-centrado">
@@ -100,6 +101,7 @@
 			{#each jugadores as j (j.id)}
 				{#if j.categoria === 'forward'}
 					<div
+						role="button"
 						class="tarjeta-jugador"
 						class:deshabilitado={jugando(j)}
 						draggable="true"
@@ -117,6 +119,7 @@
 			{#each jugadores as j (j.id)}
 				{#if j.categoria === 'back'}
 					<div
+						role="button"
 						class="tarjeta-jugador"
 						class:deshabilitado={jugando(j)}
 						draggable="true"
@@ -133,6 +136,7 @@
 			<h2>Equipo</h2>
 			{#each equipo as p (p.numero)}
 				<div
+					role="button"
 					class="tarjeta-casillero"
 					ondragover={handleDragOver}
 					ondrop={(e) => {

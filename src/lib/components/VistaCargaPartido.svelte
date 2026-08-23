@@ -38,7 +38,6 @@
 <div class="contenedor-centrado">
 	<div class="tarjeta-formulario">
 		<h2>Datos del partido</h2>
-		<p class="subtitulo">Información clave para la cabecera del reporte final.</p>
 
 		<!-- Fila 1: Torneo y División paralelos -->
 		<div class="fila-formulario">
@@ -75,7 +74,7 @@
 					<div class="campo-formulario flex-1">
 						<label for="equipo-local-select">Equipo Local</label>
 						<select id="equipo-local-select" bind:value={partido.local} class="input-control">
-							{#each partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : [] as equipo (equipo)}
+							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []).filter((e) => e.label !== partido.visitante) as equipo (equipo)}
 								<option value={equipo.label}>{equipo.label}</option>
 							{/each}
 						</select>
@@ -88,7 +87,7 @@
 							bind:value={partido.visitante}
 							class="input-control"
 						>
-							{#each partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : [] as equipo (equipo)}
+							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []).filter((e) => e.label !== partido.local) as equipo (equipo)}
 								<option value={equipo.label}>{equipo.label}</option>
 							{/each}
 						</select>
