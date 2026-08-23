@@ -74,14 +74,18 @@
 
 ### Componentes Svelte
 
+- `Cabecera.svelte` — barra sticky blanca con navegación contextual. En `/app`: título del partido (vistas 4/5) + botones `[← Editar partido] [Terminar análisis →]` / `[← Volver al análisis] [Finalizar]`. Fuera de `/app`: marca "Stats Rugby" + botón "Retomar análisis" con dot rojo parpadeante (si `hayDatos`). Oculta en `/app` desde `+layout.svelte`.
 - `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo) con captura de `videoTime`.
 - `VistaCargaEquipo.svelte` — grilla 4 columnas con drag & drop (solo desktop, no touch)
 - `VistaAcciones.svelte` — revisión de acciones logueadas, video embebido con seek (`seekToVideo`), botones "Descargar PDF" y "Compartir sala". Props: `PropsAcciones & { modalidad: ModalidadClave }`.
 - `VistaSala.svelte` — sala de clips para el veedor (`/sala/[token]`): video + filtros por skill + playlist con seek.
 - `src/routes/api/sala/+server.ts` — POST/GET de salas (Supabase). TTL free 72h.
 - `$lib/planes.ts` — `LIMITES_FREE` (topes por grupo: contacto 2, pelota 2, pie 1, infracción 1, situaciones 2), `SITUACIONES`, `grupoDeSkill`.
+- `$lib/csv.ts` — parser RFC 4180 completo (comillas, comas dentro de comillas, `\r\n`). Usado por `VistaCargaCSV`.
+- `$lib/stores.svelte.ts` — `loadFromStorage()`, `saveToStorage()`, `clearStorage()` — persistencia en `localStorage` bajo key `stats-rugby-state`. SSR-safe con guard `browser`.
+- `$lib/video.ts` — `extraerYouTubeId`, `cocinarEnlaceVideo`, `chequearEmbedYouTube` (cache en Map in-memory), `obtenerVideoVeo`, `formatTime`.
+- `$lib/video-types.d.ts` — tipos para YouTube IFrame API y Vimeo Player API.
 - `$lib/debug.ts` — `logError(...args)` con guard `import.meta.env.DEV`.
-- `$lib/video.ts` — `cocinarEnlaceVideo`, `formatTime`.
 - `$lib/supabase.ts` — cliente Supabase (`PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY`).
 - Todos los botones primarios usan `background-color: #0068CE`, hover `#0050A0`
 - Menú: navbar `#0068CE`
@@ -119,6 +123,11 @@
 18. `logError` de `$lib/debug.ts` reemplaza `console.error` (#20)
 19. Video YouTube: listener `postMessage` para leer `currentTime` (`cachedYouTubeTime`), además del check de embed por oembed
 20. Salas: cliente Supabase + `/api/sala` + `VistaSala.svelte` + botón "Compartir sala" (Sprints 2-3)
+21. Cabecera sticky implementada: barra blanca en `/app`, menú oculto en `/app`, botones contextuales por vista, modal de Finalizar como prop de VistaAcciones
+22. Parser CSV extraído a `$lib/csv.ts` con soporte RFC 4180 completo
+23. Rooms de clips: botón "Compartir sala" → "Ver sala" tras creación (reabre modal con URL existente)
+24. Fix drag & drop en VistaCargaEquipo: eliminado `$effect` duplicado del hijo y estado local `equipoModalidad`; `equipo` del padre (+page.svelte) es única fuente de verdad; quitado anti-patrón `equipo = [...equipo]` (la mutación profunda sobre el proxy `$state` ya es reactiva). Síntoma previo: primera vez con quince, el drop asignaba pero no pintaba azul y la selección no llegaba al padre
+25. Salas: dedup server-side con `content_hash` (sha256) + endpoint `/api/sala/check`; `PUBLIC_SUPABASE_*` configuradas en Netlify para producción (primer deploy de salas a `main`)
 
 ## Plan de Instagram
 
@@ -176,20 +185,20 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
 
 ### Altas (bugs significativos, riesgo de integridad de datos)
 
-7. **CSV parser naive — se rompe con comillas o comas en nombres**
-   - `src/lib/components/VistaCargaCSV.svelte:24-37` y `80-94` — `l.split(',')` no cumple RFC 4180. Nombres como "Garcia, Juan" corrompen el parseo. Lógica duplicada en ambos lugares.
+7. ~~**CSV parser naive — se rompe con comillas o comas en nombres**~~ ✅ FIXED
+   - `src/lib/csv.ts` — parser RFC 4180 completo (comillas, comas dentro de comillas, `\r\n`). Usado por `VistaCargaCSV`.
 
 8. ~~**`nextAccionId` no persiste → colisión tras recarga**~~ ✅ FIXED
    - `src/lib/components/VistaAnalisis.svelte:32` — ahora `nextAccionId = acciones.reduce((max, a) => Math.max(max, a.id), -1) + 1`; arranca desde el máximo id de las acciones restauradas de localStorage.
 
-9. **Efecto de persistencia en cada keystroke durante cambio de modalidad**
-   - `src/routes/app/+page.svelte:41-48` — el `$effect` reconstruye `equipo` desde cero al cambiar `usuarioModalidad`. Puede pisar el equipo recién restaurado de localStorage.
+9. **Efecto de persistencia en cada keystroke durante cambio de modalidad** — Mitigado
+   - `src/routes/app/+page.svelte:44` — guard `if (equipoModalidad === usuarioModalidad) return;` evita reconstruir el equipo si la modalidad no cambió.
 
-10. **Acciones huérfanas al cambiar modalidad**
-    - `src/routes/app/+page.svelte:41-48` — al cambiar modalidad se reconstruye `equipo` pero NO se limpian `acciones` ni `teamAcciones`. Quedan referencias a jugadores que ya no existen.
+10. **Acciones huérfanas al cambiar modalidad** — No aplica en la práctica
+    - `src/routes/app/+page.svelte:41-48` — al cambiar modalidad se reconstruye `equipo` pero NO se limpian `acciones` ni `teamAcciones`. El flujo lineal 1→2→3→4 impide llegar a vista 2 con acciones existentes.
 
-11. **Mismo equipo como local y visitante — sin validación**
-    - `src/lib/components/VistaCargaPartido.svelte:76-95` — ambos selectores usan la misma lista de clubes. Nada impide seleccionar el mismo club.
+11. ~~**Mismo equipo como local y visitante — sin validación**~~ ✅ FIXED
+    - `src/lib/components/VistaCargaPartido.svelte:76-95` — selectores filtrados (`.filter()` excluye el equipo opuesto) + validación `partido.local !== partido.visitante` en `formValido`.
 
 ### Medias (UX, bordes, faltantes)
 
@@ -202,14 +211,16 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
 13. **Navegación "atrás" parcial**
     - Botones de ida y vuelta 3↔4↔5 funcionando (`cambiarVista`). Falta: historial de pila (no hay volver desde 1/2/3) y acceso a vistas previas sin perder datos.
 
-14. **Veo fetch sin AbortController — carreras concurrentes**
-    - `src/lib/components/VistaAnalisis.svelte:49-69` — si `urlVideo` cambia rápido, múltiples fetches pueden llegar out-of-order.
+14. **Veo fetch sin AbortController — carreras concurrentes** — Mitigado
+    - `src/lib/components/VistaAnalisis.svelte:49-69` y `VistaAcciones.svelte:87-104` — ambos usan AbortController.
 
 15. **oembed de YouTube sin caché ni rate-limit**
     - `VistaAnalisis.svelte:273`, `VistaAcciones.svelte:78`, `VistaSala.svelte:127` — fetch a `youtube.com/oembed` para chequear si el video se puede embeber. Sin debounce ni caché. Lógica duplicada en 3 componentes.
+    - **Nota**: `$lib/video.ts` tiene `cacheEmbedYouTube` (Map in-memory) que cachea resultados. La lógica de chequeo está centralizada en `chequearEmbedYouTube()`. La duplicación en 3 componentes es un refactor pendiente, no un bug de seguridad.
 
 16. **`simularPlantel` falla silenciosamente**
     - `src/lib/components/VistaCargaCSV.svelte:99-101` — si el fetch a `/plantilla-jugadores.csv` falla, solo `logError` (visible en DEV). El usuario no ve nada.
+    - **Nota**: `VistaCargaCSV.svelte:87` ahora muestra `error = 'No se pudo cargar el plantel simulado...'`. Ya hay feedback al usuario.
 
 ### Bajas (calidad de código, typos, estilo)
 
@@ -228,8 +239,13 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
 21. ~~**`label id="club-select"` duplicado**~~ ✅ FIXED
     - `src/lib/components/VistaCargaEquipo.svelte:73-85` — labels/ids `club-select` y `modalidad-select` únicos.
 
-22. **`limpiarAccionesIndividuales` asigna array vacío dos veces**
+22. ~~**`limpiarAccionesIndividuales` asigna array vacío dos veces**~~ ✅ FIXED
     - `src/lib/components/VistaAnalisis.svelte:211-216` (y `limpiarAccionesGrupales` 218-223) — `acciones = []; acciones = [...acciones];`
+
+23. ~~**Rooms de clips sin límite de creación**~~ ✅ FIXED
+    - **Fix server-side**: columna `content_hash` (sha256 de partido+acciones+teamAcciones) en tabla `salas` + endpoint `/api/sala/check` — `crearSala()` consulta primero y muestra la URL de la sala existente en vez de duplicar
+    - **Fix client-side**: state `salaCreada` + botón cambia a "Ver sala" (reabre modal con URL existente)
+    - Pendiente: rate-limit estricto (el dedup evita duplicados idénticos, no limita creaciones con contenido distinto)
 
 ## Feature: salas de clips (modelo free/pago)
 
@@ -270,6 +286,8 @@ created_at      TIMESTAMPTZ
 
 > ✅ TTL de salas free en 72h (`src/routes/api/sala/+server.ts:13`).
 
+> ⚠️ **Bug conocido**: usuario free puede crear salas ilimitadas por partido (una por cada combinación de skills), evadiendo los topes del plan. Fix client-side aplicado (botón "Ver sala"), fix server-side pendiente (ver vuln #23).
+
 ### Decisiones clave
 
 - **Sin descarga de clips**: solo enlaces con tiempo (`?t=120s`) para YouTube/Vimeo, `currentTime` para Veo
@@ -283,14 +301,13 @@ Ver `docs/SALAS_CLIPS.md` para diseño completo, user flows, schema SQL, y detal
 
 ## Próximos cambios de UX (diseño aprobado, sin implementar)
 
-**Cabecera-analisis** (en `/app`):
+**Cabecera-analisis** (en `/app`) — ✅ implementado en `Cabecera.svelte`:
 
 - Barra sticky blanca full-width arriba en `/app`, ocupando el espacio que hoy usa el menú (el nav azul deja de renderizarse en `/app`).
-- Vista 4 (Análisis): título `Análisis {local} vs {visitante} ({pts})` + botones `[← Editar partido] [Terminar análisis →]` arriba a la derecha.
+- Vista 4 (Análisis): título `Análisis {local} vs {visitante}` + botones `[← Editar partido] [Terminar análisis →]` arriba a la derecha.
 - Vista 5 (Acciones): título `Resumen de acciones {local} vs {visitante}` + `[← Volver al análisis] [Finalizar]`.
-- Vistas 1/2/3/6: solo la marca "Stats Rugby" (sin botones; cada vista conserva su `h2`).
+- Vistas 1/2/3: solo la marca "Stats Rugby" (sin botones; cada vista conserva su `h2`).
 - `Terminar análisis →` deshabilitado si `acciones.length === 0 && teamAcciones.length === 0`.
 - El modal de confirmación de Finalizar pasa a ser prop de `VistaAcciones` (`confirmarFinalizar` + `onCancelarFinalizar`/`onConfirmarFinalizar`), moviendo el estado al page.
-- Se quitan los subtítulos del analista de VistaAnalisis y VistaAcciones (el dato queda en el PDF).
 
-**Menú global**: se reduce a marca "Stats Rugby" + botón "Retomar análisis" (cuando `hayDatos` y no está en `/app`). Los links Inicio/Acerca de/Contacto se mueven al footer (`.footer-links` de `+layout.svelte`).
+**Menú global** — ✅ implementado: se reduce a marca "Stats Rugby" + botón "Retomar análisis" (cuando `hayDatos` y no está en `/app`). Los links Inicio/Acerca de/Contacto se mueven al footer (`.footer-links` de `+layout.svelte`).
