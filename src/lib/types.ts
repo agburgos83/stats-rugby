@@ -151,7 +151,8 @@ export const BALL_SKILLS = [
 	'Rec. line',
 	'Lanz. line',
 	'Intercep.',
-	'Recu. div.'
+	'Recup. div.',
+	'Bloqueo'
 ] as const;
 
 export const CONTACT_SKILLS = [
@@ -335,7 +336,8 @@ export const EQUIPOS_POR_UNION = {
 		{ label: 'Uncas', slug: 'URMDP/UNCAS.PNG' },
 		{ label: 'Universitario', slug: 'URMDP/UNIVERSITARIO.PNG' },
 		{ label: 'Villa Gesel R.C.', slug: 'URMDP/VILLA-GESEL-RC.PNG' }
-	]
+	],
+	
 } as const;
 
 export type EquipoInfo = (typeof EQUIPOS_POR_UNION)[UnionClave][number];
