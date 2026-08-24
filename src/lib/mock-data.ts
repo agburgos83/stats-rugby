@@ -187,7 +187,7 @@ export function generarMockData(
 	// Recu. div. (2-3 total)
 	const recuDivs = rand(2, 3);
 	for (let i = 0; i < recuDivs; i++) {
-		push(poolJug(), 'Recu. div.', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
+		push(poolJug(), 'Recup. div.', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 	}
 
 	// Intercep. (1-2 total, tipicamente backs)
