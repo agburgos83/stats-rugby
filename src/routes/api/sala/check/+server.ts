@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { supabase } from '$lib/supabase';
+import { MODO_FULL } from '$lib/mode';
 import { createHash } from 'crypto';
 
 function calcularContentHash(
@@ -16,11 +17,13 @@ export const POST: RequestHandler = async ({ request }) => {
     const { partido, acciones, teamAcciones } = await request.json();
 
     const contentHash = calcularContentHash(partido, acciones, teamAcciones);
+    const plan = MODO_FULL ? 'full' : 'free';
 
     const { data } = await supabase
         .from('salas')
         .select('id')
         .eq('content_hash', contentHash)
+        .eq('plan', plan)
         .maybeSingle();
 
     if (data) {

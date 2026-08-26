@@ -12,6 +12,7 @@
 	} from '$lib/video';
 	import '$lib/video-types.d.ts';
 	import { LIMITES_FREE, grupoDeSkill, SITUACIONES, type GrupoClave } from '$lib/planes';
+	import { MODO_FULL } from '$lib/mode';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { logError } from '$lib/debug';
 
@@ -167,8 +168,7 @@
 					partido,
 					acciones,
 					teamAcciones,
-					skillsVisibles: skillsSala,
-					plan: 'free'
+					skillsVisibles: skillsSala
 				})
 			});
 			const data = await res.json();
@@ -202,6 +202,7 @@
 	function deshabilitado(s: string): boolean {
 		if (!skillsRegistradas.has(s)) return true;
 		if (skillsSala.includes(s)) return false;
+		if (MODO_FULL) return false;
 		const grupo = grupoDeSkill(s);
 		if (grupo === null) return true;
 		return contarEnGrupo(grupo) >= LIMITES_FREE[grupo];
@@ -372,12 +373,14 @@
 				{/if}
 
 				<div class="modal-leyendas">
-					<p class="modal-sub">
-						<strong>Topes de acciones plan FREE:</strong>
-					</p>
-					<p class="modal-sub">
-						2 de contacto, 2 de pelota, 1 de pie, 1 infracción y 2 situaciones de juego.
-					</p>
+					{#if !MODO_FULL}
+						<p class="modal-sub">
+							<strong>Topes de acciones plan FREE:</strong>
+						</p>
+						<p class="modal-sub">
+							2 de contacto, 2 de pelota, 1 de pie, 1 infracción y 2 situaciones de juego.
+						</p>
+					{/if}
 					<p class="modal-sub leyenda-gris">
 						<!-- <span class="muestra-gris"></span> -->
 						<em>Las acciones que no hayas registrado en el análisis que no se pueden incluir.</em>
@@ -407,7 +410,9 @@
 					<p class="modal-sub">Este análisis ya tenía una sala. Compartí el mismo link.</p>
 				{:else}
 					<p class="modal-sub">Compartí este enlace con tu equipo.</p>
-					<p class="modal-sub">Expira en 72 hs (plan free).</p>
+					{#if !MODO_FULL}
+						<p class="modal-sub">Expira en 72 hs (plan free).</p>
+					{/if}
 				{/if}
 
 				<input

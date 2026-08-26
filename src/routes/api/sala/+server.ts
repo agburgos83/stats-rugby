@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { supabase } from '$lib/supabase';
 import { LIMITES_FREE } from '$lib/planes';
+import { MODO_FULL } from '$lib/mode';
 import { createHash } from 'crypto';
 
 function calcularContentHash(
@@ -14,8 +15,9 @@ function calcularContentHash(
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-	const body = await request.json();
-	const { partido, acciones, teamAcciones, skillsVisibles, plan = 'free' } = body;
+	const { partido, acciones, teamAcciones, skillsVisibles, } = await request.json();
+
+	const plan = MODO_FULL ? 'full' : 'free';
 
 	const limites = plan === 'free' ? LIMITES_FREE : null;
 
