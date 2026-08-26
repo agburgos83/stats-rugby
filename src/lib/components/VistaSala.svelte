@@ -599,4 +599,34 @@
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
+
+	@media (max-width: 768px) {
+		.contenido-sala {
+			grid-template-columns: 1fr;
+		}
+
+		.pantalla-reporte {
+			padding: 12px;
+		}
+
+		.pantalla-reporte h2 {
+			font-size: 1.1rem;
+		}
+
+		.panel-playlist .lista-scroll {
+			max-height: none;
+		}
+
+		.tabs button {
+			padding: 12px 20px;
+		}
+
+		.filtro-botones button {
+			padding: 12px 20px;
+		}
+
+		.embed-bloqueado {
+			padding: 16px;
+		}
+	}
 </style>
