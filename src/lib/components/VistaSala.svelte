@@ -95,7 +95,7 @@
 	);
 
 	$effect(() => {
-		urlEmbed = cocinarEnlaceVideo(partido.urlVideo);
+		urlEmbed = cocinarEnlaceVideo(partido.urlVideo, { controls: false });
 	});
 
 	$effect(() => {
@@ -628,5 +628,6 @@
 		.embed-bloqueado {
 			padding: 16px;
 		}
+
 	}
 </style>

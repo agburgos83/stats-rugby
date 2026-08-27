@@ -8,19 +8,29 @@ export function extraerYouTubeId(enlace: string): string | null {
 	return null;
 }
 
-export function cocinarEnlaceVideo(enlace: string): string | null {
+export function cocinarEnlaceVideo(
+	enlace: string,
+	opciones?: { controls?: boolean }
+): string | null {
 	if (!enlace) return '';
 
-	// CASO YOUTUBE
 	if (enlace.includes('youtube.com') || enlace.includes('youtu.be')) {
 		const codigoFinal = extraerYouTubeId(enlace);
-		return codigoFinal
-			? 'https://www.youtube.com/embed/' +
-					codigoFinal +
-					'?enablejsapi=1&origin=' +
-					encodeURIComponent(window.location.origin)
-			: enlace;
+		if (!codigoFinal) return enlace;
+		const params = new URLSearchParams({
+			enablejsapi: '1',
+			origin: window.location.origin,
+			controls: opciones?.controls === false ? '0' : '1',
+			modestbranding: '1',
+			rel: '0',
+			showinfo: '0',
+			iv_load_policy: '3',
+			playsinline: '1',
+			fs: '0'        
+		});
+		return `https://www.youtube.com/embed/${codigoFinal}?${params}`;
 	}
+
 
 	// CASO VEO (no soporta iframe, se usa <video> nativo vía API)
 	if (enlace.includes('veo.co') && enlace.includes('app.veo.co')) {
