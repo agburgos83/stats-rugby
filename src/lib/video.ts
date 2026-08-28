@@ -10,7 +10,7 @@ export function extraerYouTubeId(enlace: string): string | null {
 
 export function cocinarEnlaceVideo(
 	enlace: string,
-	opciones?: { controls?: boolean }
+	opciones?: { controls?: boolean; mute?: boolean  }
 ): string | null {
 	if (!enlace) return '';
 
@@ -21,6 +21,7 @@ export function cocinarEnlaceVideo(
 			enablejsapi: '1',
 			origin: window.location.origin,
 			controls: opciones?.controls === false ? '0' : '1',
+			mute: opciones?.mute ? '1' : '0',
 			modestbranding: '1',
 			rel: '0',
 			showinfo: '0',

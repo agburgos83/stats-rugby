@@ -190,4 +190,37 @@
 	.btn-contratame:hover {
 		background-color: #f1f5f9;
 	}
+
+	/* ===== MOBILE (hasta 1023px) ===== */
+	@media (max-width: 1023.98px) {
+		.hero {
+			min-height: auto;
+			padding: 2.5rem 0 3rem;
+		}
+		.hero-grid {
+			margin: 0 auto;
+			gap: 3rem;
+			padding: 0 1.25rem;
+		}
+		.hero-descripcion {
+			font-size: 1rem;
+			line-height: 1.55;
+		}
+		.hero-logo {
+			width: 13rem;
+			margin-bottom: 1.25rem;
+		}
+		.video-titulo {
+			font-size: 1.15rem;
+			margin: 0 auto;
+		}
+		.hero-botones {
+			flex-direction: column;
+			width: 100%;
+		}
+		.hero-botones .btn-contratame {
+			width: 100%;
+			justify-content: center;
+		}
+	}
 </style>

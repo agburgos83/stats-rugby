@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { type PartidoContexto, type Accion, type TeamAccion, type Player } from '$lib/types';
+	import {
+		type PartidoContexto,
+		type Accion,
+		type TeamAccion,
+		type Player,
+		type CalificacionIndividual,
+		INFRACCION_SKILLS
+	} from '$lib/types';
 	import {
 		cocinarEnlaceVideo,
 		formatTime,
@@ -26,6 +33,7 @@
 	let { sala } = $props();
 
 	let jugadorElegidoId = $state<number | null>(null);
+	let califFiltro = $state<'todos' | CalificacionIndividual>('todos');
 	let skillsPendientes = $state<string[]>([]); // selección en curso (checkboxes)
 	let skillsAplicados = $state<string[]>([]); // filtros activos tras "Aplicar"
 	let tabActual = $state<'eventos' | 'filtros'>('eventos');
@@ -45,6 +53,10 @@
 
 	const mostrarFiltroJugador = $derived(
 		skillUnica !== null && grupoDeSkill(skillUnica) !== 'situaciones'
+	);
+
+	const mostrarFiltroCalif = $derived(
+		skillUnica !== null && !(INFRACCION_SKILLS as readonly string[]).includes(skillUnica)
 	);
 
 	// jugadores con acciones del skill único
@@ -87,15 +99,47 @@
 		accionesFiltradas.filter((item) => {
 			const nombre = item.tipo === 'individual' ? item.accion.skill : item.accion.situacion;
 			if (!skillsAplicados.includes(nombre)) return false;
-			if (item.tipo === 'individual' && jugadorElegidoId !== null) {
-				return item.accion.player.id === jugadorElegidoId;
+			if (
+				item.tipo === 'individual' &&
+				jugadorElegidoId !== null &&
+				item.accion.player.id !== jugadorElegidoId
+			) {
+				return false;
+			}
+			if (califFiltro !== 'todos' && item.accion.calificacion !== califFiltro) {
+				return false;
 			}
 			return true;
 		})
 	);
 
+	const opcionesCalificacion: Array<{ valor: CalificacionIndividual; label: string }> = $derived.by(
+		() => {
+			if (skillUnica === 'Tackle') {
+				return [
+					{ valor: 'Negativo', label: 'Errado' },
+					{ valor: 'Neutro', label: 'Neutro' },
+					{ valor: 'Positivo', label: 'Positivo' },
+					{ valor: 'Dominante', label: 'Dominante' }
+				];
+			}
+			if (skillUnica === 'Duelo') {
+				return [
+					{ valor: 'Negativo', label: 'Negativo' },
+					{ valor: 'Neutro', label: 'Neutro' },
+					{ valor: 'Positivo', label: 'Positivo' },
+					{ valor: 'Dominante', label: 'Quiebre' }
+				];
+			}
+			return [
+				{ valor: 'Negativo', label: 'Negativo' },
+				{ valor: 'Positivo', label: 'Positivo' }
+			];
+		}
+	);
+
 	$effect(() => {
-		urlEmbed = cocinarEnlaceVideo(partido.urlVideo, { controls: false });
+		urlEmbed = cocinarEnlaceVideo(partido.urlVideo, { controls: false, mute: true });
 	});
 
 	$effect(() => {
@@ -221,6 +265,19 @@
 			skillsPendientes = [...skillsPendientes, nombre];
 		}
 	}
+
+	function signoDe(calif: CalificacionIndividual): string {
+		switch (calif) {
+			case 'Negativo':
+				return '-';
+			case 'Neutro':
+				return '=';
+			case 'Positivo':
+				return '+';
+			case 'Dominante':
+				return '++';
+		}
+	}
 </script>
 
 <div class="pantalla-reporte">
@@ -249,7 +306,7 @@
 					</div>
 				{/if}
 			{:else if veoVideoUrl}
-				<video bind:this={videoEl} src={veoVideoUrl} controls preload="metadata"
+				<video bind:this={videoEl} src={veoVideoUrl} controls muted preload="metadata"
 					><track kind="captions" /></video
 				>
 			{:else if veoLoading}
@@ -282,6 +339,38 @@
 					</div>
 				{/if}
 
+				{#if mostrarFiltroCalif}
+					<div class="filtro-calif">
+						<label>Calificación</label>
+						<div class="radio-grid">
+							<label class="radio-opcion" class:activo={califFiltro === 'todos'}>
+								<input
+									type="radio"
+									name="calif"
+									value="todos"
+									checked={califFiltro === 'todos'}
+									onchange={() => (califFiltro = 'todos')}
+								/>
+								Todos
+							</label>
+
+							{#each opcionesCalificacion as c (c.valor)}
+								{@const activo = califFiltro === c.valor}
+								<label class="radio-opcion" class:activo>
+									<input
+										type="radio"
+										name="calif"
+										value={c.valor}
+										checked={activo}
+										onchange={() => (califFiltro = c.valor)}
+									/>
+									{c.label}
+								</label>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
 				<div class="panel-playlist">
 					<h3>Playlist de acciones ({accionesMostradas.length})</h3>
 					<div class="lista-scroll">
@@ -290,11 +379,15 @@
 								<button class="tarjeta-log" onclick={() => seekToVideo(item.accion.videoTime)}>
 									<span class="badge-tiempo">{formatTime(item.accion.videoTime)}</span>
 									<span>{item.accion.skill}</span>
+									{#if !INFRACCION_SKILLS.some((s) => s === item.accion.skill)}
+										<span class="signo">{signoDe(item.accion.calificacion)}</span>
+									{/if}
 								</button>
 							{:else}
 								<button class="tarjeta-log" onclick={() => seekToVideo(item.accion.videoTime)}>
 									<span class="badge-tiempo">{formatTime(item.accion.videoTime)}</span>
 									<span>{item.accion.situacion}</span>
+									<span class="signo">{signoDe(item.accion.calificacion)}</span>
 								</button>
 							{/if}
 						{/each}
@@ -481,6 +574,13 @@
 		border-color: #99c9ef;
 	}
 
+	.tarjeta-log .signo {
+		margin-left: auto;
+		color: #0068ce;
+		font-weight: 700;
+		font-size: 0.95rem;
+	}
+
 	.badge-tiempo {
 		background-color: white;
 		color: #0068ce;
@@ -600,6 +700,41 @@
 		cursor: not-allowed;
 	}
 
+	.filtro-calif {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.filtro-calif > label {
+		font-size: 0.82rem;
+		font-weight: 600;
+		color: #475569;
+		margin: 8px 0 0;
+	}
+
+	.radio-grid {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 16px;
+	}
+
+	.radio-opcion {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: #334155;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.radio-opcion input[type='radio'] {
+		accent-color: #0068ce;
+		margin: 0;
+	}
+
 	@media (max-width: 768px) {
 		.contenido-sala {
 			grid-template-columns: 1fr;
@@ -628,6 +763,5 @@
 		.embed-bloqueado {
 			padding: 16px;
 		}
-
 	}
 </style>

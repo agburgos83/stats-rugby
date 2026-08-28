@@ -66,7 +66,7 @@
 		parsed = [];
 		error = '';
 	}
-	
+
 	function simularPlantel(): void {
 		const fileUrl = '/plantilla-jugadores.csv';
 		parsed = [];
@@ -117,8 +117,8 @@
 					if (file) handleFile(file);
 				}}
 			/>
-			<span class="texto-secundario">Hacé clic o arrastrá un archivo CSV</span>
-			<span class="texto-ayuda">Columnas: nombre, apellido, posición, categoría (forward/back)</span
+			<span class="texto-secundario">Adjuntá un archivo CSV que tenga estas cuatro columnas:</span>
+			<span class="texto-ayuda">Nombre, Apellido, Posición y Categoría ("forward" o "back")</span
 			>
 		</label>
 
@@ -184,6 +184,25 @@
 	@media (max-width: 768px) {
 		.pantalla-carga {
 			grid-template-columns: 1fr;
+			padding: 20px 16px;
+			gap: 16px;
+		}
+		.tarjeta-opcion {
+			padding: 20px 16px;
+		}
+		.zona-drop {
+			padding: 24px 16px;
+		}
+		.contenedor-acciones {
+			flex-direction: column;
+			align-items: stretch;
+		}
+		.btn-primary {
+			margin: 0;
+			width: 100%;
+		}
+		.btn-secondary {
+			width: 100%;
 		}
 	}
 

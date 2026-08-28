@@ -10,8 +10,18 @@ El analista comparte una "sala de clips" con su equipo. El veedor abre una URL y
 - **Sprint 2 — Supabase**: ✅ funcional. Cliente en `$lib/supabase.ts`, `/api/sala` (POST/GET), RLS, página `/sala/[token]` con `VistaSala.svelte`.
 - **Sprint 3 — VistaAcciones**: ✅ funcional. Video embebido, acciones cliqueables (seek), botón "Compartir sala" con selector de skills y topes `LIMITES_FREE` por grupo.
 - **Sprint 4 — Auth y planes**: ⏳ no empezado.
+- ✅ **Modo Full (plan `'full'`)**: sala anónima (sin auth) **sin ningún tope de skills** (`limites=null`) y sin expiración. Está conmutado por la env var `PUBLIC_MODO_FULL` (`true` = full), que va inlined en build por SvelteKit (`$env/static/public`).
 - ✅ **TTL**: las salas free expiran a las 72h (`src/routes/api/sala/+server.ts:13`).
 - **Overlay de felicitaciones**: descartado por decisión. La sala vence a las 72h y el modal de VistaAcciones lo indica; sin countdown.
+
+### Dos deploys con la misma base
+
+| Netlify project   | `PUBLIC_MODO_FULL` | Plan grabado en `salas`        |
+| ----------------- | ------------------ | ------------------------------ |
+| `stats-rugby`     | `false`            | `free` (topes por grupo, 72h)  |
+| `stats-rugby-brc` | `true`             | `full` (sin límites ni TTL)    |
+
+Ambos comparten el mismo código, el mismo Supabase y el mismo cliente (`$lib/supabase.ts`). La única diferencia es el valor de `PUBLIC_MODO_FULL` en build. Los modos `partido` y `temporada` están previstos para Sprint 4 (auth) pero aún no se implementan.
 
 ---
 
@@ -68,7 +78,7 @@ El analista comparte una "sala de clips" con su equipo. El veedor abre una URL y
 CREATE TABLE salas (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_by        UUID REFERENCES auth.users(id),
-  plan              TEXT DEFAULT 'free' CHECK (plan IN ('free','partido','temporada')),
+  plan              TEXT DEFAULT 'free' CHECK (plan IN ('free','partido','temporada','full')),
   partido_json      JSONB NOT NULL,
   acciones_json     JSONB NOT NULL,
   team_acciones_json JSONB NOT NULL,
@@ -106,6 +116,13 @@ CREATE POLICY "Crear sala free" ON salas
     AND created_by IS NULL
   );
 
+-- Modo full (uso personal en stats-rugby-brc): anónimo, sin límites ni TTL
+CREATE POLICY "Crear sala full" ON salas
+  FOR INSERT WITH CHECK (
+    plan = 'full'
+    AND created_by IS NULL
+  );
+
 -- Solo el creador puede editar/borrar
 CREATE POLICY "Editar sala" ON salas
   FOR UPDATE USING (auth.uid() = created_by);
@@ -125,7 +142,18 @@ CREATE POLICY "Borrar sala" ON salas
 | Seek por acción         | Sí                           | Sí                              | Sí                              |
 | Filtros                 | Solo skills visibles         | Todos                           | Todos                           |
 | Filtro por jugador      | No                           | Sí                              | Sí                              |
-| Filtro por calificación | No                           | Sí                              | Sí                              |
+| Filtro por calificación | No                           | Sí                              | Sí                           |
+
+### Modo Full (uso personal)
+
+Fuera del modelo free/partido/temporada, existe el plan `'full'` para uso personal en el proyecto `stats-rugby-brc` (activado por `PUBLIC_MODO_FULL=true`):
+
+| Característica      | Full (uso personal) |
+| ------------------- | ------------------- |
+| Skills visibles     | Todas, sin topes    |
+| Caducidad           | Sin expiración      |
+| Creador             | Anónimo (`created_by NULL`), protegido por política RLS `"Crear sala full"` |
+| `limites`           | `null`              |
 
 ---
 
