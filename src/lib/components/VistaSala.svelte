@@ -216,6 +216,7 @@
 
 	function seekToVideo(seconds: number | null): void {
 		if (seconds === null) return;
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 		try {
 			if (videoEl) {
 				videoEl.currentTime = seconds;
