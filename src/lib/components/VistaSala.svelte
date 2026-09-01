@@ -609,7 +609,7 @@
 		font-weight: 700;
 		color: #334155;
 		margin-top: 0;
-		margin-bottom: 8px;
+		margin-bottom: 2px;
 		padding-bottom: 8px;
 	}
 
