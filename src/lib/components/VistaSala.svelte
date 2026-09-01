@@ -91,7 +91,7 @@
 			const nombre = item.tipo === 'individual' ? item.accion.skill : item.accion.situacion;
 			if (!lista.includes(nombre)) lista.push(nombre);
 		}
-		return lista;
+		return lista.sort((a, b) => a.localeCompare(b, 'es'));
 	});
 
 	// aplicadas (skill + jugador)
@@ -395,7 +395,7 @@
 				</div>
 			{:else if tabActual === 'filtros'}
 				<div class="panel-filtros">
-					<h3>Filtrar por skill</h3>
+					<h3>Filtrar por destreza</h3>
 					<div class="filtro-botones">
 						<button onclick={() => seleccionarTodas()}>Todos</button>
 						<button onclick={() => limpiarFiltros()}>Ninguno</button>
@@ -674,7 +674,7 @@
 	.filtro-botones {
 		display: flex;
 		gap: 8px;
-		margin-top: 24px;
+		margin-top: 4px 0 12px;
 	}
 
 	.filtro-botones button {
@@ -757,7 +757,9 @@
 		}
 
 		.filtro-botones button {
-			padding: 12px 20px;
+			padding: 6px 12px;
+			font-size: 0.8rem;
+			border-width: 1px;
 		}
 
 		.embed-bloqueado {
