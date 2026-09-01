@@ -610,7 +610,7 @@
 		color: #334155;
 		margin-top: 0;
 		margin-bottom: 2px;
-		padding-bottom: 8px;
+		padding-bottom: 2px;
 	}
 
 	.filtro-skill {
