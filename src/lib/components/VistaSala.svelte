@@ -285,7 +285,6 @@
 	<h2>
 		Sala de clips | {partido.local} vs {partido.visitante} ({partido.puntosLocal} - {partido.puntosVisitante})
 	</h2>
-	<p class="subtitulo-torneo">{partido.usuarioUnion} - {partido.division} | {partido.fecha}</p>
 
 	<div class="contenido-sala">
 		<!-- IZQUIERDA: Video -->
@@ -397,6 +396,15 @@
 			{:else if tabActual === 'filtros'}
 				<div class="panel-filtros">
 					<h3>Filtrar por skill</h3>
+					<div class="filtro-botones">
+						<button onclick={() => seleccionarTodas()}>Todos</button>
+						<button onclick={() => limpiarFiltros()}>Ninguno</button>
+						<button
+							class="primario"
+							disabled={skillsPendientes.length === 0}
+							onclick={() => aplicarFiltros()}>Aplicar</button
+						>
+					</div>
 					{#each skillsDisponibles as skill (skill)}
 						<label class="filtro-skill">
 							<input
@@ -407,15 +415,6 @@
 							{skill}
 						</label>
 					{/each}
-					<div class="filtro-botones">
-						<button onclick={() => seleccionarTodas()}>Todos</button>
-						<button onclick={() => limpiarFiltros()}>Ninguno</button>
-						<button
-							class="primario"
-							disabled={skillsPendientes.length === 0}
-							onclick={() => aplicarFiltros()}>Aplicar</button
-						>
-					</div>
 				</div>
 			{/if}
 		</aside>
