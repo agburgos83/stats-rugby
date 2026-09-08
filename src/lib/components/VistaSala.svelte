@@ -139,7 +139,7 @@
 	);
 
 	$effect(() => {
-		urlEmbed = cocinarEnlaceVideo(partido.urlVideo, { controls: false, mute: true });
+		urlEmbed = cocinarEnlaceVideo(partido.urlVideo, { controls: false, mute: true, autoplay: true });
 	});
 
 	$effect(() => {
@@ -214,34 +214,58 @@
 
 	// 1. FUNCIONES DE ACCIONES Y VIDEO
 
+	// function seekToVideo(seconds: number | null): void {
+	// 	if (seconds === null) return;
+	// 	window.scrollTo({ top: 0, behavior: 'smooth' });
+	// 	try {
+	// 		if (videoEl) {
+	// 			videoEl.currentTime = seconds;
+	// 			videoEl.play();
+	// 		} else if (
+	// 			partido.urlVideo?.includes('youtube.com') ||
+	// 			partido.urlVideo?.includes('youtu.be')
+	// 		) {
+	// 			const iframe = document.querySelector(
+	// 				'iframe[src*="youtube.com/embed"]'
+	// 			) as HTMLIFrameElement | null;
+	// 			if (iframe?.contentWindow) {
+	// 				iframe.contentWindow.postMessage(
+	// 					JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }),
+	// 					'*'
+	// 				);
+	// 				iframe.contentWindow.postMessage(
+	// 					JSON.stringify({ event: 'command', func: 'playVideo' }),
+	// 					'*'
+	// 				);
+	// 			}
+	// 		}
+	// 	} catch {
+	// 		/* player no listo */
+	// 	}
+	// }
+
 	function seekToVideo(seconds: number | null): void {
 		if (seconds === null) return;
 		window.scrollTo({ top: 0, behavior: 'smooth' });
-		try {
+		if (videoEl || !(partido.urlVideo?.includes('youtube.com') || partido.urlVideo?.includes('youtu.be'))) {
+			// videos nativos (Veo) quedan como están
 			if (videoEl) {
 				videoEl.currentTime = seconds;
 				videoEl.play();
-			} else if (
-				partido.urlVideo?.includes('youtube.com') ||
-				partido.urlVideo?.includes('youtu.be')
-			) {
-				const iframe = document.querySelector(
-					'iframe[src*="youtube.com/embed"]'
-				) as HTMLIFrameElement | null;
-				if (iframe?.contentWindow) {
-					iframe.contentWindow.postMessage(
-						JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }),
-						'*'
-					);
-					iframe.contentWindow.postMessage(
-						JSON.stringify({ event: 'command', func: 'playVideo' }),
-						'*'
-					);
-				}
 			}
-		} catch {
-			/* player no listo */
+			return;
 		}
+		const iframe = document.querySelector('iframe[src*="youtube.com/embed"]') as HTMLIFrameElement | null;
+		if (!iframe?.contentWindow) return;
+		const orden = [
+			{ event: 'command', func: 'seekTo', args: [seconds, true] },
+			{ event: 'command', func: 'playVideo' }
+		];
+		orden.forEach((m) => iframe.contentWindow?.postMessage(JSON.stringify(m), '*'));
+		// reintento: si YouTube todavía está cargando el primer play, re-mandar play
+		window.setTimeout(() => {
+			iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'playVideo' }), '*');
+		}, 250);
 	}
 
 	function seleccionarTodas(): void {

@@ -340,6 +340,11 @@ export const EQUIPOS_POR_UNION = {
 	
 } as const;
 
+export const TORNEO_REGIONAL_PAMPEANO = {
+	label: 'Torneo Regional Pampeano',
+	uniones: ['URS', 'UROBA', 'URMDP'] as const
+} as const;
+
 export type EquipoInfo = (typeof EQUIPOS_POR_UNION)[UnionClave][number];
 
 // 1. Creamos los tipos específicos de cada grupo (opcional, pero útil)

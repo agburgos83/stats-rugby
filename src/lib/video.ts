@@ -10,7 +10,7 @@ export function extraerYouTubeId(enlace: string): string | null {
 
 export function cocinarEnlaceVideo(
 	enlace: string,
-	opciones?: { controls?: boolean; mute?: boolean  }
+	opciones?: { controls?: boolean; mute?: boolean; autoplay?: boolean }
 ): string | null {
 	if (!enlace) return '';
 
@@ -18,6 +18,7 @@ export function cocinarEnlaceVideo(
 		const codigoFinal = extraerYouTubeId(enlace);
 		if (!codigoFinal) return enlace;
 		const params = new URLSearchParams({
+			autoplay: opciones?.autoplay ? '1' : '0',
 			enablejsapi: '1',
 			origin: window.location.origin,
 			controls: opciones?.controls === false ? '0' : '1',
@@ -27,7 +28,7 @@ export function cocinarEnlaceVideo(
 			showinfo: '0',
 			iv_load_policy: '3',
 			playsinline: '1',
-			fs: '0'        
+			fs: '0'
 		});
 		return `https://www.youtube.com/embed/${codigoFinal}?${params}`;
 	}

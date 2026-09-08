@@ -1,7 +1,16 @@
 <script lang="ts">
-	import { type PropsCargaPartido, EQUIPOS_POR_UNION } from '$lib/types';
+	import {
+		type PropsCargaPartido,
+		EQUIPOS_POR_UNION,
+		TORNEO_REGIONAL_PAMPEANO,
+		type UnionClave
+	} from '$lib/types';
+
+	type TorneoValor = UnionClave | 'REGIONAL_PAMPEANO';
 
 	let { partido = $bindable(), cambiarVista }: PropsCargaPartido = $props();
+
+	let torneo = $state<TorneoValor>(partido.usuarioUnion);
 
 	function esUrlValida(texto: string): boolean {
 		if (!texto) return false;
@@ -24,7 +33,8 @@
 			partido.division.trim() !== '' &&
 			partido.fecha.trim() !== '' &&
 			partido.urlVideo.trim() !== '' &&
-			partido.local !== partido.visitante
+			partido.local !== partido.visitante &&
+			(partido.local === partido.usuarioClub || partido.visitante === partido.usuarioClub)
 	);
 
 	let botonHabilitado = $derived(esUrlValida(partido.urlVideo) && formValido);
@@ -32,6 +42,18 @@
 	function esPuntajeValido(n: number | null): boolean {
 		if (n === null) return false;
 		return n !== 1 && n !== 2 && n !== 4;
+	}
+
+	function clubesDisponibles(): string[] {
+		let labels: string[];
+		if (torneo === 'REGIONAL_PAMPEANO') {
+			labels = TORNEO_REGIONAL_PAMPEANO.uniones.flatMap((u) =>
+				EQUIPOS_POR_UNION[u].map((e) => e.label)
+			);
+		} else {
+			labels = EQUIPOS_POR_UNION[torneo].map((e) => e.label);
+		}
+		return [...new Set(labels)];
 	}
 </script>
 
@@ -42,12 +64,12 @@
 		<!-- Fila 1: Torneo y División paralelos -->
 		<div class="fila-formulario">
 			<div class="campo-formulario flex-1">
-				<label for="union-select">Unión / Torneo</label>
-				<select id="union-select" bind:value={partido.usuarioUnion} class="input-control">
-					<option value="URBA">URBA (Buenos Aires)</option>
-					<option value="URS">URS (Sur)</option>
-					<option value="UROBA">UROBA (Oeste)</option>
-					<option value="URMDP">URMDP (Mar del Plata)</option>
+				<label for="union-select">Torneo</label>
+				<select id="union-select" bind:value={torneo} class="input-control">
+					<option value={partido.usuarioUnion}>{partido.usuarioUnion}</option>
+					{#if TORNEO_REGIONAL_PAMPEANO.uniones.some((u) => u === partido.usuarioUnion)}
+						<option value="REGIONAL_PAMPEANO">Torneo Regional Pampeano</option>
+					{/if}
 				</select>
 			</div>
 
@@ -74,8 +96,8 @@
 					<div class="campo-formulario flex-1">
 						<label for="equipo-local-select">Equipo Local</label>
 						<select id="equipo-local-select" bind:value={partido.local} class="input-control">
-							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []).filter((e) => e.label !== partido.visitante) as equipo (equipo)}
-								<option value={equipo.label}>{equipo.label}</option>
+							{#each clubesDisponibles().filter((e) => e !== partido.visitante) as equipo (equipo)}
+								<option value={equipo}>{equipo}</option>
 							{/each}
 						</select>
 					</div>
@@ -87,11 +109,21 @@
 							bind:value={partido.visitante}
 							class="input-control"
 						>
-							{#each (partido.usuarioUnion ? EQUIPOS_POR_UNION[partido.usuarioUnion] : []).filter((e) => e.label !== partido.local) as equipo (equipo)}
-								<option value={equipo.label}>{equipo.label}</option>
+							{#each clubesDisponibles().filter((e) => e !== partido.local) as equipo (equipo)}
+								<option value={equipo}>{equipo}</option>
 							{/each}
 						</select>
 					</div>
+				</div>
+
+				<div>
+					{#if partido.local !== '' && partido.visitante !== ''}
+						{#if partido.local !== partido.usuarioClub && partido.visitante !== partido.usuarioClub}
+							<span class="error-texto"
+								>Alguno de los dos equipos debe ser {partido.usuarioClub}</span
+							>
+						{/if}
+					{/if}
 				</div>
 			</div>
 		</div>
