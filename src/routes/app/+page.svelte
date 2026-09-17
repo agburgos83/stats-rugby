@@ -73,6 +73,7 @@
 		const esNuevo = $page.url.searchParams.has('nuevo');
 		if (esNuevo) {
 			clearStorage();
+			history.replaceState(null, '', window.location.pathname);
 		} else {
 			const saved = loadFromStorage();
 			if (saved.usuarioUnion) usuarioUnion = saved.usuarioUnion as UnionClave;
