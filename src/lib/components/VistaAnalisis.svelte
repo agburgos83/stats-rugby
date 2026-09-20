@@ -15,7 +15,12 @@
 
 	import '$lib/video-types.d.ts';
 
-	import { cocinarEnlaceVideo, extraerYouTubeId, chequearEmbedYouTube, obtenerVideoVeo } from '$lib/video';
+	import {
+		cocinarEnlaceVideo,
+		extraerYouTubeId,
+		chequearEmbedYouTube,
+		obtenerVideoVeo
+	} from '$lib/video';
 	import { logError } from '$lib/debug';
 
 	// importadas desde el orquestador
@@ -44,6 +49,9 @@
 
 	let videoEl = $state<HTMLVideoElement | null>(null);
 	let cachedYouTubeTime = $state(0);
+
+	let containerRef = $state<HTMLDivElement | null>(null);
+	let enFoco = $state(false);
 
 	$effect(() => {
 		const url = partido.urlVideo;
@@ -101,6 +109,30 @@
 			clearInterval(interval);
 			clearTimeout(timeout);
 		};
+	});
+
+	function toggleFullScreen(): void {
+		const el = containerRef;
+		if (!el) return;
+		try {
+			const div = el as HTMLDivElement & { webkitRequestFullscreen?: () => void };
+			const doc = document as Document & { webkitExitFullscreen?: () => void };
+			if (!document.fullscreenElement) {
+				(div.requestFullscreen ?? div.webkitRequestFullscreen)?.call(el);
+			} else {
+				(doc.exitFullscreen ?? doc.webkitExitFullscreen)?.call(document);
+			}
+		} catch {
+			/* fullscreen no disponible — silencioso */
+		}
+	}
+
+	$effect(() => {
+		function actualizar() {
+			enFoco = !!document.fullscreenElement;
+		}
+		document.addEventListener('fullscreenchange', actualizar);
+		return () => document.removeEventListener('fullscreenchange', actualizar);
 	});
 
 	// 1. FUNCIONES DE ACCIONES Y VIDEO
@@ -260,31 +292,9 @@
 			activo = false;
 		};
 	});
-
-	$effect(() => {
-		const url = partido.urlVideo;
-		if (!url) {
-			embedPermitido = null;
-			return;
-		}
-		const videoId = extraerYouTubeId(url);
-		if (!videoId) {
-			embedPermitido = true;
-			return;
-		}
-		embedPermitido = null;
-		let activo = true;
-		chequearEmbedYouTube(videoId).then((permitido) => {
-			if (activo) embedPermitido = permitido;
-		});
-		return () => {
-			activo = false;
-		};
-	});
-
 </script>
 
-<div class="pantalla-analisis">
+<div class="pantalla-analisis" bind:this={containerRef}>
 	<!-- PANEL IZQUIERDO: REPRODUCTOR DE VIDEO -->
 	<div class="bloque-paneles-izquierda">
 		<div class="panel-video">
@@ -316,6 +326,12 @@
 				<div class="veo-loading">Cargando video de Veo…</div>
 			{/if}
 		</div>
+
+		<div class="video-toolbar">
+			<button class="btn-foco" onclick={toggleFullScreen}>
+				⛶ {enFoco ? 'Salir' : 'Ampliar'}
+			</button>
+		</div>
 	</div>
 
 	<!-- PANEL DERECHO: INTERACCIÓN Y BOTONERAS -->
@@ -342,52 +358,11 @@
 
 			<div class="seccion-bloque">
 				<div class="grilla-skills">
-					<h3>MANEJO DE PELOTA</h3>
-					<div class="grilla-tiras">
-						{#each BALL_SKILLS as s (s)}
-							<div class="tarjeta-skill">
-								<span class="titulo-skill">{s}</span>
-								<button
-									disabled={jugadoresElegidos.length === 0}
-									onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
-									class="btn-calif neg">-</button
-								>
-								<button
-									disabled={jugadoresElegidos.length === 0}
-									onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
-									class="btn-calif pos">+</button
-								>
-							</div>
-						{/each}
-					</div>
-
-					<h3>JUEGO EN EL CONTACTO</h3>
-					<div class="grilla-tiras">
-						{#each CONTACT_SKILLS as s (s)}
-							<div class="tarjeta-skill">
-								{#if s === 'Tackle' || s === 'Duelo'}
-									<span class="titulo-skill">{s}</span>
-									<button
-										disabled={jugadoresElegidos.length === 0}
-										onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
-										class="btn-calif neg">-</button
-									>
-									<button
-										disabled={jugadoresElegidos.length === 0}
-										onclick={(e) => registrarAccionDirecta(s, 'Neutro', e.shiftKey)}
-										class="btn-calif neu">=</button
-									>
-									<button
-										disabled={jugadoresElegidos.length === 0}
-										onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
-										class="btn-calif pos">+</button
-									>
-									<button
-										disabled={jugadoresElegidos.length === 0}
-										onclick={(e) => registrarAccionDirecta(s, 'Dominante', e.shiftKey)}
-										class="btn-calif dom">++</button
-									>
-								{:else}
+					<section class="categoria categoria-pelota">
+						<h3>MANEJO DE PELOTA</h3>
+						<div class="grilla-tiras">
+							{#each BALL_SKILLS as s (s)}
+								<div class="tarjeta-skill">
 									<span class="titulo-skill">{s}</span>
 									<button
 										disabled={jugadoresElegidos.length === 0}
@@ -399,45 +374,94 @@
 										onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
 										class="btn-calif pos">+</button
 									>
-								{/if}
-							</div>
-						{/each}
-					</div>
+								</div>
+							{/each}
+						</div>
+					</section>
 
-					<h3>JUEGO CON EL PIE</h3>
-					<div class="grilla-tiras">
-						{#each FOOT_SKILLS as s (s)}
-							<div class="tarjeta-skill">
-								<span class="titulo-skill">{s}</span>
-								<button
-									disabled={jugadoresElegidos.length === 0}
-									onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
-									class="btn-calif neg">-</button
-								>
-								<button
-									disabled={jugadoresElegidos.length === 0}
-									onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
-									class="btn-calif pos">+</button
-								>
-							</div>
-						{/each}
-					</div>
+					<section class="categoria categoria-contacto">
+						<h3>JUEGO EN EL CONTACTO</h3>
+						<div class="grilla-tiras">
+							{#each CONTACT_SKILLS as s (s)}
+								<div class="tarjeta-skill">
+									{#if s === 'Tackle' || s === 'Duelo'}
+										<span class="titulo-skill">{s}</span>
+										<button
+											disabled={jugadoresElegidos.length === 0}
+											onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
+											class="btn-calif neg">-</button
+										>
+										<button
+											disabled={jugadoresElegidos.length === 0}
+											onclick={(e) => registrarAccionDirecta(s, 'Neutro', e.shiftKey)}
+											class="btn-calif neu">=</button
+										>
+										<button
+											disabled={jugadoresElegidos.length === 0}
+											onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
+											class="btn-calif pos">+</button
+										>
+										<button
+											disabled={jugadoresElegidos.length === 0}
+											onclick={(e) => registrarAccionDirecta(s, 'Dominante', e.shiftKey)}
+											class="btn-calif dom">++</button
+										>
+									{:else}
+										<span class="titulo-skill">{s}</span>
+										<button
+											disabled={jugadoresElegidos.length === 0}
+											onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
+											class="btn-calif neg">-</button
+										>
+										<button
+											disabled={jugadoresElegidos.length === 0}
+											onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
+											class="btn-calif pos">+</button
+										>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					</section>
 
-					<h3>INFRACCIONES</h3>
-					<div class="grilla-tiras">
-						{#each INFRACCION_SKILLS as i (i)}
-							<div class="tarjeta-skill">
-								<span class="titulo-skill">{i}</span>
-								<button
-									disabled={jugadoresElegidos.length === 0}
-									onclick={(e) => registrarAccionDirecta(i, 'Positivo', e.shiftKey)}
-									class="btn-calif pos">+</button
-								>
-							</div>
-						{/each}
-					</div>
+					<section class="categoria categoria-pie">
+						<h3>JUEGO CON EL PIE</h3>
+						<div class="grilla-tiras">
+							{#each FOOT_SKILLS as s (s)}
+								<div class="tarjeta-skill">
+									<span class="titulo-skill">{s}</span>
+									<button
+										disabled={jugadoresElegidos.length === 0}
+										onclick={(e) => registrarAccionDirecta(s, 'Negativo', e.shiftKey)}
+										class="btn-calif neg">-</button
+									>
+									<button
+										disabled={jugadoresElegidos.length === 0}
+										onclick={(e) => registrarAccionDirecta(s, 'Positivo', e.shiftKey)}
+										class="btn-calif pos">+</button
+									>
+								</div>
+							{/each}
+						</div>
+					</section>
 
-					<div class="barra-herramientas">
+					<section class="categoria categoria-infracciones">
+						<h3>INFRACCIONES</h3>
+						<div class="grilla-tiras">
+							{#each INFRACCION_SKILLS as i (i)}
+								<div class="tarjeta-skill">
+									<span class="titulo-skill">{i}</span>
+									<button
+										disabled={jugadoresElegidos.length === 0}
+										onclick={(e) => registrarAccionDirecta(i, 'Positivo', e.shiftKey)}
+										class="btn-calif pos">+</button
+									>
+								</div>
+							{/each}
+						</div>
+					</section>
+
+					<div class="barra-herramientas barra-individual">
 						<span class="contador-texto"
 							>Total acciones individuales: <strong>{totalAccionesIndividuales}</strong></span
 						>
@@ -467,136 +491,138 @@
 		<!-- 2. ACCIONES GRUPALES -->
 		<div class="panel-interaccion">
 			<div class="seccion-bloque">
-				<h3>SITUACIONES DE JUEGO</h3>
+				<section class="categoria categoria-situaciones">
+					<h3>SITUACIONES DE JUEGO</h3>
 
-				<!-- Contenedor vertical que apila las 3 líneas -->
-				<div class="contenedor-lineas-grupales">
-					<div class="linea-grupal">
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Line propio</span>
-							<button
-								onclick={() => (
-									registrarAccionEquipo('Line propio', 'Negativo'),
-									(puedeDeshacerGrupal = true)
-								)}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Line propio-Negativo'}>-</button
-							>
-							<button
-								onclick={() => (
-									registrarAccionEquipo('Line propio', 'Positivo'),
-									(puedeDeshacerGrupal = true)
-								)}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Line propio-Positivo'}>+</button
-							>
-						</div>
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Scrum propio</span>
-							<button
-								onclick={() => (
-									registrarAccionEquipo('Scrum propio', 'Negativo'),
-									(puedeDeshacerGrupal = true)
-								)}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Scrum propio-Negativo'}>-</button
-							>
-							<button
-								onclick={() => (
-									registrarAccionEquipo('Scrum propio', 'Positivo'),
-									(puedeDeshacerGrupal = true)
-								)}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Scrum propio-Positivo'}>+</button
-							>
-						</div>
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Salida recibida</span>
-							<button
-								onclick={() => registrarAccionEquipo('Salida recibida', 'Negativo')}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Salida recibida-Negativo'}>-</button
-							>
-							<button
-								onclick={() => registrarAccionEquipo('Salida recibida', 'Positivo')}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Salida recibida-Positivo'}>+</button
-							>
+					<!-- Contenedor vertical que apila las 3 líneas -->
+					<div class="contenedor-lineas-grupales">
+						<div class="linea-grupal">
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Line propio</span>
+								<button
+									onclick={() => (
+										registrarAccionEquipo('Line propio', 'Negativo'),
+										(puedeDeshacerGrupal = true)
+									)}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Line propio-Negativo'}>-</button
+								>
+								<button
+									onclick={() => (
+										registrarAccionEquipo('Line propio', 'Positivo'),
+										(puedeDeshacerGrupal = true)
+									)}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Line propio-Positivo'}>+</button
+								>
+							</div>
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Scrum propio</span>
+								<button
+									onclick={() => (
+										registrarAccionEquipo('Scrum propio', 'Negativo'),
+										(puedeDeshacerGrupal = true)
+									)}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Scrum propio-Negativo'}>-</button
+								>
+								<button
+									onclick={() => (
+										registrarAccionEquipo('Scrum propio', 'Positivo'),
+										(puedeDeshacerGrupal = true)
+									)}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Scrum propio-Positivo'}>+</button
+								>
+							</div>
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Salida recibida</span>
+								<button
+									onclick={() => registrarAccionEquipo('Salida recibida', 'Negativo')}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Salida recibida-Negativo'}>-</button
+								>
+								<button
+									onclick={() => registrarAccionEquipo('Salida recibida', 'Positivo')}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Salida recibida-Positivo'}>+</button
+								>
+							</div>
+
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Efectividad 22m At.</span>
+								<button
+									onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Negativo')}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Negativo'}>-</button
+								>
+								<button
+									onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Positivo')}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Positivo'}>+</button
+								>
+							</div>
 						</div>
 
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Efectividad 22m At.</span>
-							<button
-								onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Negativo')}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Negativo'}>-</button
-							>
-							<button
-								onclick={() => registrarAccionEquipo('Efect. AT. 22m', 'Positivo')}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Efect. AT. 22m-Positivo'}>+</button
-							>
+						<div class="linea-grupal">
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Line rival</span>
+								<button
+									onclick={() => registrarAccionEquipo('Line rival', 'Negativo')}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Line rival-Negativo'}>-</button
+								>
+								<button
+									onclick={() => registrarAccionEquipo('Line rival', 'Positivo')}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Line rival-Positivo'}>+</button
+								>
+							</div>
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Scrum rival</span>
+								<button
+									onclick={() => registrarAccionEquipo('Scrum rival', 'Negativo')}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Scrum rival-Negativo'}>-</button
+								>
+								<button
+									onclick={() => registrarAccionEquipo('Scrum rival', 'Positivo')}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Scrum rival-Positivo'}>+</button
+								>
+							</div>
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Salida cargada</span>
+								<button
+									onclick={() => registrarAccionEquipo('Salida cargada', 'Negativo')}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Salida cargada-Negativo'}>-</button
+								>
+								<button
+									onclick={() => registrarAccionEquipo('Salida cargada', 'Positivo')}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Salida cargada-Positivo'}>+</button
+								>
+							</div>
+
+							<div class="tarjeta-situacion">
+								<span class="titulo-situacion">Efectividad 22m Def.</span>
+								<button
+									onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Negativo')}
+									class="btn-calif neg"
+									class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Negativo'}>-</button
+								>
+								<button
+									onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Positivo')}
+									class="btn-calif pos"
+									class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Positivo'}>+</button
+								>
+							</div>
 						</div>
 					</div>
+				</section>
 
-					<div class="linea-grupal">
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Line rival</span>
-							<button
-								onclick={() => registrarAccionEquipo('Line rival', 'Negativo')}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Line rival-Negativo'}>-</button
-							>
-							<button
-								onclick={() => registrarAccionEquipo('Line rival', 'Positivo')}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Line rival-Positivo'}>+</button
-							>
-						</div>
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Scrum rival</span>
-							<button
-								onclick={() => registrarAccionEquipo('Scrum rival', 'Negativo')}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Scrum rival-Negativo'}>-</button
-							>
-							<button
-								onclick={() => registrarAccionEquipo('Scrum rival', 'Positivo')}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Scrum rival-Positivo'}>+</button
-							>
-						</div>
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Salida cargada</span>
-							<button
-								onclick={() => registrarAccionEquipo('Salida cargada', 'Negativo')}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Salida cargada-Negativo'}>-</button
-							>
-							<button
-								onclick={() => registrarAccionEquipo('Salida cargada', 'Positivo')}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Salida cargada-Positivo'}>+</button
-							>
-						</div>
-
-						<div class="tarjeta-situacion">
-							<span class="titulo-situacion">Efectividad 22m Def.</span>
-							<button
-								onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Negativo')}
-								class="btn-calif neg"
-								class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Negativo'}>-</button
-							>
-							<button
-								onclick={() => registrarAccionEquipo('Efect. DEF. 22m', 'Positivo')}
-								class="btn-calif pos"
-								class:flash={ultimaAccionClickeada === 'Efect. DEF. 22m-Positivo'}>+</button
-							>
-						</div>
-					</div>
-				</div>
-
-				<div class="barra-herramientas">
+				<div class="barra-herramientas barra-grupal">
 					<span class="contador-texto"
 						>Total acciones grupales: <strong>{totalAccionesGrupales}</strong></span
 					>
@@ -875,6 +901,14 @@
 		margin-bottom: 0;
 	}
 
+	/* Separación entre categorías apiladas en vista normal */
+	.categoria {
+		margin-bottom: 16px;
+	}
+	.categoria:last-child {
+		margin-bottom: 0;
+	}
+
 	.contenedor-lineas-grupales {
 		display: flex;
 		flex-direction: column;
@@ -976,5 +1010,175 @@
 		font-weight: bold;
 		font-size: 0.9rem;
 		flex-shrink: 0;
+	}
+
+	/* --- Botón fullscreen (vista normal + fullscreen) --- */
+	.video-toolbar {
+		margin-top: auto;
+	}
+
+	.btn-foco {
+		/* width: 100%; */
+		padding: 12px;
+		background-color: #0068ce;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-weight: bold;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: background-color 0.1s ease;
+	}
+
+	.btn-foco:hover {
+		background-color: #0050a0;
+	}
+
+	/* --- FULLSCREEN: video llena la pantalla, la botonera se distribuye horizontal --- */
+	.pantalla-analisis:fullscreen {
+		display: block;
+		position: relative;
+		background: #000;
+		overflow: hidden;
+	}
+
+	/* El video ocupa TODO el contenedor (por detrás) */
+	.pantalla-analisis:fullscreen .bloque-paneles-izquierda {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.pantalla-analisis:fullscreen .panel-video {
+		width: 100%;
+		height: 100%;
+	}
+
+	.pantalla-analisis:fullscreen .panel-video iframe,
+	.pantalla-analisis:fullscreen .panel-video video {
+		width: 100%;
+		height: 100%;
+		aspect-ratio: unset;
+		border: none;
+		border-radius: 0;
+	}
+
+	.pantalla-analisis:fullscreen .veo-loading {
+		width: 100%;
+		height: 100%;
+		aspect-ratio: unset;
+	}
+
+	/* La botonera ocupa todo el ancho en un grid de 5 columnas × 3 filas */
+	.pantalla-analisis:fullscreen .bloque-paneles-derecha {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		/* inset: 0; */
+		top: auto;
+		z-index: 2;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(
+				0,
+				1.2fr
+			);
+		grid-template-rows: auto auto;
+		column-gap: 12px;
+		row-gap: 12px;
+		align-content: end;
+		padding: 12px;
+		overflow-y: auto;
+	}
+
+	/* Contenedores intermedios colapsan: el grid "ve" chips y categorías como items */
+	.pantalla-analisis:fullscreen .panel-interaccion,
+	.pantalla-analisis:fullscreen .seccion-bloque,
+	.pantalla-analisis:fullscreen .grilla-skills {
+		display: contents;
+	}
+
+	/* Oculta el h3 "JUGADORES" (es hijo directo de su seccion-bloque) */
+	.pantalla-analisis:fullscreen .seccion-bloque > h3 {
+		display: none;
+	}
+
+	/* Fila 1: cinta de jugadores a todo el ancho */
+	.pantalla-analisis:fullscreen .grupo-chips {
+		grid-row: 1;
+		grid-column: 1 / -1;
+		justify-content: center;
+	}
+
+	/* Fila 2: una columna por categoría, con fondo sutil */
+	.pantalla-analisis:fullscreen .categoria {
+		grid-row: 2;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 10px;
+		background: rgba(255, 255, 255, 0.25);
+		border-radius: 8px;
+		border: 1px solid rgba(203, 213, 225, 0.8);
+		margin: 0;
+	}
+
+	.pantalla-analisis:fullscreen .categoria h3 {
+		margin: 0; /* el gap de 8px del flex ya separa del contenido */
+		background: #fff; /* ya no se pierde con el video */
+		padding: 6px 8px;
+		/* border-radius: 6px; */
+	}
+
+	.pantalla-analisis:fullscreen .categoria-pelota {
+		grid-column: 1;
+	}
+	.pantalla-analisis:fullscreen .categoria-contacto {
+		grid-column: 2;
+	}
+	.pantalla-analisis:fullscreen .categoria-pie {
+		grid-column: 3;
+	}
+	.pantalla-analisis:fullscreen .categoria-infracciones {
+		grid-column: 4;
+	}
+	.pantalla-analisis:fullscreen .categoria-situaciones {
+		grid-column: 5;
+	}
+
+	/* Skills apiladas (una por fila) dentro de cada columna */
+	.pantalla-analisis:fullscreen .grilla-tiras,
+	.pantalla-analisis:fullscreen .linea-grupal {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	/* En fullscreen los nombres no se cortan: se envuelven a 2ª línea */
+	.pantalla-analisis:fullscreen .titulo-skill,
+	.pantalla-analisis:fullscreen .titulo-situacion {
+		white-space: normal;
+		overflow-wrap: anywhere;
+		line-height: 1.15;
+		overflow: visible;
+		min-width: 0;
+	}
+
+	/* Los botones no se comprimen para hacerle espacio al título */
+	.pantalla-analisis:fullscreen .btn-calif {
+		flex-shrink: 0;
+	}
+
+	/* Fila 3: contadores/acciones y botón fullscreen ocultos en fullscreen */
+	.pantalla-analisis:fullscreen .barra-individual,
+	.pantalla-analisis:fullscreen .barra-grupal,
+	.pantalla-analisis:fullscreen .video-toolbar {
+		display: none;
+	}
+
+	.pantalla-analisis:fullscreen .categoria .grilla-tiras,
+	.pantalla-analisis:fullscreen .categoria .contenedor-lineas-grupales {
+		margin-bottom: 0;
 	}
 </style>
