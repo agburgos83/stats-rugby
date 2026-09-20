@@ -187,7 +187,7 @@
 {:else if vistaActual === 3}
 	<VistaCargaPartido bind:partido cambiarVista={(v) => cambiarVista(v)} />
 {:else if vistaActual === 4}
-	<VistaAnalisis {equipo} {partido} bind:acciones bind:teamAcciones />
+	<VistaAnalisis {equipo} {partido} modalidad={usuarioModalidad} bind:acciones bind:teamAcciones />
 {:else if vistaActual === 5}
 	<VistaAcciones
 		{equipo}

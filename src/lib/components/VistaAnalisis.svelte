@@ -10,7 +10,8 @@
 		type CalificacionGrupal,
 		type Player,
 		type TeamAccion,
-		type PropsAnalisis
+		type PropsAnalisis,
+		MODALIDADES
 	} from '$lib/types';
 
 	import '$lib/video-types.d.ts';
@@ -28,7 +29,8 @@
 		equipo,
 		partido,
 		acciones = $bindable(),
-		teamAcciones = $bindable()
+		teamAcciones = $bindable(),
+		modalidad
 	}: PropsAnalisis = $props();
 
 	// let jugadorElegido = $state<Player | null>(null);
@@ -43,6 +45,7 @@
 	let embedPermitido = $state<boolean | null>(null);
 
 	const urlEmbed = $derived(cocinarEnlaceVideo(partido.urlVideo));
+	const titulares = $derived(MODALIDADES[modalidad].titulares);
 
 	let veoVideoUrl = $state<string | null>(null);
 	let veoLoading = $state(false);
@@ -343,7 +346,7 @@
 
 				<div class="grupo-chips">
 					{#each equipo as p (p.numero)}
-						{#if p.player !== null}
+						{#if p.player !== null && p.numero <= titulares}
 							<button
 								onclick={(e) => toggleJugador(p.player!, e.ctrlKey)}
 								class:activo={jugadoresElegidos.some((j) => j.id === p.player?.id)}
@@ -353,6 +356,21 @@
 							</button>
 						{/if}
 					{/each}
+
+					{#if enFoco && (modalidad === 'doce' || modalidad === 'quince') && equipo.some((p) => p.player !== null && p.numero > titulares)}
+						<span class="salto-chips" aria-hidden="true"></span>
+						{#each equipo as p (p.numero)}
+							{#if p.player !== null && p.numero > titulares}
+								<button
+									onclick={(e) => toggleJugador(p.player!, e.ctrlKey)}
+									class:activo={jugadoresElegidos.some((j) => j.id === p.player?.id)}
+									class="btn-chip"
+								>
+									{p.numero}. {p.player.apellido}
+								</button>
+							{/if}
+						{/each}
+					{/if}
 				</div>
 			</div>
 
@@ -707,6 +725,14 @@
 		flex-wrap: wrap;
 		gap: 6px;
 	}
+
+	.salto-chips {
+		flex-basis: 100%;
+		width: 0;
+		height: 0;
+		overflow: hidden;
+	}
+
 	.bloque-paneles-derecha {
 		display: flex;
 		flex-direction: column;
@@ -1110,7 +1136,7 @@
 	.pantalla-analisis:fullscreen .grupo-chips {
 		grid-row: 1;
 		grid-column: 1 / -1;
-		justify-content: center;
+		justify-content: flex-start;
 	}
 
 	/* Fila 2: una columna por categoría, con fondo sutil */

@@ -384,6 +384,7 @@ export interface PropsCargaEquipo {
 }
 
 export interface PropsAnalisis {
+	modalidad: ModalidadClave;
 	partido: PartidoContexto;
 	equipo: Puesto[];
 	acciones: Accion[];
