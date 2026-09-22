@@ -39,6 +39,7 @@
 - 3 categorías de tabla: juego en el contacto + infracciones / juego con pelota / juego con el pie
 - **Azul PDF**: `[0, 104, 206]` para headers, `[0, 53, 112]` para texto de calificadores, `[204, 228, 247]` para fondo de celdas
 - Encabezado usa `doc.setFont('helvetica', 'normal')` — sin bold
+- `didDrawPage` pinta pie de aclaraciones en 3 columnas (Duelo / Tackle / Aclaraciones) con `col1X=14, col2X=65, col3X=115`; cada lista de calificadores se dibuja en la X de su propio título (seek fix: antes los items de Duelo y Tackle se cruzaban de columna)
 
 **`radar.ts`** — Página 0 del PDF:
 
@@ -75,7 +76,7 @@
 ### Componentes Svelte
 
 - `Cabecera.svelte` — barra sticky blanca con navegación contextual. En `/app`: título del partido (vistas 4/5) + botones `[← Editar partido] [Terminar análisis →]` / `[← Volver al análisis] [Finalizar]`. Fuera de `/app`: marca "Stats Rugby" + botón "Retomar análisis" con dot rojo parpadeante (si `hayDatos`). Oculta en `/app` desde `+layout.svelte`.
-- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo) con captura de `videoTime`.
+- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo) con captura de `videoTime`. **Fullscreen** (`⛶`): el video llena la pantalla y la botonera flota encima (chips arriba + 5 columnas de skills abajo). Props: `PropsAnalisis & { modalidad: ModalidadClave }`.
 - `VistaCargaEquipo.svelte` — grilla 4 columnas con drag & drop (solo desktop, no touch)
 - `VistaAcciones.svelte` — revisión de acciones logueadas, video embebido con seek (`seekToVideo`), botones "Descargar PDF" y "Compartir sala". Props: `PropsAcciones & { modalidad: ModalidadClave }`.
 - `VistaSala.svelte` — sala de clips para el veedor (`/sala/[token]`): video + filtros por skill + playlist con seek.
@@ -128,6 +129,9 @@
 23. Rooms de clips: botón "Compartir sala" → "Ver sala" tras creación (reabre modal con URL existente)
 24. Fix drag & drop en VistaCargaEquipo: eliminado `$effect` duplicado del hijo y estado local `equipoModalidad`; `equipo` del padre (+page.svelte) es única fuente de verdad; quitado anti-patrón `equipo = [...equipo]` (la mutación profunda sobre el proxy `$state` ya es reactiva). Síntoma previo: primera vez con quince, el drop asignaba pero no pintaba azul y la selección no llegaba al padre
 25. Salas: dedup server-side con `content_hash` (sha256) + endpoint `/api/sala/check`; `PUBLIC_SUPABASE_*` configuradas en Netlify para producción (primer deploy de salas a `main`)
+26. Fullscreen en VistaAnalisis: botón `⛶` (`toggleFullScreen` + `enFoco` con `fullscreenchange`). El video llena la pantalla (`.bloque-paneles-izquierda` absolute inset 0) y la botonera flota sobre él; contenedores intermedios con `display: contents` para que el grid de `.bloque-paneles-derecha` vea chips y categorías como items (5 columnas `1fr 1.2fr 0.8fr 0.8fr 1.2fr`, `bottom: 0` + `align-content: end`). En FS se ocultan las barras de totales y el botón salir (se sale con `Escape`); títulos de columna con fondo blanco, tarjetas translúcidas `rgba(255,255,255,0.25)`, y nombres de skills sin cortar (wrap). El no-FS quedó sin cambios visuales respecto del commit previo
+27. Chips de jugadores: en FS alineados a la izquierda (`flex-start`). Split de líneas usando la frontera `MODALIDADES[modalidad].titulares` (7/10/12/15): titulares en línea 1, suplentes en línea 2 con `<span class="salto-chips">` (`flex-basis: 100%`). El salto solo se emite en fullscreen y para modalidades `doce`/`quince`. Se agregó `modalidad: ModalidadClave` a `PropsAnalisis` y se pasa desde `+page.svelte`
+28. Fix `reporte.ts:` el pie de aclaraciones (Duelo/Tackle) dibujaba los items en la X de la columna vecina — cada lista ahora se pinta bajo su título (`col1X+4` para Duelo, `col2X+4` para Tackle)
 
 ## Plan de Instagram
 

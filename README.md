@@ -1,42 +1,33 @@
-# sv
+# Stats Rugby
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Análisis de partidos de rugby para entrenadores: el analista carga el plantel (CSV o manual), arma el equipo con drag & drop, carga los datos del partido con el link del video, registra acciones jugada por jugada (skills + calificadores) y situaciones de equipo, y descarga un reporte PDF con radares por jugador, tablas por área (contacto / pelota / pie) y donuts de situaciones.
 
-## Creating a project
+Diseñada **desktop-first**: analizar requiere pantalla grande para combinar el video y la botonera.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Stack
 
-```sh
-# create a new project
-npx sv create my-app
-```
+- Svelte 5 (runes: `$state`, `$effect`, `$props`, `$bindable`)
+- TypeScript + Vite
+- jsPDF + jspdf-autotable y D3 (arc, pie, scaleLinear, lineRadial) para el PDF
+- Supabase (PostgreSQL + Auth + API) para salas de clips (compartir análisis con enlaces y tiempo de video)
+- Deploy en Netlify (SPA, con redirect para `/escudos-clubes/*`)
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.15.3 create --template minimal --types ts --add eslint prettier tailwindcss="plugins:typography,forms" --install npm stats-rugby
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Comandos
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+npm run dev                       # servidor local
+npx svelte-check --tsconfig ./tsconfig.json   # typecheck + lint
+npm run build                     # build producción
 ```
 
-## Building
+## Estructura
 
-To create a production version of your app:
+- `src/lib/components/` — vistas del flujo: carga de equipo, carga de partido, análisis (con fullscreen de video + botonera), resumen de acciones y sala de clips para el veedor.
+- `src/lib/pdf/` — generación del reporte PDF (radares, tablas y donuts).
+- `src/lib/types.ts` — tipos centrales (modalidades, posiciones, skills, calificaciones, acciones).
+- `src/routes/api/sala/` — API de salas de clips (Supabase, TTL free 72h).
 
-```sh
-npm run build
-```
+## Documentación
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- `AGENTS.md` — contexto del proyecto para desarrollo (stack, estructura, cambios relevantes).
+- `docs/SALAS_CLIPS.md` — diseño de las salas de clips (flujos, schema SQL, planes).

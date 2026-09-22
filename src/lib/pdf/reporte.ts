@@ -378,17 +378,19 @@ export async function descargarPDF(
 			const col3X = 115;
 
 			// COLUMNA 1: DUELO
+			doc.setFont('helvetica', 'bold');
 			doc.text('Duelo', col1X, currentY);
+			doc.setFont('helvetica', 'normal');
 			currentY += 6;
 
 			const listaDuelo = [
-				'\u2022 Negativo -',
-				'\u2022 Neutro =',
-				'\u2022 Positivo +',
-				'\u2022 Quiebre ++'
+				'Negativo -',
+				'Neutro =',
+				'Positivo +',
+				'Quiebre ++'
 			];
 			listaDuelo.forEach((item) => {
-				doc.text(item, col2X + 4, currentY);
+				doc.text(item, col1X, currentY);
 				currentY += 5;
 			});
 
@@ -396,18 +398,19 @@ export async function descargarPDF(
 			currentY = startY;
 
 			// COLUMNA 2: DUELO
-
+			doc.setFont('helvetica', 'bold');
 			doc.text('Tackle', col2X, currentY);
+			doc.setFont('helvetica', 'normal');
 			currentY += 6;
 
 			const listaTackle = [
-				'\u2022 Errado -',
-				'\u2022 Neutro =',
-				'\u2022 Positivo +',
-				'\u2022 Dominante ++'
+				'Errado -',
+				'Neutro =',
+				'Positivo +',
+				'Dominante ++'
 			];
 			listaTackle.forEach((item) => {
-				doc.text(item, col1X + 4, currentY); // col1X + 4 da espacio al bullet
+				doc.text(item, col2X, currentY); // col1X + 4 da espacio al bullet
 				currentY += 5;
 			});
 
@@ -415,7 +418,9 @@ export async function descargarPDF(
 			currentY = startY;
 
 			// COLUMNA 3: ACLARACIONES
+			doc.setFont('helvetica', 'bold');
 			doc.text('Aclaraciones', col3X, currentY);
+			doc.setFont('helvetica', 'normal');
 			currentY += 6;
 
 			// Ajustamos el ancho máximo de la columna de texto (ej. 80 unidades de jsPDF)
