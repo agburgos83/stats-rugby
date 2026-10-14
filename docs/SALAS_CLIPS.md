@@ -252,31 +252,30 @@ Fuera del modelo free/partido/temporada, existe el plan `'full'` para uso person
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  Equipo Local vs Equipo Visitante               │
-│  15/06/2025 — URBA — Primera                    │
+│  Sala de clips | Local vs Visitante (24 - 17)   │
 ├──────────────────────┬──────────────────────────┤
-│                      │  Filtrar por skill:      │
-│   VIDEO EMBEBIDO     │  ☑ Todas                │
-│                      │  ☐ Tackle               │
-│                      │  ☐ Pase                 │
-│                      │  ☐ Scrum propio         │
-│                      │  ☐ Line propio          │
-├──────────────────────┴──────────────────────────┤
-│  Playlist:                                      │
-│  ⏱ 2:15  García - Tackle: Positivo  (verde)    │
-│  ⏱ 5:30  López - Pase: Negativo     (rojo)     │
-│  ⏱ 8:45  Scrum propio: Positivo     (verde)    │
-│  ...                                            │
-└─────────────────────────────────────────────────┘
+│                      │  Clips del partido       │
+│                      │  [ Eventos ] [ Filtros ] │
+│                      │  Filtrá por jugador ▾    │
+│   VIDEO EMBEBIDO     │  Calificación ○○○○       │
+│                      │  Playlist de acciones    │
+│                      │  ⏱ 2:15  Tackle      +   │
+│                      │  ⏱ 5:30  Pase        -   │
+│                      │  ⏱ 8:45  Scrum propio +  │
+│                      │  ...                     │
+│                      │  [ ⛶ Ampliar ]           │
+└──────────────────────┴──────────────────────────┘
 ```
 
 **Funcionamiento:**
 
-- Video embebido: YouTube/Vimeo/Veo (mismo patrón que VistaAnalisis)
-- Filtros: checkboxes que muestran/ocultan acciones en la playlist
-- Cada acción es un botón que hace seek al video en `videoTime`
-- Colores: positivas/dominantes en verde (`#16a34a`), negativas en rojo (`#dc2626`), neutros en gris
-- Sin filtro por calificación ni por jugador en versión gratuita
+- Video embebido: YouTube/Vimeo/Veo (mismo patrón que VistaAnalisis). En la sala va con `controls:false`, `mute:true`, `autoplay:true` (barra de YouTube oculta; el propio botón de la sala es la única vía de fullscreen).
+- Dos tabs en el panel derecho: **Eventos** (filtros de jugador/calificación + playlist) y **Filtros**. En Filtros hay **dos cajas**: **Acciones individuales** y **Situaciones de juego**, cada una con sus checkboxes ordenados alfabéticamente (`localeCompare 'es'`). Un único juego de botones **Todos / Ninguno / Aplicar** debajo de ambas cajas afecta a las dos; `Aplicar` permite dejar una caja en 0 y salta al tab Eventos.
+- **Clip a clip**: cliquear una acción reproduce **solo ese clip** (duración 3 s `Accion` / 5 s `TeamAccion`) y salta automáticamente al siguiente de `accionesMostradas`; fin de playlist → pausa (sin loop); se saltean las acciones con `videoTime === null`; la tarjeta en reproducción se resalta. El seek se hace con `seekToVideo(videoTime)` (scroll al top; retry de `playVideo` a 250 ms en YouTube, `videoEl` nativo en Veo).
+- **Filtro de jugador**: visible solo cuando **todas** las skills aplicadas son individuales (ninguna situación) y hay al menos una; lista los jugadores con acciones en esas skills.
+- **Filtro de calificación**: visible solo con una skill única y que no sea infracción; labels especiales para Tackle (`Errado`/`Neutro`/`Positivo`/`Dominante`) y Duelo (`Negativo`/`Neutro`/`Positivo`/`Quiebre`). La playlist muestra signos `-` `=` `+` `++`.
+- **Fullscreen**: botón `⛶ Ampliar` en la columna derecha (solo visible en el tab Eventos); el video llena la pantalla y el panel derecho queda flotante con fondo oscuro translúcido y scroll; se sale con `Escape`.
+- **Mobile**: media query ≤768px (grilla 1 columna, playlist sin altura máxima, botones compactos).
 
 ---
 

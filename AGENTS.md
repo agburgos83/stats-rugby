@@ -79,7 +79,7 @@
 - `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo) con captura de `videoTime`. **Fullscreen** (`⛶`): el video llena la pantalla y la botonera flota encima (chips arriba + 5 columnas de skills abajo). Props: `PropsAnalisis & { modalidad: ModalidadClave }`.
 - `VistaCargaEquipo.svelte` — grilla 4 columnas con drag & drop (solo desktop, no touch)
 - `VistaAcciones.svelte` — revisión de acciones logueadas, video embebido con seek (`seekToVideo`), botones "Descargar PDF" y "Compartir sala". Props: `PropsAcciones & { modalidad: ModalidadClave }`.
-- `VistaSala.svelte` — sala de clips para el veedor (`/sala/[token]`): video + filtros por skill + playlist con seek.
+- `VistaSala.svelte` — sala de clips para el veedor (`/sala/[token]`): video embed + playlist **clip a clip** + fullscreen; dos cajas de filtro (**Acciones individuales** / **Situaciones de juego**) con un único Todos/Ninguno/Aplicar, y filtro de jugador visible solo cuando lo aplicado son acciones individuales.
 - `src/routes/api/sala/+server.ts` — POST/GET de salas (Supabase). TTL free 72h.
 - `$lib/planes.ts` — `LIMITES_FREE` (topes por grupo: contacto 2, pelota 2, pie 1, infracción 1, situaciones 2), `SITUACIONES`, `grupoDeSkill`.
 - `$lib/csv.ts` — parser RFC 4180 completo (comillas, comas dentro de comillas, `\r\n`). Usado por `VistaCargaCSV`.
@@ -132,8 +132,15 @@
 26. Fullscreen en VistaAnalisis: botón `⛶` (`toggleFullScreen` + `enFoco` con `fullscreenchange`). El video llena la pantalla (`.bloque-paneles-izquierda` absolute inset 0) y la botonera flota sobre él; contenedores intermedios con `display: contents` para que el grid de `.bloque-paneles-derecha` vea chips y categorías como items (5 columnas `1fr 1.2fr 0.8fr 0.8fr 1.2fr`, `bottom: 0` + `align-content: end`). En FS se ocultan las barras de totales y el botón salir (se sale con `Escape`); títulos de columna con fondo blanco, tarjetas translúcidas `rgba(255,255,255,0.25)`, y nombres de skills sin cortar (wrap). El no-FS quedó sin cambios visuales respecto del commit previo
 27. Chips de jugadores: en FS alineados a la izquierda (`flex-start`). Split de líneas usando la frontera `MODALIDADES[modalidad].titulares` (7/10/12/15): titulares en línea 1, suplentes en línea 2 con `<span class="salto-chips">` (`flex-basis: 100%`). El salto solo se emite en fullscreen y para modalidades `doce`/`quince`. Se agregó `modalidad: ModalidadClave` a `PropsAnalisis` y se pasa desde `+page.svelte`
 28. Fix `reporte.ts:` el pie de aclaraciones (Duelo/Tackle) dibujaba los items en la X de la columna vecina — cada lista ahora se pinta bajo su título (`col1X+4` para Duelo, `col2X+4` para Tackle)
-
-## Plan de Instagram
+29. Nueva skill `Bloqueo` en `BALL_SKILLS` + rename `Recu. div.` → `Recup. div.` (`types.ts`/`mock-data.ts`); logos SVG (`logo-app-blue-400.svg`, `logo-app-white-400.svg`) rediseñados a curvas
+30. **MODO_FULL**: `src/lib/mode.ts` expone `MODO_FULL` desde `PUBLIC_MODO_FULL` (`$env/static/public`). Con `true`, `/api/sala` graba `plan='full'` (sin `limites` ni TTL) y `/api/sala/check` filtra además por `plan` en el dedup. En el modal de VistaAcciones se ocultan la leyenda de topes FREE y la expiración de 72h. Detalle de los dos deploys en `docs/SALAS_CLIPS.md`
+31. **Sala mobile + embed**: media query ≤768px en `VistaSala` (grilla 1 columna, playlist sin altura máxima, botones compactos), home mobile ≤1023px y `VistaCargaCSV` mobile. Embed de la sala con `controls:false`, `mute:true`, `autoplay:true` (`cocinarEnlaceVideo`)
+32. **Filtro de calificación en VistaSala**: se muestra solo con una skill única y que no sea infracción; labels especiales para Tackle (`Errado`/`Neutro`/`Positivo`/`Dominante`) y Duelo (`…`/`Quiebre`); signos `-` `=` `+` `++` en la playlist
+33. **Seek/playlist de la sala**: `seekToVideo` hace `scrollTo(top)` y reintenta `playVideo` a 250ms (YouTube) o usa `videoEl` nativo (Veo); skills del filtro ordenadas alfabéticamente (`localeCompare 'es'`); botones Todos/Ninguno/Aplicar debajo de las dos cajas de filtro; ajustes de márgenes de títulos
+34. **Torneo Regional Pampeano**: `TORNEO_REGIONAL_PAMPEANO` (uniones URS + UROBA + URMDP) en `types.ts`; select de torneo en `VistaCargaPartido` que combina clubes de las uniones y validación con mensaje inline: uno de los dos equipos debe ser `partido.usuarioClub`
+35. **Reproducción clip a clip en la sala**: estado `indiceClip` + `clipTimer` (no reactivo) y helpers `reproducirDesde(i)` / `siguienteClip()` / `detenerCadena()` / `pausarVideo()`; duración 3 s (`Accion`) / 5 s (`TeamAccion`) por `videoTime`; saltea clips con `videoTime === null`; fin de playlist → `detenerCadena()` (pausa, sin loop); clic en otro clip reinicia la cadena desde ese índice; la tarjeta activa se resalta con `class:activa` (`outline` + fondo `#CCE4F7`); un `$effect` sobre `accionesMostradas` corta la cadena al cambiar filtros o al desmontar; pausa vía `postMessage('pauseVideo')` (YouTube) o `videoEl.pause()` (Veo)
+36. **Fullscreen en VistaSala**: mismo patrón que `VistaAnalisis` — `bind:this={containerRef}` en `.pantalla-reporte`, `enFoco`, `toggleFullScreen()` con fallback webkit y listener `fullscreenchange`. En `:fullscreen` el video llena la pantalla (`.panel-video` absolute `inset:0`) y `.panel-derecho` queda flotante sobre el video con fondo oscuro translúcido (`rgba(15,23,42,0.85)` + blur), scroll interno y `z-index` alto (overrides de texto claro). El botón `⛶ {enFoco ? 'Salir' : 'Ampliar'}` vive en la columna derecha y solo se muestra en el tab Eventos; se sale con `Escape` (el embed de YouTube va con `fs:'0'`)
+37. **Filtros de la sala en 2 cajas**: `skillsIndividualesDisponibles` / `situacionesDisponibles` (split por `grupoDeSkill`); un único juego Todos/Ninguno/Aplicar (`seleccionarTodas`/`limpiarFiltros`/`aplicarFiltros`) que afecta ambas cajas y salta al tab Eventos; `aplicarFiltros` permite 0 seleccionadas; `mostrarFiltroJugador` = hay ≥1 skill aplicada y ninguna es situación; `jugadoresDisponibles` sale de las skills individuales aplicadas; el filtro de jugador solo se aplica cuando el select está visible
 
 ### Formato general
 
@@ -206,7 +213,7 @@ Stats Rugby está diseñada para uso en PC de escritorio. Analizar un partido re
 
 ### Medias (UX, bordes, faltantes)
 
-12. **Sin diseño responsive** — 4 componentes con layouts fijos:
+12. **Sin diseño responsive (parcial)** — ya tienen media queries: `VistaSala` (≤768px), home (`/`) (≤1023px) y `VistaCargaCSV` (≤768px). Siguen con layout fijo:
     - `VistaCargaEquipo.svelte:172` — grilla 4 columnas sin media queries
     - `VistaAnalisis.svelte:613` — 2 paneles fijos
     - `VistaAcciones.svelte:79` — flex 2 columnas sin breakpoints
@@ -315,3 +322,5 @@ Ver `docs/SALAS_CLIPS.md` para diseño completo, user flows, schema SQL, y detal
 - El modal de confirmación de Finalizar pasa a ser prop de `VistaAcciones` (`confirmarFinalizar` + `onCancelarFinalizar`/`onConfirmarFinalizar`), moviendo el estado al page.
 
 **Menú global** — ✅ implementado: se reduce a marca "Stats Rugby" + botón "Retomar análisis" (cuando `hayDatos` y no está en `/app`). Los links Inicio/Acerca de/Contacto se mueven al footer (`.footer-links` de `+layout.svelte`).
+
+

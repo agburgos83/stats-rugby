@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		type PartidoContexto,
+		// type PartidoContexto,
 		type Accion,
 		type TeamAccion,
 		type Player,
@@ -18,17 +18,17 @@
 	import { grupoDeSkill } from '$lib/planes';
 	import { logError } from '$lib/debug';
 
-	interface sala {
-		id: string;
-		plan: string;
-		partido_json: PartidoContexto;
-		acciones_json: Accion[];
-		team_acciones_json: TeamAccion[];
-		skills_visibles: string[];
-		limites: Record<string, number>;
-		expires_at: string | null;
-		created_by: string | null;
-	}
+	// interface sala {
+	// 	id: string;
+	// 	plan: string;
+	// 	partido_json: PartidoContexto;
+	// 	acciones_json: Accion[];
+	// 	team_acciones_json: TeamAccion[];
+	// 	skills_visibles: string[];
+	// 	limites: Record<string, number>;
+	// 	expires_at: string | null;
+	// 	created_by: string | null;
+	// }
 
 	let { sala } = $props();
 
@@ -45,6 +45,11 @@
 	let urlEmbed = $state<string | null>(null);
 	let filtrosInicializados = false; // flag no reactivo: inicializa filtros una sola vez
 
+	let indiceClip = $state<number | null>(null);
+	let clipTimer: ReturnType<typeof setTimeout> | null = null;
+	let containerRef = $state<HTMLDivElement | null>(null);
+	let enFoco = $state(false);
+
 	const partido = $derived(sala.partido_json);
 	const acciones = $derived(sala.acciones_json);
 	const teamAcciones = $derived(sala.team_acciones_json);
@@ -52,7 +57,7 @@
 	const skillUnica = $derived(skillsAplicados.length === 1 ? skillsAplicados[0] : null);
 
 	const mostrarFiltroJugador = $derived(
-		skillUnica !== null && grupoDeSkill(skillUnica) !== 'situaciones'
+		skillsAplicados.length > 0 && skillsAplicados.every((s) => grupoDeSkill(s) !== 'situaciones')
 	);
 
 	const mostrarFiltroCalif = $derived(
@@ -63,7 +68,7 @@
 	const jugadoresDisponibles = $derived.by(() => {
 		const jugadores: Player[] = [];
 		for (const a of acciones) {
-			if (a.skill !== skillUnica) continue;
+			if (!skillsAplicados.includes(a.skill)) continue;
 			if (!jugadores.some((j) => j.id === a.player.id)) jugadores.push(a.player);
 		}
 		return jugadores;
@@ -84,15 +89,30 @@
 		return resultado;
 	});
 
-	// skills presentes entre las visibles
-	const skillsDisponibles = $derived.by(() => {
+	// skills individuales presentes entre las visibles (contacto/pelota/pie/infracción)
+	const skillsIndividualesDisponibles = $derived.by(() => {
 		const lista: string[] = [];
 		for (const item of accionesFiltradas) {
 			const nombre = item.tipo === 'individual' ? item.accion.skill : item.accion.situacion;
+			if (grupoDeSkill(nombre) === 'situaciones') continue;
 			if (!lista.includes(nombre)) lista.push(nombre);
 		}
 		return lista.sort((a, b) => a.localeCompare(b, 'es'));
 	});
+
+	// situaciones de juego presentes entre las visibles
+	const situacionesDisponibles = $derived.by(() => {
+		const lista: string[] = [];
+		for (const item of accionesFiltradas) {
+			const nombre = item.tipo === 'individual' ? item.accion.skill : item.accion.situacion;
+			if (grupoDeSkill(nombre) !== 'situaciones') continue;
+			if (!lista.includes(nombre)) lista.push(nombre);
+		}
+		return lista.sort((a, b) => a.localeCompare(b, 'es'));
+	});
+
+	// unión: la usan init, Todos y Ninguno (afectan ambas cajas)
+	const skillsDisponibles = $derived([...skillsIndividualesDisponibles, ...situacionesDisponibles]);
 
 	// aplicadas (skill + jugador)
 	const accionesMostradas = $derived(
@@ -100,6 +120,7 @@
 			const nombre = item.tipo === 'individual' ? item.accion.skill : item.accion.situacion;
 			if (!skillsAplicados.includes(nombre)) return false;
 			if (
+				mostrarFiltroJugador &&
 				item.tipo === 'individual' &&
 				jugadorElegidoId !== null &&
 				item.accion.player.id !== jugadorElegidoId
@@ -139,7 +160,11 @@
 	);
 
 	$effect(() => {
-		urlEmbed = cocinarEnlaceVideo(partido.urlVideo, { controls: false, mute: true, autoplay: true });
+		urlEmbed = cocinarEnlaceVideo(partido.urlVideo, {
+			controls: false,
+			mute: true,
+			autoplay: true
+		});
 	});
 
 	$effect(() => {
@@ -212,42 +237,13 @@
 		return () => controller.abort();
 	});
 
-	// 1. FUNCIONES DE ACCIONES Y VIDEO
-
-	// function seekToVideo(seconds: number | null): void {
-	// 	if (seconds === null) return;
-	// 	window.scrollTo({ top: 0, behavior: 'smooth' });
-	// 	try {
-	// 		if (videoEl) {
-	// 			videoEl.currentTime = seconds;
-	// 			videoEl.play();
-	// 		} else if (
-	// 			partido.urlVideo?.includes('youtube.com') ||
-	// 			partido.urlVideo?.includes('youtu.be')
-	// 		) {
-	// 			const iframe = document.querySelector(
-	// 				'iframe[src*="youtube.com/embed"]'
-	// 			) as HTMLIFrameElement | null;
-	// 			if (iframe?.contentWindow) {
-	// 				iframe.contentWindow.postMessage(
-	// 					JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }),
-	// 					'*'
-	// 				);
-	// 				iframe.contentWindow.postMessage(
-	// 					JSON.stringify({ event: 'command', func: 'playVideo' }),
-	// 					'*'
-	// 				);
-	// 			}
-	// 		}
-	// 	} catch {
-	// 		/* player no listo */
-	// 	}
-	// }
-
 	function seekToVideo(seconds: number | null): void {
 		if (seconds === null) return;
 		window.scrollTo({ top: 0, behavior: 'smooth' });
-		if (videoEl || !(partido.urlVideo?.includes('youtube.com') || partido.urlVideo?.includes('youtu.be'))) {
+		if (
+			videoEl ||
+			!(partido.urlVideo?.includes('youtube.com') || partido.urlVideo?.includes('youtu.be'))
+		) {
 			// videos nativos (Veo) quedan como están
 			if (videoEl) {
 				videoEl.currentTime = seconds;
@@ -255,7 +251,9 @@
 			}
 			return;
 		}
-		const iframe = document.querySelector('iframe[src*="youtube.com/embed"]') as HTMLIFrameElement | null;
+		const iframe = document.querySelector(
+			'iframe[src*="youtube.com/embed"]'
+		) as HTMLIFrameElement | null;
 		if (!iframe?.contentWindow) return;
 		const orden = [
 			{ event: 'command', func: 'seekTo', args: [seconds, true] },
@@ -264,9 +262,94 @@
 		orden.forEach((m) => iframe.contentWindow?.postMessage(JSON.stringify(m), '*'));
 		// reintento: si YouTube todavía está cargando el primer play, re-mandar play
 		window.setTimeout(() => {
-			iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'playVideo' }), '*');
+			iframe.contentWindow?.postMessage(
+				JSON.stringify({ event: 'command', func: 'playVideo' }),
+				'*'
+			);
 		}, 250);
 	}
+
+	const DURACION_INDIVIDUAL = 3000;
+	const DURACION_EQUIPO = 5000;
+
+	function pausarVideo(): void {
+		if (videoEl) {
+			videoEl.pause();
+			return;
+		}
+		const iframe = document.querySelector(
+			'iframe[src*="youtube.com/embed"]'
+		) as HTMLIFrameElement | null;
+		iframe?.contentWindow?.postMessage(
+			JSON.stringify({ event: 'command', func: 'pauseVideo' }),
+			'*'
+		);
+	}
+
+	function detenerCadena(): void {
+		if (clipTimer !== null) {
+			clearTimeout(clipTimer);
+			clipTimer = null;
+		}
+		indiceClip = null;
+		pausarVideo();
+	}
+
+	function reproducirDesde(desde: number): void {
+		if (clipTimer !== null) {
+			clearTimeout(clipTimer);
+			clipTimer = null;
+		}
+		const lista = accionesMostradas;
+		let i = desde;
+		while (i < lista.length && lista[i].accion.videoTime === null) i++;
+		if (i >= lista.length) {
+			detenerCadena();
+			return;
+		}
+		indiceClip = i;
+		const item = lista[i];
+		seekToVideo(item.accion.videoTime);
+		clipTimer = setTimeout(
+			() => siguienteClip(),
+			item.tipo === 'individual' ? DURACION_INDIVIDUAL : DURACION_EQUIPO
+		);
+	}
+
+	function siguienteClip(): void {
+		if (indiceClip === null) return;
+		reproducirDesde(indiceClip + 1);
+	}
+
+	function toggleFullScreen(): void {
+		const el = containerRef;
+		if (!el) return;
+		try {
+			const div = el as HTMLDivElement & { webkitRequestFullscreen?: () => void };
+			const doc = document as Document & { webkitExitFullscreen?: () => void };
+			if (!document.fullscreenElement) {
+				(div.requestFullscreen ?? div.webkitRequestFullscreen)?.call(el);
+			} else {
+				(doc.exitFullscreen ?? doc.webkitExitFullscreen)?.call(document);
+			}
+		} catch {
+			/* fullscreen no disponible — silencioso */
+		}
+	}
+
+	$effect(() => {
+		function actualizar() {
+			enFoco = !!document.fullscreenElement;
+		}
+		document.addEventListener('fullscreenchange', actualizar);
+		return () => document.removeEventListener('fullscreenchange', actualizar);
+	});
+
+	// corta la cadena si cambian los filtros (identidad de accionesMostradas) o al desmontar
+	$effect(() => {
+		void accionesMostradas;
+		return () => detenerCadena();
+	});
 
 	function seleccionarTodas(): void {
 		skillsPendientes = [...skillsDisponibles];
@@ -277,7 +360,6 @@
 	}
 
 	function aplicarFiltros(): void {
-		if (skillsPendientes.length === 0) return;
 		skillsAplicados = [...skillsPendientes];
 		jugadorElegidoId = null;
 		tabActual = 'eventos';
@@ -305,7 +387,7 @@
 	}
 </script>
 
-<div class="pantalla-reporte">
+<div class="pantalla-reporte" bind:this={containerRef}>
 	<h2>
 		Sala de clips | {partido.local} vs {partido.visitante} ({partido.puntosLocal} - {partido.puntosVisitante})
 	</h2>
@@ -398,9 +480,13 @@
 				<div class="panel-playlist">
 					<h3>Playlist de acciones ({accionesMostradas.length})</h3>
 					<div class="lista-scroll">
-						{#each accionesMostradas as item (item)}
+						{#each accionesMostradas as item, i (item)}
 							{#if item.tipo === 'individual'}
-								<button class="tarjeta-log" onclick={() => seekToVideo(item.accion.videoTime)}>
+								<button
+									class="tarjeta-log"
+									class:activa={indiceClip === i}
+									onclick={() => reproducirDesde(i)}
+								>
 									<span class="badge-tiempo">{formatTime(item.accion.videoTime)}</span>
 									<span>{item.accion.skill}</span>
 									{#if !INFRACCION_SKILLS.some((s) => s === item.accion.skill)}
@@ -408,7 +494,11 @@
 									{/if}
 								</button>
 							{:else}
-								<button class="tarjeta-log" onclick={() => seekToVideo(item.accion.videoTime)}>
+								<button
+									class="tarjeta-log"
+									class:activa={indiceClip === i}
+									onclick={() => reproducirDesde(i)}
+								>
 									<span class="badge-tiempo">{formatTime(item.accion.videoTime)}</span>
 									<span>{item.accion.situacion}</span>
 									<span class="signo">{signoDe(item.accion.calificacion)}</span>
@@ -417,28 +507,49 @@
 						{/each}
 					</div>
 				</div>
+
+				<div class="video-toolbar">
+					<button class="btn-foco" onclick={toggleFullScreen}>
+						⛶ {enFoco ? 'Salir' : 'Ampliar'}
+					</button>
+				</div>
 			{:else if tabActual === 'filtros'}
-				<div class="panel-filtros">
-					<h3>Filtrar por destreza</h3>
-					<div class="filtro-botones">
-						<button onclick={() => seleccionarTodas()}>Todos</button>
-						<button onclick={() => limpiarFiltros()}>Ninguno</button>
-						<button
-							class="primario"
-							disabled={skillsPendientes.length === 0}
-							onclick={() => aplicarFiltros()}>Aplicar</button
-						>
+				{#if skillsIndividualesDisponibles.length > 0}
+					<div class="panel-filtros">
+						<h3>Acciones individuales</h3>
+						{#each skillsIndividualesDisponibles as skill (skill)}
+							<label class="filtro-skill">
+								<input
+									type="checkbox"
+									checked={skillsPendientes.includes(skill)}
+									onchange={() => togglePendiente(skill)}
+								/>
+								{skill}
+							</label>
+						{/each}
 					</div>
-					{#each skillsDisponibles as skill (skill)}
-						<label class="filtro-skill">
-							<input
-								type="checkbox"
-								checked={skillsPendientes.includes(skill)}
-								onchange={() => togglePendiente(skill)}
-							/>
-							{skill}
-						</label>
-					{/each}
+				{/if}
+
+				{#if situacionesDisponibles.length > 0}
+					<div class="panel-filtros">
+						<h3>Situaciones de juego</h3>
+						{#each situacionesDisponibles as situacion (situacion)}
+							<label class="filtro-skill">
+								<input
+									type="checkbox"
+									checked={skillsPendientes.includes(situacion)}
+									onchange={() => togglePendiente(situacion)}
+								/>
+								{situacion}
+							</label>
+						{/each}
+					</div>
+				{/if}
+
+				<div class="filtro-botones">
+					<button onclick={() => seleccionarTodas()}>Todos</button>
+					<button onclick={() => limpiarFiltros()}>Ninguno</button>
+					<button class="primario" onclick={() => aplicarFiltros()}>Aplicar</button>
 				</div>
 			{/if}
 		</aside>
@@ -698,16 +809,18 @@
 	.filtro-botones {
 		display: flex;
 		gap: 8px;
-		margin-top: 4px 0 12px;
+		margin-top: 0 0 12px;
 	}
 
 	.filtro-botones button {
-		padding: 8px 16px;
+		padding: 6px 16px;
 		border: 1px solid #0068ce;
-		border-radius: 6px;
+		border-radius: 4px;
 		background: white;
 		color: #0068ce;
 		cursor: pointer;
+		font-size: 0.85rem;
+		line-height: 1.2;
 	}
 
 	.filtro-botones button.primario {
@@ -789,5 +902,131 @@
 		.embed-bloqueado {
 			padding: 16px;
 		}
+	}
+
+	/* a partir de acá estilos FS */
+
+	/* ===== BOTÓN FULLSCREEN ===== */
+	.video-toolbar {
+		width: 100%;
+		margin-top: 12px;
+	}
+
+	.btn-foco {
+		padding: 12px;
+		background-color: #0068ce;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-weight: bold;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: background-color 0.1s ease;
+	}
+
+	.btn-foco:hover {
+		background-color: #0050a0;
+	}
+
+	/* ===== CLIP EN REPRODUCCIÓN ===== */
+	.tarjeta-log.activa {
+		background-color: #cce4f7;
+		outline: 2px solid #0068ce;
+		outline-offset: -2px;
+	}
+
+	/* ===== FULLSCREEN ===== */
+	.pantalla-reporte:fullscreen {
+		display: block;
+		position: relative;
+		background: #000;
+		overflow: hidden;
+		padding: 0;
+	}
+
+	.pantalla-reporte:fullscreen > h2 {
+		display: none;
+	}
+
+	.pantalla-reporte:fullscreen .video-toolbar {
+		display: none;
+	}
+
+	.pantalla-reporte:fullscreen .contenido-sala {
+		position: absolute;
+		inset: 0;
+		display: block;
+	}
+
+	.pantalla-reporte:fullscreen .panel-video {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.pantalla-reporte:fullscreen .panel-video iframe,
+	.pantalla-reporte:fullscreen .panel-video video {
+		width: 100%;
+		height: 100%;
+		aspect-ratio: unset;
+		border: none;
+		border-radius: 0;
+	}
+
+	.pantalla-reporte:fullscreen .veo-loading,
+	.pantalla-reporte:fullscreen .embed-bloqueado {
+		width: 100%;
+		height: 100%;
+		aspect-ratio: unset;
+	}
+
+	/* Panel derecho flotante sobre el video (oscuro translúcido) */
+	.pantalla-reporte:fullscreen .panel-derecho {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		width: min(420px, 85vw);
+		z-index: 2;
+		background: rgba(15, 23, 42, 0.85);
+		backdrop-filter: blur(4px);
+		padding: 16px;
+		overflow-y: auto;
+	}
+
+	.pantalla-reporte:fullscreen .panel-derecho h2 {
+		color: #f1f5f9;
+		border-bottom-color: rgba(241, 245, 249, 0.2);
+	}
+
+	.pantalla-reporte:fullscreen .panel-playlist,
+	.pantalla-reporte:fullscreen .panel-filtros {
+		background-color: transparent;
+		border-color: rgba(241, 245, 249, 0.25);
+	}
+
+	.pantalla-reporte:fullscreen .panel-playlist h3,
+	.pantalla-reporte:fullscreen .panel-filtros h3 {
+		color: #e2e8f0;
+	}
+
+	.pantalla-reporte:fullscreen .filtro-skill,
+	.pantalla-reporte:fullscreen .filtro-jugador label,
+	.pantalla-reporte:fullscreen .filtro-calif > label,
+	.pantalla-reporte:fullscreen .radio-opcion {
+		color: #e2e8f0;
+	}
+
+	.pantalla-reporte:fullscreen .tabs button {
+		background: transparent;
+		color: #cce4f7;
+	}
+
+	.pantalla-reporte:fullscreen .tabs button.activo {
+		background-color: #0068ce;
+		color: white;
 	}
 </style>
