@@ -48,6 +48,7 @@
 	let indiceClip = $state<number | null>(null);
 	let clipTimer: ReturnType<typeof setTimeout> | null = null;
 	let containerRef = $state<HTMLDivElement | null>(null);
+	let listaRef = $state<HTMLDivElement | null>(null);
 	let enFoco = $state(false);
 
 	const partido = $derived(sala.partido_json);
@@ -269,8 +270,8 @@
 		}, 250);
 	}
 
-	const DURACION_INDIVIDUAL = 3000;
-	const DURACION_EQUIPO = 5000;
+	const DURACION_INDIVIDUAL = 6000;
+	const DURACION_EQUIPO = 10000;
 
 	function pausarVideo(): void {
 		if (videoEl) {
@@ -349,6 +350,20 @@
 	$effect(() => {
 		void accionesMostradas;
 		return () => detenerCadena();
+	});
+
+	$effect(() => {
+		const i = indiceClip;
+		if (i === null) return;
+		const cont = listaRef;
+		const el = cont?.children[i];
+		if (!cont || !(el instanceof HTMLElement)) return;
+		const delta =
+			el.getBoundingClientRect().top -
+			cont.getBoundingClientRect().top -
+			cont.clientHeight / 2 +
+			el.clientHeight / 2;
+		cont.scrollTo({ top: cont.scrollTop + delta, behavior: 'smooth' });
 	});
 
 	function seleccionarTodas(): void {
@@ -479,7 +494,7 @@
 
 				<div class="panel-playlist">
 					<h3>Playlist de acciones ({accionesMostradas.length})</h3>
-					<div class="lista-scroll">
+					<div class="lista-scroll" bind:this={listaRef}>
 						{#each accionesMostradas as item, i (item)}
 							{#if item.tipo === 'individual'}
 								<button
@@ -983,50 +998,19 @@
 		aspect-ratio: unset;
 	}
 
-	/* Panel derecho flotante sobre el video (oscuro translúcido) */
+	/* Panel derecho flotante sobre el video (blanco) */
 	.pantalla-reporte:fullscreen .panel-derecho {
 		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
+		top: 24px;
+		right: 24px;
+		bottom: auto;
 		width: min(420px, 85vw);
+		max-height: calc(100% - 48px);
 		z-index: 2;
-		background: rgba(15, 23, 42, 0.85);
-		backdrop-filter: blur(4px);
+		background: #fff;
+		border-radius: 12px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 		padding: 16px;
 		overflow-y: auto;
-	}
-
-	.pantalla-reporte:fullscreen .panel-derecho h2 {
-		color: #f1f5f9;
-		border-bottom-color: rgba(241, 245, 249, 0.2);
-	}
-
-	.pantalla-reporte:fullscreen .panel-playlist,
-	.pantalla-reporte:fullscreen .panel-filtros {
-		background-color: transparent;
-		border-color: rgba(241, 245, 249, 0.25);
-	}
-
-	.pantalla-reporte:fullscreen .panel-playlist h3,
-	.pantalla-reporte:fullscreen .panel-filtros h3 {
-		color: #e2e8f0;
-	}
-
-	.pantalla-reporte:fullscreen .filtro-skill,
-	.pantalla-reporte:fullscreen .filtro-jugador label,
-	.pantalla-reporte:fullscreen .filtro-calif > label,
-	.pantalla-reporte:fullscreen .radio-opcion {
-		color: #e2e8f0;
-	}
-
-	.pantalla-reporte:fullscreen .tabs button {
-		background: transparent;
-		color: #cce4f7;
-	}
-
-	.pantalla-reporte:fullscreen .tabs button.activo {
-		background-color: #0068ce;
-		color: white;
 	}
 </style>
