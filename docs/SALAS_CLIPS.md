@@ -196,17 +196,17 @@ Fuera del modelo free/partido/temporada, existe el plan `'full'` para uso person
 
 ### Integración con video players
 
-| Player  | Cómo leer `currentTime`                       | Cómo hacer seek            | Cómo embeber                                         |
-| ------- | --------------------------------------------- | -------------------------- | ---------------------------------------------------- |
-| YouTube | YouTube IFrame API: `player.getCurrentTime()` | `player.seekTo(t, true)`   | `<iframe src="https://youtube.com/embed/{id}">`      |
-| Vimeo   | Vimeo Player API: `player.getCurrentTime()`   | `player.setCurrentTime(t)` | `<iframe src="https://player.vimeo.com/video/{id}">` |
-| Veo     | `videoEl.currentTime`                         | `videoEl.currentTime = t`  | `<video src="{videoUrl}">`                           |
+| Player  | Cómo leer `currentTime`                                                                                | Cómo hacer seek                   | Cómo embeber                                                 |
+| ------- | ------------------------------------------------------------------------------------------------------ | --------------------------------- | ------------------------------------------------------------ |
+| YouTube | `postMessage` `listening` → respuesta `infoDelivery` con `info.currentTime` (vía `crearControlYouTube`) | `postMessage` `seekTo` (absoluto) | `<iframe src="https://youtube.com/embed/{id}?enablejsapi=1">` |
+| Vimeo   | No implementado (solo se menciona en la UI)                                                            | —                                 | —                                                            |
+| Veo     | `videoEl.currentTime`                                                                                  | `videoEl.currentTime = t`         | `<video src="{videoUrl}">`                                   |
 
 **Carga de APIs:**
 
-- YouTube IFrame API: se carga dinámicamente vía `<script src="https://www.youtube.com/iframe_api">`
-- Vimeo Player API: se carga dinámicamente vía `<script src="https://player.vimeo.com/api/player.js">`
-- Veo: ya se resuelve vía `/api/veo-video` (server-side proxy)
+- YouTube: **no** se carga la IFrame API (`iframe_api`). Se agrega `enablejsapi=1` al src y se habla con el iframe por `postMessage`: `listening` (pregunta, con heartbeat permanente de 1 s) → `infoDelivery` (respuesta con `currentTime` y `playerState`); órdenes `seekTo` / `pauseVideo`. Todo vive en `crearControlYouTube` (`$lib/video.ts`).
+- Vimeo: no hay integración (queda el link tal cual en el iframe).
+- Veo: ya se resuelve vía `/api/veo-video` (server-side proxy).
 
 ---
 
@@ -275,6 +275,7 @@ Fuera del modelo free/partido/temporada, existe el plan `'full'` para uso person
 - **Filtro de jugador**: visible solo cuando **todas** las skills aplicadas son individuales (ninguna situación) y hay al menos una; lista los jugadores con acciones en esas skills.
 - **Filtro de calificación**: visible solo con una skill única y que no sea infracción; labels especiales para Tackle (`Errado`/`Neutro`/`Positivo`/`Dominante`) y Duelo (`Negativo`/`Neutro`/`Positivo`/`Quiebre`). La playlist muestra signos `-` `=` `+` `++`.
 - **Fullscreen**: botón `⛶ Ampliar` en la columna derecha (solo visible en el tab Eventos); el video llena la pantalla y el panel derecho queda flotante con fondo oscuro translúcido y scroll; se sale con `Escape`.
+- **Atajos de teclado**: ←/→ mueven el video 5 s (`Shift` = 15 s, `Ctrl`/`Cmd` = 1 s) vía `activarAtajosVideo` (`$lib/video.ts`), tanto en Veo como en YouTube. Con el foco dentro del iframe de YouTube el player maneja sus propias teclas (5 s nativo). El salto manual no resincroniza la cadena clip a clip (el `clipTimer` sigue su cuenta).
 - **Mobile**: media query ≤768px (grilla 1 columna, playlist sin altura máxima, botones compactos).
 
 ---

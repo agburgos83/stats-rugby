@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { procesarReporte } from '$lib/processing/reporte-data';
 	import { descargarPDF } from '$lib/pdf/reporte';
-	import type { PropsAcciones, ModalidadClave } from '$lib/types';
+	import type { PropsAcciones } from '$lib/types';
 	import { INFRACCION_SKILLS, CONTACT_SKILLS, BALL_SKILLS, FOOT_SKILLS } from '$lib/types';
 	import {
 		cocinarEnlaceVideo,
 		formatTime,
 		extraerYouTubeId,
 		chequearEmbedYouTube,
-		obtenerVideoVeo
+		obtenerVideoVeo,
+		crearControlYouTube,
+		activarAtajosVideo,
+		type ControlYouTube
 	} from '$lib/video';
 	import '$lib/video-types.d.ts';
 	import { LIMITES_FREE, grupoDeSkill, SITUACIONES, type GrupoClave } from '$lib/planes';
@@ -25,7 +28,7 @@
 		onCancelarFinalizar,
 		onConfirmarFinalizar,
 		modalidad
-	} = $props<PropsAcciones & { modalidad: ModalidadClave }>();
+	}: PropsAcciones = $props();
 
 	let generando = $state(false);
 	let errorMsg = $state('');
@@ -41,7 +44,11 @@
 	let embedPermitido = $state<boolean | null>(null);
 	let veoVideoUrl = $state<string | null>(null);
 	let veoLoading = $state(false);
+
 	let videoEl = $state<HTMLVideoElement | null>(null);
+	let ytIframe = $state<HTMLIFrameElement | null>(null);
+	let controlYT = $state<ControlYouTube | null>(null);
+
 	// eslint-disable-next-line svelte/prefer-writable-derived
 	let urlEmbed = $state<string | null>(null);
 
@@ -106,6 +113,25 @@
 			.catch((e) => logError('Error al traer video de Veo:', e))
 			.finally(() => (veoLoading = false));
 		return () => controller.abort();
+	});
+
+	$effect(() => {
+		const f = ytIframe;
+		if (!f) return;
+		const control = crearControlYouTube(f);
+		controlYT = control;
+		const stop = control.conectar();
+		return () => {
+			stop();
+			controlYT = null;
+		};
+	});
+
+	$effect(() => {
+		return activarAtajosVideo({
+			nativo: () => videoEl,
+			youtube: () => controlYT
+		});
 	});
 
 	function contarEnGrupo(grupo: GrupoClave): number {
@@ -253,6 +279,7 @@
 				<div class="veo-loading">Verificando disponibilidad del video…</div>
 			{:else if embedPermitido}
 				<iframe
+					bind:this={ytIframe}
 					src={urlEmbed}
 					title="Video Player"
 					style="border: 0;"
@@ -452,6 +479,7 @@
 		aspect-ratio: 16 / 9;
 		border-radius: 8px;
 		background-color: #000;
+		object-fit: contain;
 	}
 
 	.veo-loading {

@@ -20,8 +20,10 @@
 		cocinarEnlaceVideo,
 		extraerYouTubeId,
 		chequearEmbedYouTube,
-		obtenerVideoVeo
+		obtenerVideoVeo,
+		crearControlYouTube, activarAtajosVideo, type ControlYouTube
 	} from '$lib/video';
+
 	import { logError } from '$lib/debug';
 
 	// importadas desde el orquestador
@@ -51,10 +53,12 @@
 	let veoLoading = $state(false);
 
 	let videoEl = $state<HTMLVideoElement | null>(null);
-	let cachedYouTubeTime = $state(0);
 
 	let containerRef = $state<HTMLDivElement | null>(null);
 	let enFoco = $state(false);
+
+	let ytIframe = $state<HTMLIFrameElement | null>(null);
+	let controlYT = $state<ControlYouTube | null>(null);
 
 	$effect(() => {
 		const url = partido.urlVideo;
@@ -77,41 +81,22 @@
 	});
 
 	$effect(() => {
-		const url = partido.urlVideo;
-		const isYT = url?.includes('youtube.com') || url?.includes('youtu.be');
-		if (!isYT) return;
-
-		const handler = (event: MessageEvent) => {
-			if (event.origin !== 'https://www.youtube.com') return;
-			try {
-				const data = JSON.parse(event.data);
-				if (data.event === 'infoDelivery' && data.info?.currentTime !== undefined) {
-					cachedYouTubeTime = data.info.currentTime;
-				}
-			} catch {
-				/* not a JSON message from YT */
-			}
-		};
-
-		const sendListening = () => {
-			const iframe = document.querySelector(
-				'iframe[src*="youtube.com/embed"]'
-			) as HTMLIFrameElement | null;
-			if (iframe?.contentWindow) {
-				iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
-			}
-		};
-
-		window.addEventListener('message', handler);
-		sendListening();
-		const interval = setInterval(sendListening, 1000);
-		const timeout = setTimeout(() => clearInterval(interval), 10000);
-
+		const f = ytIframe;
+		if (!f) return;
+		const control = crearControlYouTube(f);
+		controlYT = control;
+		const stop = control.conectar();
 		return () => {
-			window.removeEventListener('message', handler);
-			clearInterval(interval);
-			clearTimeout(timeout);
+			stop();
+			controlYT = null;
 		};
+	});
+
+	$effect(() => {
+		return activarAtajosVideo({
+			nativo: () => videoEl,
+			youtube: () => controlYT
+		});
 	});
 
 	function toggleFullScreen(): void {
@@ -144,12 +129,7 @@
 		try {
 			let t: number | null = null;
 			if (videoEl) t = videoEl.currentTime;
-			else if (
-				partido.urlVideo?.includes('youtube.com') ||
-				partido.urlVideo?.includes('youtu.be')
-			) {
-				t = cachedYouTubeTime;
-			}
+			else t = controlYT?.tiempoActual() ?? null;
 			if (t === null) return null;
 			return Math.max(0, t - offset);
 		} catch {
@@ -691,6 +671,7 @@
 		border-radius: 8px;
 		background-color: #000;
 		border: 1px solid #e2e8f0;
+		object-fit: contain;
 	}
 
 	.veo-loading {
@@ -1090,6 +1071,8 @@
 		aspect-ratio: unset;
 		border: none;
 		border-radius: 0;
+		object-fit: contain;
+
 	}
 
 	.pantalla-analisis:fullscreen .veo-loading {

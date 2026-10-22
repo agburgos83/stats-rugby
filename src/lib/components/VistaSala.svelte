@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		// type PartidoContexto,
 		type Accion,
 		type TeamAccion,
 		type Player,
@@ -12,26 +11,14 @@
 		formatTime,
 		extraerYouTubeId,
 		chequearEmbedYouTube,
-		obtenerVideoVeo
+		obtenerVideoVeo,
+		crearControlYouTube, activarAtajosVideo, type ControlYouTube
 	} from '$lib/video';
 	import '$lib/video-types.d.ts';
 	import { grupoDeSkill } from '$lib/planes';
 	import { logError } from '$lib/debug';
 
-	// interface sala {
-	// 	id: string;
-	// 	plan: string;
-	// 	partido_json: PartidoContexto;
-	// 	acciones_json: Accion[];
-	// 	team_acciones_json: TeamAccion[];
-	// 	skills_visibles: string[];
-	// 	limites: Record<string, number>;
-	// 	expires_at: string | null;
-	// 	created_by: string | null;
-	// }
-
 	let { sala } = $props();
-
 	let jugadorElegidoId = $state<number | null>(null);
 	let califFiltro = $state<'todos' | CalificacionIndividual>('todos');
 	let skillsPendientes = $state<string[]>([]); // selección en curso (checkboxes)
@@ -50,6 +37,9 @@
 	let containerRef = $state<HTMLDivElement | null>(null);
 	let listaRef = $state<HTMLDivElement | null>(null);
 	let enFoco = $state(false);
+	let ytIframe = $state<HTMLIFrameElement | null>(null);
+	let controlYT = $state<ControlYouTube | null>(null);
+
 
 	const partido = $derived(sala.partido_json);
 	const acciones = $derived(sala.acciones_json);
@@ -238,6 +228,26 @@
 		return () => controller.abort();
 	});
 
+	$effect(() => {
+		const f = ytIframe;
+		if (!f) return;
+		const control = crearControlYouTube(f);
+		controlYT = control;
+		const stop = control.conectar();
+		return () => {
+			stop();
+			controlYT = null;
+		};
+	});
+
+	$effect(() => {
+		return activarAtajosVideo({
+			nativo: () => videoEl,
+			youtube: () => controlYT
+		});
+	});
+
+
 	function seekToVideo(seconds: number | null): void {
 		if (seconds === null) return;
 		window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -415,6 +425,7 @@
 					<div class="veo-loading">Verificando disponibilidad del video…</div>
 				{:else if embedPermitido}
 					<iframe
+						bind:this={ytIframe}
 						src={urlEmbed}
 						title="Video Player"
 						style="border: 0;"
@@ -622,6 +633,7 @@
 		aspect-ratio: 16 / 9;
 		border-radius: 8px;
 		background-color: #000;
+		object-fit: contain;
 	}
 
 	.veo-loading {
@@ -989,6 +1001,7 @@
 		aspect-ratio: unset;
 		border: none;
 		border-radius: 0;
+		object-fit: contain;
 	}
 
 	.pantalla-reporte:fullscreen .veo-loading,

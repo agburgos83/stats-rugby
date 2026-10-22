@@ -76,18 +76,19 @@
 ### Componentes Svelte
 
 - `Cabecera.svelte` — barra sticky blanca con navegación contextual. En `/app`: título del partido (vistas 4/5) + botones `[← Editar partido] [Terminar análisis →]` / `[← Volver al análisis] [Finalizar]`. Fuera de `/app`: marca "Stats Rugby" + botón "Retomar análisis" con dot rojo parpadeante (si `hayDatos`). Oculta en `/app` desde `+layout.svelte`.
-- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo) con captura de `videoTime`. **Fullscreen** (`⛶`): el video llena la pantalla y la botonera flota encima (chips arriba + 5 columnas de skills abajo). Props: `PropsAnalisis & { modalidad: ModalidadClave }`.
+- `VistaAnalisis.svelte` — análisis con botones `btn-chip` por jugador (`numero. apellido`), skills en grilla, calificadores. Incluye reproductor de video (YouTube/Vimeo/Veo) con captura de `videoTime`. **Fullscreen** (`⛶`): el video llena la pantalla y la botonera flota encima (chips arriba + 5 columnas de skills abajo). Atajos ←/→ (`activarAtajosVideo`). Props: `PropsAnalisis`.
 - `VistaCargaEquipo.svelte` — grilla 4 columnas con drag & drop (solo desktop, no touch)
-- `VistaAcciones.svelte` — revisión de acciones logueadas, video embebido con seek (`seekToVideo`), botones "Descargar PDF" y "Compartir sala". Props: `PropsAcciones & { modalidad: ModalidadClave }`.
+- `VistaAcciones.svelte` — revisión de acciones logueadas, video embebido con seek (`seekToVideo`), botones "Descargar PDF" y "Compartir sala". Atajos ←/→ (`activarAtajosVideo`). Props: `PropsAcciones` (incluye `modalidad`).
 - `VistaSala.svelte` — sala de clips para el veedor (`/sala/[token]`): video embed + playlist **clip a clip** + fullscreen; dos cajas de filtro (**Acciones individuales** / **Situaciones de juego**) con un único Todos/Ninguno/Aplicar, y filtro de jugador visible solo cuando lo aplicado son acciones individuales.
 - `src/routes/api/sala/+server.ts` — POST/GET de salas (Supabase). TTL free 72h.
 - `$lib/planes.ts` — `LIMITES_FREE` (topes por grupo: contacto 2, pelota 2, pie 1, infracción 1, situaciones 2), `SITUACIONES`, `grupoDeSkill`.
 - `$lib/csv.ts` — parser RFC 4180 completo (comillas, comas dentro de comillas, `\r\n`). Usado por `VistaCargaCSV`.
 - `$lib/stores.svelte.ts` — `loadFromStorage()`, `saveToStorage()`, `clearStorage()` — persistencia en `localStorage` bajo key `stats-rugby-state`. SSR-safe con guard `browser`.
-- `$lib/video.ts` — `extraerYouTubeId`, `cocinarEnlaceVideo`, `chequearEmbedYouTube` (cache en Map in-memory), `obtenerVideoVeo`, `formatTime`.
+- `$lib/video.ts` — `extraerYouTubeId`, `cocinarEnlaceVideo`, `chequearEmbedYouTube` (cache en Map in-memory), `obtenerVideoVeo`, `formatTime`, `crearControlYouTube` (control del player de YouTube vía `postMessage`) y `activarAtajosVideo` (atajos ←/→ con `PASO_VIDEO` 5 s / `PASO_VIDEO_SHIFT` 15 s / `PASO_VIDEO_CTRL` 1 s).
 - `$lib/video-types.d.ts` — tipos para YouTube IFrame API y Vimeo Player API.
 - `$lib/debug.ts` — `logError(...args)` con guard `import.meta.env.DEV`.
 - `$lib/supabase.ts` — cliente Supabase (`PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY`).
+- **Props en Svelte 5**: usar la anotación (`let { ... }: Props = $props();`). La forma genérica `$props<Props>()` no está tipada (`node_modules/svelte/types/index.d.ts` declara `$props(): any`) y el TS server del IDE la marca como TS2558 “Expected 0 type arguments”.
 - Todos los botones primarios usan `background-color: #0068CE`, hover `#0050A0`
 - Menú: navbar `#0068CE`
 - Footer: `background-color: #0068CE`, links hover `#CCE4F7`
@@ -122,7 +123,7 @@
 16. `nextAccionId` inicializado desde `acciones.reduce((max, a) => Math.max(max, a.id), -1) + 1` — sin colisión tras recarga (#8)
 17. `MatrizProcesada` tipada `Record<number, FilaJugador>` (#17); radar `skills: Skill[]`
 18. `logError` de `$lib/debug.ts` reemplaza `console.error` (#20)
-19. Video YouTube: listener `postMessage` para leer `currentTime` (`cachedYouTubeTime`), además del check de embed por oembed
+19. Video YouTube: listener `postMessage` para leer `currentTime` (~~`cachedYouTubeTime`~~ → reemplazado por `ControlYouTube` de `$lib/video.ts`, ítem 38), además del check de embed por oembed
 20. Salas: cliente Supabase + `/api/sala` + `VistaSala.svelte` + botón "Compartir sala" (Sprints 2-3)
 21. Cabecera sticky implementada: barra blanca en `/app`, menú oculto en `/app`, botones contextuales por vista, modal de Finalizar como prop de VistaAcciones
 22. Parser CSV extraído a `$lib/csv.ts` con soporte RFC 4180 completo
@@ -141,6 +142,7 @@
 35. **Reproducción clip a clip en la sala**: estado `indiceClip` + `clipTimer` (no reactivo) y helpers `reproducirDesde(i)` / `siguienteClip()` / `detenerCadena()` / `pausarVideo()`; duración 3 s (`Accion`) / 5 s (`TeamAccion`) por `videoTime`; saltea clips con `videoTime === null`; fin de playlist → `detenerCadena()` (pausa, sin loop); clic en otro clip reinicia la cadena desde ese índice; la tarjeta activa se resalta con `class:activa` (`outline` + fondo `#CCE4F7`); un `$effect` sobre `accionesMostradas` corta la cadena al cambiar filtros o al desmontar; pausa vía `postMessage('pauseVideo')` (YouTube) o `videoEl.pause()` (Veo)
 36. **Fullscreen en VistaSala**: mismo patrón que `VistaAnalisis` — `bind:this={containerRef}` en `.pantalla-reporte`, `enFoco`, `toggleFullScreen()` con fallback webkit y listener `fullscreenchange`. En `:fullscreen` el video llena la pantalla (`.panel-video` absolute `inset:0`) y `.panel-derecho` queda flotante sobre el video con fondo oscuro translúcido (`rgba(15,23,42,0.85)` + blur), scroll interno y `z-index` alto (overrides de texto claro). El botón `⛶ {enFoco ? 'Salir' : 'Ampliar'}` vive en la columna derecha y solo se muestra en el tab Eventos; se sale con `Escape` (el embed de YouTube va con `fs:'0'`)
 37. **Filtros de la sala en 2 cajas**: `skillsIndividualesDisponibles` / `situacionesDisponibles` (split por `grupoDeSkill`); un único juego Todos/Ninguno/Aplicar (`seleccionarTodas`/`limpiarFiltros`/`aplicarFiltros`) que afecta ambas cajas y salta al tab Eventos; `aplicarFiltros` permite 0 seleccionadas; `mostrarFiltroJugador` = hay ≥1 skill aplicada y ninguna es situación; `jugadoresDisponibles` sale de las skills individuales aplicadas; el filtro de jugador solo se aplica cuando el select está visible
+38. **Atajos de teclado del reproductor**: `$lib/video.ts` suma `crearControlYouTube(iframe)` (control del player de YouTube por `postMessage`: `conectar()` / `tiempoActual()` / `saltar(delta)`) y `activarAtajosVideo({ nativo, youtube })` (listener de `keydown` en `window` con `capture: true` + `preventDefault()`/`stopPropagation()`). Flechas = 5 s, `Shift` = 15 s, `Ctrl`/`Cmd` = 1 s, en las 3 vistas (VistaAnalisis, VistaAcciones, VistaSala); se ignora en campos editables y con `Alt`. Hallazgos medidos en Chrome (CDP): el seek nativo de `<video controls>` con ←/→ es proporcional al **1% de la duración** (~54 s en un partido de 90 min) y solo ocurre si el `<video>` tiene el foco (con el foco en un botón de la botonera el delta es 0); `preventDefault` en captura lo cancela (delta = 5 s exactos); `infoDelivery` de YouTube solo llega si se manda `listening` en heartbeat permanente (12 s sin preguntar → 0 respuestas; el heartbeat anterior duraba 10 s y congelaba el tiempo); `seekTo` es absoluto → requiere el `currentTime` (extrapolación con tope de 1,2 s si el player está reproduciendo); los saltos NO reanudan la reproducción. También se agregó `object-fit: contain` al iframe/video en fullscreen. Limitación: con el foco dentro del iframe de YouTube, el player maneja sus propias teclas (5 s nativo; `Ctrl+→` = próximo capítulo)
 
 ### Formato general
 

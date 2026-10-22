@@ -399,4 +399,5 @@ export interface PropsAcciones {
 	confirmarFinalizar: boolean;
 	onCancelarFinalizar: () => void;
 	onConfirmarFinalizar:() => void;
+	modalidad: ModalidadClave;
 }
