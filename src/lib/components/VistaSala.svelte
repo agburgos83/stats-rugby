@@ -280,8 +280,8 @@
 		}, 250);
 	}
 
-	const DURACION_INDIVIDUAL = 6000;
-	const DURACION_EQUIPO = 10000;
+	const DURACION_INDIVIDUAL = 3000;
+	const DURACION_EQUIPO = 8000;
 
 	function pausarVideo(): void {
 		if (videoEl) {
