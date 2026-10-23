@@ -13,10 +13,10 @@ const DURACION_POR_SKILL: Record<Skill, number> = {
 	'Off load': DURACION_CORTA,
 	'Rec. line': DURACION_CORTA,
 	'Recup. div.': DURACION_CORTA,
-	'Lanz. line': DURACION_CORTA,
 	'Knock on': DURACION_CORTA,
 	// — 5 s —
-	'Ast. duelo': DURACION_MEDIA,
+	'Lanz. line': DURACION_MEDIA,
+    'Ast. duelo': DURACION_MEDIA,
 	'Ast. tackle': DURACION_MEDIA,
 	'Ctr. ruck': DURACION_MEDIA,
 	Ruck: DURACION_MEDIA,
