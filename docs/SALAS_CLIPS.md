@@ -131,6 +131,10 @@ CREATE POLICY "Borrar sala" ON salas
   FOR DELETE USING (auth.uid() = created_by);
 ```
 
+### Migraciones de datos
+
+- **2026-10-23 — `Kick off` → `Salida`**: las salas anteriores al rename guardan `"Kick off"` en `acciones_json` y `skills_visibles`. Ejecutar `docs/migraciones/2026-10-23-kick-off-a-salida.sql` en el SQL Editor de Supabase (idempotente).
+
 ### Modelos de planes
 
 | Característica          | Gratis                       | Partido ($5)                    | Temporada ($50, 20 partidos)    |
