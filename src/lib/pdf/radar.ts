@@ -28,7 +28,7 @@ export const GROUP_SKILLS: Record<string, GrupoRadar> = {
 	},
 	medios: {
 		label: 'Medios',
-		skills: ['Pase', 'Kick', 'Tackle', 'Kick off', 'Duelo']
+		skills: ['Pase', 'Kick', 'Tackle', 'Salida', 'Duelo']
 	},
 	backs: {
 		label: 'Backs',

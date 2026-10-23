@@ -1,22 +1,19 @@
 <script lang="ts">
-	import {
-		type Accion,
-		type TeamAccion,
-		type Player,
-		type CalificacionIndividual,
-		INFRACCION_SKILLS
-	} from '$lib/types';
+	import { type Player, type CalificacionIndividual, INFRACCION_SKILLS } from '$lib/types';
 	import {
 		cocinarEnlaceVideo,
 		formatTime,
 		extraerYouTubeId,
 		chequearEmbedYouTube,
 		obtenerVideoVeo,
-		crearControlYouTube, activarAtajosVideo, type ControlYouTube
+		crearControlYouTube,
+		activarAtajosVideo,
+		type ControlYouTube
 	} from '$lib/video';
 	import '$lib/video-types.d.ts';
 	import { grupoDeSkill } from '$lib/planes';
 	import { logError } from '$lib/debug';
+	import { duracionClip, type ItemClip } from '$lib/clips';
 
 	let { sala } = $props();
 	let jugadorElegidoId = $state<number | null>(null);
@@ -39,7 +36,6 @@
 	let enFoco = $state(false);
 	let ytIframe = $state<HTMLIFrameElement | null>(null);
 	let controlYT = $state<ControlYouTube | null>(null);
-
 
 	const partido = $derived(sala.partido_json);
 	const acciones = $derived(sala.acciones_json);
@@ -67,9 +63,7 @@
 
 	// acciones visibles en la sala
 	const accionesFiltradas = $derived.by(() => {
-		const resultado: Array<
-			{ tipo: 'individual'; accion: Accion } | { tipo: 'equipo'; accion: TeamAccion }
-		> = [];
+		const resultado: ItemClip[] = [];
 
 		for (const a of acciones)
 			if (skillsVisibles.includes(a.skill)) resultado.push({ tipo: 'individual', accion: a });
@@ -247,7 +241,6 @@
 		});
 	});
 
-
 	function seekToVideo(seconds: number | null): void {
 		if (seconds === null) return;
 		window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -279,9 +272,6 @@
 			);
 		}, 250);
 	}
-
-	const DURACION_INDIVIDUAL = 3000;
-	const DURACION_EQUIPO = 8000;
 
 	function pausarVideo(): void {
 		if (videoEl) {
@@ -321,10 +311,7 @@
 		indiceClip = i;
 		const item = lista[i];
 		seekToVideo(item.accion.videoTime);
-		clipTimer = setTimeout(
-			() => siguienteClip(),
-			item.tipo === 'individual' ? DURACION_INDIVIDUAL : DURACION_EQUIPO
-		);
+		clipTimer = setTimeout(() => siguienteClip(), duracionClip(item));
 	}
 
 	function siguienteClip(): void {

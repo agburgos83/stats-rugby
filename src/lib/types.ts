@@ -165,7 +165,7 @@ export const CONTACT_SKILLS = [
 	'Pesca'
 ] as const;
 
-export const FOOT_SKILLS = ['Kick', 'Kick off', 'Palos', 'Drop'] as const;
+export const FOOT_SKILLS = ['Kick', 'Salida', 'Palos', 'Drop'] as const;
 
 export const EQUIPOS_POR_UNION = {
 	URBA: [

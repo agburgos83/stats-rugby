@@ -159,7 +159,7 @@ export function generarMockData(
 	const totalKickOffs = baseKickOffs + extraKickOffs;
 	if (diez) {
 		for (let i = 0; i < totalKickOffs; i++) {
-			push(diez, 'Kick off', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
+			push(diez, 'Salida', pickCalif({ Negativo: 0.1, Positivo: 0.9 }));
 		}
 	}
 
