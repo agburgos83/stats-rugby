@@ -428,7 +428,7 @@ export async function descargarPDF(
 
 			// Procesamos los textos largos para que tengan salto de línea automático
 			const textoAclaracion1 = doc.splitTextToSize(
-				'Solo los tackles negativos, positivos y dominantes cuentan como efectivos.',
+				'Solo los tackles neutros, positivos y dominantes cuentan como efectivos.',
 				anchoMaxCol3
 			);
 			const textoAclaracion2 = doc.splitTextToSize(
